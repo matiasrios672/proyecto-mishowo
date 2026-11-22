@@ -89,8 +89,8 @@ export function useEditor(initial: Draft, sync?: SyncConfig) {
     resumeSync: () => void engineRef.current?.resume(),
     /** Antes de cerrar sesión: sube lo pendiente y frena cualquier guardado local posterior. */
     async prepareSignOut() {
-      await engineRef.current?.flushNow(draftRef.current);
-      locked.current = true;
+      locked.current = true; // primero se frena el guardado local: nada nuevo se escribe en esta compu
+      await engineRef.current?.settle(3000); // y solo se espera si hay cambios sin subir
     },
   };
 }

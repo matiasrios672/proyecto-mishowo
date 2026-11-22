@@ -155,6 +155,46 @@ describe("syncEngine", () => {
     engine.dispose();
   });
 
+  it("settle no hace ningún pedido si no hay nada pendiente", async () => {
+    const t = setup();
+    await t.engine.settle();
+    expect(t.push).not.toHaveBeenCalled();
+  });
+
+  it("settle sube lo pendiente sin esperar el debounce y recién después devuelve", async () => {
+    const t = setup(1);
+    t.engine.schedule({ n: 1 });
+    let done = false;
+    const p = t.engine.settle().then(() => { done = true; });
+    await vi.advanceTimersByTimeAsync(100);
+    await p;
+    expect(done).toBe(true);
+    expect(t.calls).toEqual([{ doc: { n: 1 }, base: 1 }]); // no esperó los 800 ms
+  });
+
+  it("settle espera un guardado en vuelo pero se rinde al llegar al tope", async () => {
+    const t = setup(1, ["hang"]);
+    t.engine.schedule({ n: 1 });
+    await vi.advanceTimersByTimeAsync(800);
+    let done = false;
+    const p = t.engine.settle(1000).then(() => { done = true; });
+    await vi.advanceTimersByTimeAsync(500);
+    expect(done).toBe(false);
+    await vi.advanceTimersByTimeAsync(600);
+    await p;
+    expect(done).toBe(true); // el servidor no respondió, igual se sigue
+  });
+
+  it("settle no espera si el guardado está detenido por un conflicto", async () => {
+    const t = setup(1, [{ ok: false, reason: "conflict", version: 3 }]);
+    t.engine.schedule({ n: 1 });
+    await vi.advanceTimersByTimeAsync(800);
+    let done = false;
+    void t.engine.settle(5000).then(() => { done = true; });
+    await vi.advanceTimersByTimeAsync(0);
+    expect(done).toBe(true);
+  });
+
   it("dispose cancela lo pendiente y ya no avisa nada", async () => {
     const t = setup();
     t.engine.schedule({ n: 1 });

@@ -21,7 +21,9 @@ export async function refreshUser() {
 }
 
 export async function logout() {
-  await api("/auth/logout", { method: "POST", body: {} });
+  // keepalive: si la persona cierra o recarga la pestaña enseguida, el navegador igual completa el pedido
+  // (si no, la sesión quedaría abierta en el servidor).
+  await api("/auth/logout", { method: "POST", body: {}, keepalive: true });
   setUser(null);
 }
 

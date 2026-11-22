@@ -64,3 +64,7 @@ Formato: ID · fecha · decisión · motivo · consecuencias. Las más nuevas ar
 - Sin conexión: se sigue editando, se guarda local, y el motor (`lib/syncEngine.ts`, sin React y con tests de reloj simulado) reintenta con espera creciente (5 s a 60 s) sin perder el último cambio.
 - Cerrar sesión sube lo pendiente, borra el borrador y la marca de sincronización del navegador y frena cualquier guardado local posterior (privacidad en compus compartidas).
 - CORS: el plugin solo permite GET/HEAD/POST por defecto; hubo que habilitar PUT/DELETE (con test de preflight). Un bug que ni los tests de backend ni `curl` podían ver.
+
+## D-012 · 2026-11-22 · Cerrar sesión: el logout nunca espera a un guardado
+- Bug real (intermitente bajo carga): "Salir" subía primero lo pendiente al servidor, aunque no hubiera cambios, y si la persona recargaba o cerraba la pestaña enseguida el pedido de logout no salía y la sesión quedaba abierta en el servidor.
+- Ahora: se frena el guardado local, se espera solo si hay cambios sin subir (tope 3 s, `settle()`), se borra lo local y el logout se manda con `keepalive`, que el navegador completa aunque la página se cierre.

@@ -130,6 +130,19 @@ export function createSyncEngine<T>(opts: SyncOptions<T>, initialVersion: number
       clear();
       return run();
     },
+    /**
+     * Espera a que lo pendiente llegue al servidor, sin pasarse de `timeoutMs`. No hace ningún pedido si
+     * no hay nada sin subir, y no espera si el guardado está detenido (conflicto o sesión vencida).
+     */
+    async settle(timeoutMs = 3000): Promise<void> {
+      if (disposed || stopped) return;
+      if (dirty && !inflight) { clear(); void run(); }
+      let waited = 0;
+      while ((inflight || dirty) && !stopped && !disposed && waited < timeoutMs) {
+        await new Promise<void>((r) => setTimeout(r, 25));
+        waited += 25;
+      }
+    },
     getVersion: () => version,
     isBusy: () => inflight || dirty,
     dispose() {
