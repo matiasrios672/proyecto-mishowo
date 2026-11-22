@@ -13,6 +13,7 @@ import { authRoutes } from "./routes/auth.js";
 import { meRoutes } from "./routes/me.js";
 import { contactRoutes } from "./routes/contact.js";
 import { createSmtpMailer, type Mailer } from "./lib/mailer.js";
+import { createRevalidator, type SiteChanged } from "./lib/revalidate.js";
 
 export type HealthCheck = () => Promise<boolean>;
 
@@ -30,7 +31,7 @@ export function originAllowed(origin: string | undefined, config: Pick<Config, "
   }
 }
 
-export interface AppDeps { mailer?: Mailer }
+export interface AppDeps { mailer?: Mailer; onSiteChanged?: SiteChanged }
 
 export function buildApp(config: Config, dbCheck: HealthCheck = async () => true, db?: Db, deps: AppDeps = {}) {
   const app = Fastify({ logger: config.NODE_ENV !== "test", trustProxy: config.NODE_ENV === "production" });
@@ -67,7 +68,7 @@ export function buildApp(config: Config, dbCheck: HealthCheck = async () => true
       const mailer = deps.mailer ?? createSmtpMailer(config);
       contactRoutes(api, db, mailer, config.REPORTS_PER_MINUTE);
       api.register(async (authScope) => authRoutes(authScope, db, config, mailer));
-      api.register(async (meScope) => meRoutes(meScope, db, config));
+      api.register(async (meScope) => meRoutes(meScope, db, config, deps.onSiteChanged ?? createRevalidator(config, (m) => app.log.warn(m))));
     }
   });
 

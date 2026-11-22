@@ -36,7 +36,7 @@ const isTyping = (t: EventTarget | null) =>
   t instanceof HTMLElement && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.tagName === "SELECT" || t.isContentEditable);
 
 export function Editor({ initial, sync }: { initial: Draft; sync?: SyncConfig }) {
-  const { draft, update, undo, redo, canUndo, canRedo, save, now, syncState, syncEnabled, keepMine, adoptServer, resumeSync, prepareSignOut } = useEditor(initial, sync);
+  const { draft, update, undo, redo, canUndo, canRedo, save, now, syncState, syncEnabled, keepMine, adoptServer, resumeSync, prepareSignOut, settleNow } = useEditor(initial, sync);
   const [conflictBusy, setConflictBusy] = useState(false);
   const [tab, setTab] = useState<EditorTab>("negocio");
   const [device, setDevice] = useState<"celular" | "computadora">("celular");
@@ -88,7 +88,7 @@ export function Editor({ initial, sync }: { initial: Draft; sync?: SyncConfig })
     panelRef.current?.scrollTo({ top: 0 });
   }
 
-  const props = { draft, update, goTab };
+  const props = { draft, update, goTab, account: { enabled: syncEnabled, settle: settleNow } };
   const preview = (
     <div className={`mx-auto bg-background ${device === "celular" ? "w-[390px] max-w-full rounded-[2rem] border-8 border-foreground/80" : "w-full max-w-5xl rounded-lg border"} overflow-hidden`} data-testid="preview-frame" data-device={device}>
       <SiteView site={site} preview />

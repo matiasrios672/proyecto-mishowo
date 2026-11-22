@@ -19,7 +19,7 @@ export function publicRoutes(app: FastifyInstance, db: Db) {
 
     const [cats, prods, opts] = await Promise.all([
       db.select().from(s.categories).where(eq(s.categories.businessId, biz.id)).orderBy(asc(s.categories.position)),
-      db.select().from(s.products).where(eq(s.products.businessId, biz.id)).orderBy(asc(s.products.position)),
+      db.select().from(s.products).where(and(eq(s.products.businessId, biz.id), eq(s.products.isExample, false))).orderBy(asc(s.products.position)),
       db.select().from(s.productOptions).where(eq(s.productOptions.businessId, biz.id)).orderBy(asc(s.productOptions.position)),
     ]);
 

@@ -3,6 +3,7 @@ import { and, asc, eq, inArray, isNull, notInArray, or, sql } from "drizzle-orm"
 import type { Db } from "../db/tenant.js";
 import * as s from "../db/schema.js";
 import { defaultHours, type Content } from "./content.js";
+import { productLimit, realProducts } from "./publish.js";
 
 type Tx = Parameters<Parameters<Db["transaction"]>[0]>[0];
 const CHUNK = 300;
@@ -10,8 +11,9 @@ const chunks = <T,>(arr: T[], n = CHUNK) => Array.from({ length: Math.ceil(arr.l
 const num = (v: number | null) => (v === null ? null : String(v));
 
 export type SaveResult =
-  | { status: "ok"; version: number; created: boolean }
-  | { status: "conflict"; version: number };
+  | { status: "ok"; version: number; created: boolean; published: string | null }
+  | { status: "conflict"; version: number }
+  | { status: "limit"; limit: number; count: number };
 
 export function businessColumns(c: Content) {
   return {
@@ -46,6 +48,11 @@ export async function saveContent(db: Db, userId: string, baseVersion: number | 
     const [existing] = await tx.select().from(s.businesses)
       .where(and(eq(s.businesses.ownerId, userId), isNull(s.businesses.deletedAt)));
 
+    // Límite del plan (lo edita el admin): se cuentan solo los productos propios, no los de ejemplo.
+    const limit = await productLimit(tx, existing?.planId ?? "gratis");
+    const count = realProducts(content).length;
+    if (limit !== null && count > limit) return { status: "limit" as const, limit, count };
+
     let businessId: string;
     let version: number;
     if (!existing) {
@@ -63,7 +70,7 @@ export async function saveContent(db: Db, userId: string, baseVersion: number | 
     }
 
     await reconcileCatalog(tx, businessId, content);
-    return { status: "ok" as const, version, created: !existing };
+    return { status: "ok" as const, version, created: !existing, published: existing?.status === "published" ? existing.slug : null };
   });
 }
 

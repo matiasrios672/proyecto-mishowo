@@ -87,6 +87,8 @@ export function useEditor(initial: Draft, sync?: SyncConfig) {
       if (syncUser) setSyncMarker({ userId: syncUser, version });
     },
     resumeSync: () => void engineRef.current?.resume(),
+    /** Espera a que lo pendiente llegue al servidor (antes de publicar). */
+    settleNow: async () => { await engineRef.current?.settle(5000); },
     /** Antes de cerrar sesión: sube lo pendiente y frena cualquier guardado local posterior. */
     async prepareSignOut() {
       locked.current = true; // primero se frena el guardado local: nada nuevo se escribe en esta compu

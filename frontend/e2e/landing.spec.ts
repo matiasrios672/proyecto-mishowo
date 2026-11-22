@@ -72,6 +72,11 @@ test.describe("página pública del negocio", () => {
     await expect(nav.getByRole("link", { name: "Platos del día" })).toHaveAttribute("aria-current", "true");
   });
 
+  test("un negocio que no existe responde 404 de verdad (no una página vacía con status 200)", async ({ request }) => {
+    for (const slug of ["no-existe-para-nada", "admin-falso-123"]) expect((await request.get(url(slug))).status(), slug).toBe(404);
+    expect((await request.get(url("demo-ropa"))).status()).toBe(200);
+  });
+
   test("el horario resalta el día de hoy", async ({ page }) => {
     await page.goto(url("demo-ropa"));
     await expect(page.getByText("Hoy", { exact: true })).toBeVisible();

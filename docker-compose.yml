@@ -39,6 +39,9 @@ services:
       SMTP_PORT: "1025"
       AUTH_PER_MINUTE: "60"
       REPORTS_PER_MINUTE: "60"
+      PUBLISH_PER_MINUTE: "60"
+      FRONTEND_INTERNAL_URL: http://frontend:3000
+      REVALIDATE_SECRET: dev-revalidate-secret-0123456789
       UPLOADS_DIR: /app/uploads
     ports:
       - "4000:4000"
@@ -55,6 +58,7 @@ services:
         condition: service_healthy
     environment:
       API_URL: http://backend:4000
+      REVALIDATE_SECRET: dev-revalidate-secret-0123456789
     ports:
       - "3000:3000"
 

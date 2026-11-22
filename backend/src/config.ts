@@ -8,9 +8,13 @@ const schema = z.object({
   // Dominio raíz: sus subdominios (las páginas de los negocios) pueden llamar a la API.
   ROOT_DOMAIN: z.string().default("localhost"),
   // Pedidos por minuto por IP en el endpoint público de pedidos.
+  PUBLISH_PER_MINUTE: z.coerce.number().int().positive().default(20),
   REPORTS_PER_MINUTE: z.coerce.number().int().positive().default(5),
   // Frontend público (para armar los links de los emails).
   APP_URL: z.string().default("http://localhost:3000"),
+  // Para avisar al frontend que invalide el caché de una página (si falta el secreto, no se avisa).
+  FRONTEND_INTERNAL_URL: z.string().default("http://localhost:3000"),
+  REVALIDATE_SECRET: z.string().min(16).optional(),
   SMTP_HOST: z.string().default("localhost"),
   SMTP_PORT: z.coerce.number().default(1025),
   SMTP_USER: z.string().optional(),

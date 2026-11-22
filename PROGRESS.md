@@ -1,5 +1,12 @@
 # PROGRESS — MiShowo (bitácora, lo más nuevo arriba)
 
+## 2026-11-22 — Épica 7 (parte 1): publicar y límites del plan
+- Backend: GET /me/slug, POST /me/business/publish y /unpublish (requisitos, link único y reservado, límite del plan, suspendido), límite del plan también al guardar, aviso de cambio al frontend. API pública oculta productos de ejemplo.
+- Frontend: pestaña Publicar real (link con chequeo en vivo, errores explicados, copiar, cambiar link, despublicar), /api/revalidate seguro, proxy con 404 reales.
+- Bugs reales: (1) dos personas con el mismo link daban 500 (error de Postgres envuelto en cause); (2) tras despublicar la URL seguía en 200.
+- Tests: backend 130; frontend 119 unitarios + 136 e2e.
+- Falta de la épica 7: 7.3 planes y pago manual, 7.4 vencimiento automático.
+
 ## 2026-11-22 — Épica 10: landing de MiShowo, Remotion, contenido y legales
 - Landing con identidad propia, demo interactiva real, video Remotion, ejemplos, beneficios, pasos, planes desde la DB, testimonios de ejemplo, FAQ con JSON-LD, Próximamente. Blog (3), ayuda (6), legales, arrepentimiento + contacto con acuse por email (POST /public/contact, tabla contact_requests), sitemap y robots.
 - Rediseño de las páginas de clientes (D-013) cerrado con tests.

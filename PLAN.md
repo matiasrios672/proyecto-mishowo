@@ -70,8 +70,8 @@ Criterio general de aceptación por tarea: typecheck + lint + tests verdes; para
 - [ ] 6.6 Video MP4/MOV/WebM con límite por plan.
 
 ## Épica 7 — Publicación, slug y planes con cobro manual
-- [ ] 7.1 Elegir y reservar slug, publicar/despublicar.
-- [ ] 7.2 Límites por plan aplicados en backend (productos, fotos, WhatsApp).
+- [x] 7.1 Elegir y reservar slug, publicar/despublicar.
+- [x] 7.2 Límites por plan aplicados en backend (productos, fotos, WhatsApp).
 - [ ] 7.3 Pantalla de planes, datos de pago configurables, "Ya pagué" con comprobante.
 - [ ] 7.4 Cron `expire-plans` (degrada a Gratis) y recordatorios previos.
 
