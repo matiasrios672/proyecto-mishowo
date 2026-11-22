@@ -42,6 +42,11 @@ export function CartDrawer({ slug, businessName, whatsapp, greeting, showQuantit
   const [name, setName] = useState("");
   const [notes, setNotes] = useState("");
   const [eventDate, setEventDate] = useState("");
+  const [phone, setPhone] = useState("");
+  const [couponOpen, setCouponOpen] = useState(false);
+  const [couponInput, setCouponInput] = useState("");
+  const [coupon, setCoupon] = useState<{ code: string; discount: number } | null>(null);
+  const [couponMsg, setCouponMsg] = useState<string | null>(null);
   const [today, setToday] = useState("");
   const closeRef = useRef<HTMLButtonElement>(null);
   const openerRef = useRef<HTMLElement | null>(null);
@@ -73,6 +78,31 @@ export function CartDrawer({ slug, businessName, whatsapp, greeting, showQuantit
     openerRef.current?.focus();
   }
 
+  // Valida el cupón en vivo con el subtotal actual. Es solo una vista previa: al enviar, el servidor vuelve a calcular todo.
+  async function applyCoupon(code: string, subtotal: number, keepMsg = false) {
+    try {
+      const res = await fetch(`${API}/public/coupons/validate`, {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ slug, code, subtotal, ...(phone.trim() ? { customerPhone: phone.trim() } : {}) }),
+      });
+      const d = await res.json().catch(() => ({}));
+      if (res.status === 429) { setCoupon(null); return setCouponMsg("Probaste muchos códigos. Esperá un minuto y volvé a intentar."); }
+      if (d?.valid) { setCoupon({ code: d.code, discount: d.discount }); setCouponMsg(null); return; }
+      setCoupon(null);
+      setCouponMsg(d?.reason === "min_purchase" ? `Este cupón se usa desde ${formatPrice(d.minPurchase)} de compra.` : keepMsg ? "El cupón ya no aplica a tu pedido." : "Ese cupón no es válido o ya no está disponible.");
+    } catch {
+      setCouponMsg("No pudimos validar el cupón. Revisá tu conexión.");
+    }
+  }
+  // Si cambia el pedido, se revalida (el descuento puede cambiar o dejar de aplicar).
+  useEffect(() => {
+    if (!coupon) return;
+    const t = setTimeout(() => void applyCoupon(coupon.code, total, true), 350);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [total]);
+
+  const discount = coupon ? Math.min(coupon.discount, total) : 0;
   const waDisabled = !whatsappLink(whatsapp, "x");
   const needsDate = askEventDate && !eventDate;
 
@@ -87,18 +117,24 @@ export function CartDrawer({ slug, businessName, whatsapp, greeting, showQuantit
           slug,
           items: cart.items.map((i) => ({ productId: i.productId, ...(i.optionId ? { optionId: i.optionId } : {}), quantity: i.quantity })),
           ...(name.trim() ? { customerName: name.trim() } : {}),
+          ...(phone.trim() ? { customerPhone: phone.trim() } : {}),
+          ...(coupon ? { couponCode: coupon.code } : {}),
           ...(notes.trim() ? { notes: notes.trim() } : {}),
           ...(eventDate ? { eventDate } : {}),
           ...(source() ? { source: source() } : {}),
         }),
       });
       const data = await res.json().catch(() => ({}));
-      if (!res.ok) return setStatus({ kind: "error", message: orderErrorMessage(data?.error), offline: false });
+      if (!res.ok) {
+        if (data?.error === "coupon_invalid" || data?.error === "coupon_min_purchase") setCoupon(null);
+        return setStatus({ kind: "error", message: orderErrorMessage(data?.error), offline: false });
+      }
 
       // Se arma el mensaje con lo que calculó el servidor: precios y total confiables.
       const text = buildOrderMessage({
         greeting, number: data.number, items: data.items, total: data.total,
         customerName: data.customerName, notes: data.notes, eventDate: data.eventDate,
+        couponCode: data.couponCode, discount: data.discount,
       });
       const link = whatsappLink(whatsapp, text) ?? "";
       writeCart(slug, emptyCart());
@@ -120,10 +156,10 @@ export function CartDrawer({ slug, businessName, whatsapp, greeting, showQuantit
   return (
     <>
       {!open && count > 0 && (
-        <div className="fixed inset-x-0 bottom-0 z-30 p-3 @2xl:hidden">
+        <div className="site-cartbar fixed inset-x-0 bottom-0 z-30 p-3 @2xl:hidden">
           <button type="button" onClick={(e) => openDrawer(e.currentTarget)} data-testid="cart-bar"
-            className={`mx-auto flex w-full max-w-2xl items-center justify-between shadow-lg ${primary}`} style={radius}>
-            <span>Ver mi pedido · {count} {count === 1 ? "producto" : "productos"}</span>
+            className={`mx-auto flex w-full max-w-2xl items-center justify-between gap-3 shadow-[0_18px_40px_-12px_rgba(0,0,0,0.55)] ring-1 ring-white/25 transition-transform active:scale-[0.98] ${primary}`} style={radius}>
+            <span className="flex items-center gap-2"><span key={count} className="site-bump grid min-w-6 place-items-center rounded-full bg-white/25 px-1.5 text-sm font-bold">{count}</span>Ver mi pedido</span>
             <span>{formatPrice(total)}{hasUnpriced ? "+" : ""}</span>
           </button>
         </div>
@@ -185,13 +221,35 @@ export function CartDrawer({ slug, businessName, whatsapp, greeting, showQuantit
                         <input type="date" className={`${field} mt-1 font-normal`} value={eventDate} min={today} required onChange={(e) => setEventDate(e.target.value)} />
                       </label>
                     )}
+                    <label className="block text-sm font-medium">Tu teléfono (opcional)
+                      <input className={`${field} mt-1 font-normal`} value={phone} maxLength={30} inputMode="tel" autoComplete="tel" onChange={(e) => setPhone(e.target.value)} />
+                    </label>
                     <label className="block text-sm font-medium">Aclaraciones (opcional)
                       <textarea className={`${field} mt-1 font-normal`} rows={2} maxLength={500} value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Ej: sin cebolla, retiro a las 13" />
                     </label>
 
+                    {coupon ? (
+                      <div className="flex items-center justify-between rounded-lg bg-muted px-3 py-2 text-sm" data-testid="coupon-applied">
+                        <span>Cupón <strong>{coupon.code}</strong> aplicado</span>
+                        <span className="flex items-center gap-3"><span className="font-semibold">-{formatPrice(discount)}</span>
+                          <button type="button" className="underline" onClick={() => { setCoupon(null); setCouponInput(""); setCouponMsg(null); }}>Sacar</button></span>
+                      </div>
+                    ) : couponOpen ? (
+                      <div className="space-y-1.5">
+                        <div className="flex gap-2">
+                          <input className={`${field} font-normal uppercase`} value={couponInput} maxLength={30} placeholder="Tu código" aria-label="Código del cupón" autoCapitalize="characters" autoComplete="off"
+                            onChange={(e) => { setCouponInput(e.target.value); setCouponMsg(null); }} onKeyDown={(e) => { if (e.key === "Enter" && couponInput.trim()) { e.preventDefault(); void applyCoupon(couponInput.trim(), total); } }} />
+                          <button type="button" className="rounded-lg border px-4 text-sm font-medium disabled:opacity-60" disabled={!couponInput.trim()} onClick={() => void applyCoupon(couponInput.trim(), total)}>Aplicar</button>
+                        </div>
+                        {couponMsg && <p role="alert" className="text-sm text-destructive" data-testid="coupon-error">{couponMsg}</p>}
+                      </div>
+                    ) : (
+                      <button type="button" className="text-sm underline" onClick={() => setCouponOpen(true)} data-testid="coupon-toggle">Tengo un cupón</button>
+                    )}
+
                     <div className="flex items-baseline justify-between border-t pt-3">
                       <span className="font-medium">Total</span>
-                      <span className="text-lg font-bold" data-testid="cart-total">{formatPrice(total)}{hasUnpriced ? " + a consultar" : ""}</span>
+                      <span className="text-lg font-bold" data-testid="cart-total">{formatPrice(Math.max(0, total - discount))}{hasUnpriced ? " + a consultar" : ""}</span>
                     </div>
                     <p className="text-xs text-muted-foreground">El pago y la entrega los coordinás directamente con {businessName}.</p>
 

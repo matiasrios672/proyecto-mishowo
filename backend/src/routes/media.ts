@@ -14,7 +14,7 @@ import type { SiteChanged } from "../lib/revalidate.js";
 
 const MAX_COVER = 5;
 const DEFAULTS = { photosPerProduct: 4, uploadMb: 10 };
-const query = z.object({ productId: z.string().min(1).max(64).optional(), kind: z.literal("cover").optional() }).refine((q) => !!q.productId !== !!q.kind, "target");
+const query = z.object({ productId: z.string().min(1).max(64).optional(), kind: z.enum(["cover", "logo"]).optional() }).refine((q) => !!q.productId !== !!q.kind, "target");
 
 type MediaRow = typeof s.media.$inferSelect;
 export const fileKeys = (m: Pick<MediaRow, "path" | "kind">) => (m.kind === "video" ? [m.path] : WIDTHS.map((w) => variantKey(m.path, w)));
@@ -61,13 +61,15 @@ export function mediaRoutes(app: FastifyInstance, db: Db, config: Config, storag
     const maxBytes = limits.uploadMb * 1024 * 1024;
     if (file.file.truncated || data.length > maxBytes) return reply.code(413).send({ error: "file_too_large", maxMb: limits.uploadMb });
     const type = sniff(data);
-    if (!type || type.kind === "document") return reply.code(415).send({ error: "unsupported_file" });
+    const isLogo = q.data.kind === "logo";
+    if (!type || type.kind === "document" || (isLogo && type.kind !== "image")) return reply.code(415).send({ error: "unsupported_file" });
+    const rowKind = isLogo ? "logo" : type.kind; // el logo es una imagen con kind propio (sin tocar el esquema)
 
     // Límites por plan: fotos por producto (o 5 de portada) y 1 video por lugar.
     const scope = productId ? eq(s.media.productId, productId) : isNull(s.media.productId);
-    const [{ n } = { n: 0 }] = await db.select({ n: sql<number>`count(*)::int` }).from(s.media).where(and(eq(s.media.businessId, biz.id), eq(s.media.kind, type.kind), scope));
-    const cap = type.kind === "video" ? 1 : productId ? limits.photosPerProduct : MAX_COVER;
-    if (n >= cap) return reply.code(422).send({ error: type.kind === "video" ? "video_limit" : "photo_limit", limit: cap });
+    const [{ n } = { n: 0 }] = await db.select({ n: sql<number>`count(*)::int` }).from(s.media).where(and(eq(s.media.businessId, biz.id), eq(s.media.kind, rowKind), scope));
+    const cap = isLogo ? 1 : type.kind === "video" ? 1 : productId ? limits.photosPerProduct : MAX_COVER;
+    if (n >= cap) return reply.code(422).send({ error: isLogo ? "logo_limit" : type.kind === "video" ? "video_limit" : "photo_limit", limit: cap });
 
     const hash = createHash("sha256").update(data).digest("hex").slice(0, 16);
     const path = type.kind === "video" ? `media/${biz.id}/${hash}.${type.ext}` : `media/${biz.id}/${hash}`;
@@ -83,7 +85,7 @@ export function mediaRoutes(app: FastifyInstance, db: Db, config: Config, storag
       await storage.put(path, data);
     }
     const [{ next } = { next: 0 }] = await db.select({ next: sql<number>`coalesce(max(${s.media.position}), -1) + 1` }).from(s.media).where(and(eq(s.media.businessId, biz.id), scope));
-    const [row] = await db.insert(s.media).values({ businessId: biz.id, productId, kind: type.kind, path, position: next }).returning();
+    const [row] = await db.insert(s.media).values({ businessId: biz.id, productId, kind: rowKind, path, position: next }).returning();
     if (biz.status === "published") notify(biz.slug);
     return reply.code(201).send(view(row!, q.data.productId ?? null));
   });

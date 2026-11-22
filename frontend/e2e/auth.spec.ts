@@ -1,4 +1,5 @@
 import { test, expect, type Page } from "@playwright/test";
+import { signOutFromShell } from "./helpers";
 
 // Requiere el stack: `docker compose up -d` (backend + Mailpit en :8025).
 const MAILPIT = "http://localhost:8025/api/v1";
@@ -64,7 +65,7 @@ test.describe("cuentas", () => {
     const email = uniqueEmail("dup", info.project.name);
     await startDraft(page);
     await register(page, email);
-    await page.getByRole("button", { name: "Salir" }).click();
+    await signOutFromShell(page);
     await expect(page.getByRole("heading", { name: /Todavía no elegiste un rubro/ })).toBeVisible(); // sin sesión y sin borrador: no queda nada de la cuenta
 
     await page.goto("/registro");
@@ -83,9 +84,9 @@ test.describe("cuentas", () => {
     const email = uniqueEmail("login", info.project.name);
     await startDraft(page);
     await register(page, email);
-    await page.getByRole("button", { name: "Salir" }).click();
+    await signOutFromShell(page);
 
-    await page.goto("/ingresar");
+    await page.goto("/ingresar?next=/editor");
     await page.getByLabel(/^Email/).fill(email);
     await page.getByLabel(/^Contraseña/).fill("incorrecta999");
     await page.getByRole("button", { name: "Ingresar" }).click();
@@ -93,12 +94,12 @@ test.describe("cuentas", () => {
 
     await page.getByLabel(/^Contraseña/).fill(PASS);
     await page.getByRole("button", { name: "Ingresar" }).click();
-    await page.waitForURL("**/editor");
+    await page.waitForURL(/\/(editor|panel\/pedidos)/);
     await expect(page.getByTestId("account")).toContainText(email);
 
     await page.reload(); // la sesión sobrevive a recargar
     await expect(page.getByTestId("account")).toContainText(email);
-    await page.getByRole("button", { name: "Salir" }).click();
+    await signOutFromShell(page);
     await page.reload(); // y el cierre es real, no solo visual
     await expect(page.getByRole("heading", { name: /Todavía no elegiste un rubro/ })).toBeVisible();
   });
@@ -107,7 +108,7 @@ test.describe("cuentas", () => {
     const email = uniqueEmail("rec", info.project.name);
     await startDraft(page);
     await register(page, email);
-    await page.getByRole("button", { name: "Salir" }).click();
+    await signOutFromShell(page);
 
     await page.goto("/recuperar");
     await page.getByLabel(/^Email/).fill(email);
@@ -127,7 +128,7 @@ test.describe("cuentas", () => {
     await expect(page.locator("p[role=alert]:visible")).toContainText("no son correctos");
     await page.getByLabel(/^Contraseña/).fill("otraClave456789");
     await page.getByRole("button", { name: "Ingresar" }).click();
-    await page.waitForURL("**/editor");
+    await page.waitForURL(/\/(editor|panel\/pedidos)/);
   });
 
   test("entrar con un enlace mágico crea la cuenta ya verificada", async ({ page }, info) => {
@@ -141,7 +142,8 @@ test.describe("cuentas", () => {
     const token = await tokenFromMail(email);
     await page.goto(`/enlace?token=${encodeURIComponent(token)}`);
     await page.getByRole("button", { name: "Entrar a MiShowo" }).click(); // exige un clic: un escáner de links no lo gasta
-    await page.waitForURL("**/editor");
+    await page.waitForURL(/\/(editor|panel\/pedidos)/);
+    await page.goto("/editor");
     await startDraft(page);
     await expect(page.getByTestId("account")).toContainText(email);
     await expect(page.getByTestId("verify-banner")).toHaveCount(0); // el enlace prueba que el email es suyo
@@ -151,13 +153,13 @@ test.describe("cuentas", () => {
     const email = uniqueEmail("next", info.project.name);
     await startDraft(page);
     await register(page, email);
-    await page.getByRole("button", { name: "Salir" }).click();
+    await signOutFromShell(page);
 
     await page.goto("/ingresar?next=//evil.example.com");
     await page.getByLabel(/^Email/).fill(email);
     await page.getByLabel(/^Contraseña/).fill(PASS);
     await page.getByRole("button", { name: "Ingresar" }).click();
-    await page.waitForURL("**/editor");
+    await page.waitForURL(/\/(editor|panel\/pedidos)/);
     expect(new URL(page.url()).hostname).toBe("localhost");
   });
 

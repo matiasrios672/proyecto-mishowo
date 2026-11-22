@@ -76,4 +76,14 @@ describe("mensaje de WhatsApp", () => {
       expect(orderErrorMessage(code)).toMatch(/\S/);
     expect(orderErrorMessage("out_of_stock")).toMatch(/stock/);
   });
+  it("el mensaje incluye el cupón y el descuento que calculó el servidor", () => {
+    const m = buildOrderMessage({ greeting: "Hola", number: 3, items: [{ name: "Pan", optionLabel: null, unitPrice: 1000, quantity: 2 }], total: 1800, couponCode: "VERANO10", discount: 200 });
+    expect(m).toContain("Cupón VERANO10: -");
+    expect(m).toMatch(/Total: .*1.800/);
+    expect(buildOrderMessage({ greeting: "Hola", items: [], total: 0, couponCode: "X", discount: 0 })).not.toContain("Cupón");
+  });
+  it("traduce los errores de cupón", () => {
+    expect(orderErrorMessage("coupon_invalid")).toMatch(/cupón/);
+    expect(orderErrorMessage("coupon_min_purchase")).toMatch(/mínimo/);
+  });
 });

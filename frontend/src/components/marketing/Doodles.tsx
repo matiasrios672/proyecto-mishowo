@@ -75,3 +75,46 @@ export function Underline({ className = "" }: { className?: string }) {
     </svg>
   );
 }
+
+export const IconBag = ({ className }: IconProps) => (
+  <Svg className={className}><path {...tint} d="M5 8h14l-1 12H6L5 8Z" /><path d="M5 8h14l-1 12H6L5 8ZM9 8V6a3 3 0 0 1 6 0v2" /></Svg>
+);
+export const IconTag = ({ className }: IconProps) => (
+  <Svg className={className}><path {...tint} d="M3 12V4h8l10 10-8 8L3 12Z" /><path d="M3 12V4h8l10 10-8 8L3 12Z" /><circle cx="7.500" cy="8.500" r="1.200" fill="currentColor" /></Svg>
+);
+export const IconCalendar = ({ className }: IconProps) => (
+  <Svg className={className}><rect x="3" y="5" width="18" height="16" rx="3" {...tint} /><path d="M3 9h18M8 3v4M16 3v4M3 8a3 3 0 0 1 3-3h12a3 3 0 0 1 3 3v10a3 3 0 0 1-3 3H6a3 3 0 0 1-3-3V8Z" /></Svg>
+);
+export const IconCard = ({ className }: IconProps) => (
+  <Svg className={className}><rect x="2.500" y="5" width="19" height="14" rx="3" {...tint} /><path d="M2.500 10h19M6 15h4M5.500 5h13a3 3 0 0 1 3 3v8a3 3 0 0 1-3 3h-13a3 3 0 0 1-3-3V8a3 3 0 0 1 3-3Z" /></Svg>
+);
+export const IconMenu = ({ className }: IconProps) => (
+  <Svg className={className}><path d="M4 7h16M4 12h16M4 17h16" /></Svg>
+);
+export const IconLogout = ({ className }: IconProps) => (
+  <Svg className={className}><path d="M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3M10 8l-4 4 4 4M6 12h10" /></Svg>
+);
+export const IconUsers = ({ className }: IconProps) => (
+  <Svg className={className}><circle cx="9" cy="8" r="3.500" {...tint} /><path d="M2.500 20a6.500 6.500 0 0 1 13 0M9 11.500a3.500 3.500 0 1 0 0-7 3.500 3.500 0 0 0 0 7ZM17 11a3 3 0 1 0 0-6M21.500 20a5.500 5.500 0 0 0-3.500-5.100" /></Svg>
+);
+export const IconShield = ({ className }: IconProps) => (
+  <Svg className={className}><path {...tint} d="M12 3 4 6v6c0 4.500 3.400 7.700 8 9 4.600-1.300 8-4.500 8-9V6l-8-3Z" /><path d="M12 3 4 6v6c0 4.500 3.400 7.700 8 9 4.600-1.300 8-4.500 8-9V6l-8-3ZM9 12l2 2 4-4" /></Svg>
+);
+export const IconFlag = ({ className }: IconProps) => (
+  <Svg className={className}><path d="M5 21V4M5 4h11l-2 4 2 4H5" /><path {...tint} d="M5 4h11l-2 4 2 4H5z" /></Svg>
+);
+export const IconHome = ({ className }: IconProps) => (
+  <Svg className={className}><path {...tint} d="M4 11 12 4l8 7v9H4v-9Z" /><path d="M4 11 12 4l8 7v9H4v-9ZM10 20v-5h4v5" /></Svg>
+);
+export const IconServer = ({ className }: IconProps) => (
+  <Svg className={className}><rect x="3" y="4" width="18" height="7" rx="2" {...tint} /><path d="M5 4h14a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2ZM5 13h14a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2ZM7 7.500h.01M7 16.500h.01" /></Svg>
+);
+export const IconEdit = ({ className }: IconProps) => (
+  <Svg className={className}><path d="M4 20h4L19 9a2.800 2.800 0 0 0-4-4L4 16v4ZM13.500 6.500l4 4" /></Svg>
+);
+export const IconEye = ({ className }: IconProps) => (
+  <Svg className={className}><path d="M2 12s3.500-7 10-7 10 7 10 7-3.500 7-10 7S2 12 2 12Z" /><circle cx="12" cy="12" r="3" {...tint} /><circle cx="12" cy="12" r="3" /></Svg>
+);
+export const IconEyeOff = ({ className }: IconProps) => (
+  <Svg className={className}><path d="M3 3l18 18M10.600 5.100A10 10 0 0 1 12 5c6.500 0 10 7 10 7a17 17 0 0 1-3.200 4M6.300 6.300A17 17 0 0 0 2 12s3.500 7 10 7a9.700 9.700 0 0 0 4.200-.9M9.900 9.900a3 3 0 0 0 4.200 4.200" /></Svg>
+);

@@ -5,6 +5,8 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import QRCode from "qrcode";
 import { Wordmark } from "@/components/brand/Wordmark";
+import { AppShell, type NavGroup, type NavItem } from "@/components/brand/AppShell";
+import { IconCard, IconEdit, IconFlag, IconHome, IconServer, IconShield, IconStore, IconTag, IconUsers } from "@/components/marketing/Doodles";
 import { Button } from "@/components/ui/button";
 import { Field, TextInput } from "@/components/ui/fields";
 import { api } from "@/lib/authClient";
@@ -15,20 +17,29 @@ interface Me { user: { id: string; email: string; role: AdminRole }; totpEnabled
 const Ctx = createContext<Me["user"] | null>(null);
 export const useAdmin = () => useContext(Ctx)!;
 
-const NAV: { href: string; label: string; roles?: AdminRole[] }[] = [
-  { href: "/admin", label: "Resumen" },
-  { href: "/admin/pagos", label: "Pagos", roles: ["owner", "admin"] },
-  { href: "/admin/negocios", label: "Negocios" },
-  { href: "/admin/usuarios", label: "Usuarios" },
-  { href: "/admin/planes", label: "Planes", roles: ["owner", "admin"] },
-  { href: "/admin/auditoria", label: "Auditoría", roles: ["owner", "admin"] },
-  { href: "/admin/admins", label: "Equipo", roles: ["owner"] },
+const ADMIN_GROUPS: { label: string; items: { href: string; label: string; Icon: NavItem["Icon"]; exact?: boolean; roles?: AdminRole[] }[] }[] = [
+  { label: "General", items: [
+    { href: "/admin", label: "Resumen", Icon: IconHome, exact: true },
+    { href: "/admin/pagos", label: "Pagos", Icon: IconCard, roles: ["owner", "admin"] },
+    { href: "/admin/negocios", label: "Negocios", Icon: IconStore },
+    { href: "/admin/usuarios", label: "Usuarios", Icon: IconUsers },
+  ] },
+  { label: "Moderación y contenido", items: [
+    { href: "/admin/denuncias", label: "Denuncias", Icon: IconFlag },
+    { href: "/admin/contenido", label: "Contenido", Icon: IconEdit },
+    { href: "/admin/planes", label: "Planes", Icon: IconTag, roles: ["owner", "admin"] },
+  ] },
+  { label: "Sistema", items: [
+    { href: "/admin/sistema", label: "Estado", Icon: IconServer },
+    { href: "/admin/auditoria", label: "Auditoría", Icon: IconShield, roles: ["owner", "admin"] },
+    { href: "/admin/admins", label: "Equipo", Icon: IconUsers, roles: ["owner"] },
+  ] },
 ];
 
 const CODE_ERR: Record<string, string> = { invalid_code: "Ese código no es correcto o venció. Probá con el que muestra ahora tu app.", rate_limited: "Demasiados intentos. Esperá un minuto." };
 
 function Box({ children }: { children: ReactNode }) {
-  return <main className="mx-auto max-w-md space-y-5 p-6 pt-16"><Wordmark />{children}</main>;
+  return <main className="mx-auto my-10 max-w-md space-y-5 rounded-3xl border border-[#D6E4F2] bg-white p-7 shadow-[0_30px_60px_-35px_rgba(47,111,176,0.5)] sm:my-16"><Wordmark className="text-2xl" />{children}</main>;
 }
 
 function CodeForm({ label, button, onSubmit }: { label: string; button: string; onSubmit: (code: string) => Promise<string | null> }) {
@@ -106,24 +117,14 @@ export function AdminShell({ children }: { children: ReactNode }) {
     );
 
   const role = me.user.role;
+  const roleLabel = role === "owner" ? "Owner" : role === "admin" ? "Admin" : "Soporte";
+  const can = (roles?: AdminRole[]) => !roles || roles.includes(role);
+  const groups: NavGroup[] = ADMIN_GROUPS.map((g) => ({ label: g.label, items: g.items.filter((n) => can(n.roles)).map(({ href, label, Icon, exact }) => ({ href, label, Icon, exact })) })).filter((g) => g.items.length > 0);
   return (
     <Ctx.Provider value={me.user}>
-      <div className="mx-auto flex min-h-dvh max-w-7xl flex-col px-4 sm:px-6">
-        <header className="flex flex-wrap items-center gap-x-6 gap-y-2 border-b py-3">
-          <Link href="/admin" aria-label="Administración de MiShowo"><Wordmark /></Link>
-          <nav aria-label="Administración" className="flex flex-wrap gap-1">
-            {NAV.filter((n) => !n.roles || n.roles.includes(role)).map((n) => (
-              <Link key={n.href} href={n.href} aria-current={path === n.href ? "page" : undefined}
-                className={`rounded-full px-3 py-1.5 text-sm ${path === n.href ? "bg-primary text-primary-foreground" : "hover:bg-muted"}`}>{n.label}</Link>
-            ))}
-          </nav>
-          <span className="ml-auto flex items-center gap-2 text-xs text-muted-foreground">
-            <span>{me.user.email} · {role === "owner" ? "Owner" : role === "admin" ? "Admin" : "Soporte"}</span>
-            <button type="button" className="rounded-md px-2 py-1 hover:bg-muted" onClick={async () => { await logout(); router.replace("/ingresar"); }}>Salir</button>
-          </span>
-        </header>
-        <div className="flex-1 py-6">{children}</div>
-      </div>
+      <AppShell groups={groups} areaLabel="Administración" homeHref="/admin" userLabel={`${me.user.email} · ${roleLabel}`} onLogout={async () => { await logout(); router.replace("/ingresar"); }}>
+        {children}
+      </AppShell>
     </Ctx.Provider>
   );
 }

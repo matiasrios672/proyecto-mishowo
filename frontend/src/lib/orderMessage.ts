@@ -11,6 +11,8 @@ export interface MessageInput {
   customerName?: string | null;
   notes?: string | null;
   eventDate?: string | null;  // YYYY-MM-DD
+  couponCode?: string | null; // cupón aplicado (el descuento lo calculó el servidor)
+  discount?: number;
 }
 
 /** "2026-12-25" -> "25/12/2026" sin pasar por Date (evita corrimientos por zona horaria). */
@@ -30,6 +32,7 @@ export function buildOrderMessage(i: MessageInput): string {
     lines.push(`• ${it.quantity} x ${label} — ${sub}`);
   }
   lines.push("");
+  if (i.couponCode && i.discount) lines.push(`Cupón ${i.couponCode}: -${formatPrice(i.discount)}`);
   lines.push(`*Total: ${formatPrice(i.total)}*${i.hasUnpriced ? " (más los productos a consultar)" : ""}`);
   const extra: string[] = [];
   if (i.eventDate) extra.push(`Fecha del evento: ${formatEventDate(i.eventDate)}`);
@@ -47,6 +50,8 @@ export function orderErrorMessage(code: string | undefined): string {
     case "option_required":
     case "invalid_option": return "Una de las opciones que elegiste ya no está disponible. Volvé a elegirla.";
     case "event_date_required": return "Elegí la fecha de tu evento para poder enviar el pedido.";
+    case "coupon_invalid": return "Ese cupón no es válido o ya no está disponible. Sacalo para enviar el pedido sin descuento.";
+    case "coupon_min_purchase": return "Tu pedido no llega al mínimo de compra de ese cupón.";
     case "unavailable_business": return "Este negocio no está recibiendo pedidos por el momento.";
     case "not_found": return "No encontramos este negocio.";
     default: return "No pudimos registrar tu pedido. Probá de nuevo en un momento.";

@@ -236,7 +236,7 @@ describe("exportar a CSV", () => {
     expect(res.headers["content-type"]).toContain("text/csv");
     expect(res.headers["content-disposition"]).toBe('attachment; filename="pedidos-negocio-a.csv"');
     const body = res.body;
-    expect(body.startsWith("﻿Pedido;Fecha;Estado;Cliente;Teléfono;Total;Fecha del evento;Notas;Productos")).toBe(true);
+    expect(body.startsWith("﻿Pedido;Fecha;Estado;Cliente;Teléfono;Total;Cupón;Descuento;Fecha del evento;Notas;Productos")).toBe(true);
     expect(body).toContain("'=HYPERLINK"); // la fórmula quedó como texto
     expect(body).not.toMatch(/;=HYPERLINK/);
     expect(body).toContain('"Sin ""cebolla"";\ntocar timbre"'); // comillas y salto de línea bien escapados

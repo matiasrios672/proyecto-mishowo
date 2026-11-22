@@ -5,6 +5,7 @@ import type { Db } from "../db/tenant.js";
 import type { Mailer } from "../lib/mailer.js";
 import { notifyOwner } from "../orders/notify.js";
 import * as s from "../db/schema.js";
+import { CouponError, redeemCoupon } from "../coupons/apply.js";
 
 const line = z.object({
   productId: z.string().uuid(),
@@ -20,6 +21,7 @@ const body = z.object({
   notes: z.string().trim().max(500).optional(),
   eventDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
   source: z.string().trim().max(40).optional(),
+  couponCode: z.string().trim().max(30).optional(),
 });
 
 class OrderError extends Error {
@@ -48,7 +50,8 @@ export function orderRoutes(app: FastifyInstance, db: Db, perMinute = 20, mailer
         if (!biz || biz.status === "draft") throw new OrderError(404, "not_found");
         if (biz.status !== "published") throw new OrderError(409, "unavailable_business");
 
-        const settings = (biz.settings ?? {}) as { askEventDate?: boolean };
+        const settings = (biz.settings ?? {}) as { askEventDate?: boolean; ordersEnabled?: boolean };
+        if (settings.ordersEnabled === false) throw new OrderError(409, "orders_disabled");
         if (settings.askEventDate && !input.eventDate) throw new OrderError(422, "event_date_required");
 
         // Serializa pedidos del mismo negocio: numeración correlativa y stock sin carreras.
@@ -94,7 +97,11 @@ export function orderRoutes(app: FastifyInstance, db: Db, perMinute = 20, mailer
           if (r.length === 0) throw new OrderError(409, "out_of_stock", { optionId: id });
         }
 
-        const totalCents = lines.reduce((sum, l) => sum + l.unitCents * l.quantity, 0);
+        const subtotalCents = lines.reduce((sum, l) => sum + l.unitCents * l.quantity, 0);
+        // El descuento se calcula acá, con el cupón de la base: del navegador solo llega el código.
+        let coupon: Awaited<ReturnType<typeof redeemCoupon>> | null = null;
+        if (input.couponCode) coupon = await redeemCoupon(tx, biz.id, input.couponCode, subtotalCents, input.customerPhone);
+        const totalCents = Math.max(0, subtotalCents - (coupon?.discountCents ?? 0));
         const nextRows = (await tx.execute(sql`select coalesce(max(number), 0) + 1 as next from orders where business_id = ${biz.id}`)).rows as { next: number }[];
         const number = Number(nextRows[0]?.next ?? 1);
 
@@ -102,7 +109,9 @@ export function orderRoutes(app: FastifyInstance, db: Db, perMinute = 20, mailer
           businessId: biz.id, number, total: fromCents(totalCents),
           customerName: input.customerName || null, customerPhone: input.customerPhone || null,
           notes: input.notes || null, eventDate: input.eventDate ?? null, source: input.source ?? null,
+          couponId: coupon?.couponId ?? null, couponCode: coupon?.code ?? null, discount: fromCents(coupon?.discountCents ?? 0),
         }).returning();
+        if (coupon) await tx.insert(s.couponRedemptions).values({ businessId: biz.id, couponId: coupon.couponId, orderId: order!.id, customerKey: coupon.customerKey });
         await tx.insert(s.orderItems).values(lines.map((l) => ({
           businessId: biz.id, orderId: order!.id, productId: l.productId, optionId: l.optionId, name: l.name,
           optionLabel: l.optionLabel, unitPrice: fromCents(l.unitCents), quantity: l.quantity,
@@ -110,7 +119,8 @@ export function orderRoutes(app: FastifyInstance, db: Db, perMinute = 20, mailer
 
         return {
           ownerId: biz.ownerId, businessName: biz.name,
-          number, total: Number(fromCents(totalCents)),
+          number, total: Number(fromCents(totalCents)), subtotal: subtotalCents / 100,
+          discount: (coupon?.discountCents ?? 0) / 100, couponCode: coupon?.code ?? null,
           items: lines.map((l) => ({ name: l.name, optionLabel: l.optionLabel, unitPrice: l.unitCents / 100, quantity: l.quantity })),
           eventDate: input.eventDate ?? null, customerName: input.customerName || null, notes: input.notes || null,
         };
@@ -120,6 +130,7 @@ export function orderRoutes(app: FastifyInstance, db: Db, perMinute = 20, mailer
       return reply.code(201).send(publicResult);
     } catch (e) {
       if (e instanceof OrderError) return reply.code(e.status).send({ error: e.code, ...e.extra });
+      if (e instanceof CouponError) return reply.code(422).send({ error: e.code, ...e.extra });
       throw e;
     }
   });

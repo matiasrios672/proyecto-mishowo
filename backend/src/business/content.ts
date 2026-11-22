@@ -51,6 +51,8 @@ export const contentSchema = z
     announcement: z.string().max(120),
     whatsappGreeting: z.string().max(200),
     showQuantities: z.boolean(),
+    // Pedidos opcionales: apagado = la página es un catálogo con botón de consulta por WhatsApp.
+    ordersEnabled: z.boolean().default(true),
     askEventDate: z.boolean(),
     design: designSchema.extend({ buttonShape: z.enum(["redondeado", "pildora", "recto"]) }),
     categories: z.array(category).max(30),

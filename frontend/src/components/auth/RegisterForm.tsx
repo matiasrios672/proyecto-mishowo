@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Field, TextInput } from "@/components/ui/fields";
 import { api, authErrorMessage, safeNext, type PublicUser } from "@/lib/authClient";
 import { FormError } from "./AuthShell";
+import { PasswordField } from "./PasswordField";
 import { setUser } from "./authStore";
 
 export function RegisterForm() {
@@ -36,13 +37,11 @@ export function RegisterForm() {
       <Field label="Email" required>
         {(id) => <TextInput id={id} name="email" type="email" autoComplete="email" required />}
       </Field>
-      <Field label="Contraseña" required hint="Mínimo 8 caracteres">
-        {(id, d) => <TextInput id={id} aria-describedby={d} name="password" type="password" autoComplete="new-password" minLength={8} required />}
-      </Field>
+      <PasswordField autoComplete="new-password" minLength={8} hint="Mínimo 8 caracteres" />
       <FormError message={error} />
       <Button type="submit" size="lg" className="w-full" disabled={busy}>{busy ? "Creando tu cuenta…" : "Crear mi cuenta"}</Button>
-      <p className="text-center text-sm text-muted-foreground">
-        ¿Preferís no usar contraseña? <Link className="underline" href={`/ingresar?next=${encodeURIComponent(next)}`}>Entrá con un enlace a tu email</Link>
+      <p className="text-center text-[15px] text-[#47566A]">
+        ¿Preferís no usar contraseña? <Link className="font-semibold text-[#2F6FB0] underline underline-offset-4" href={`/ingresar?next=${encodeURIComponent(next)}`}>Entrá con un enlace a tu email</Link>
       </p>
     </form>
   );

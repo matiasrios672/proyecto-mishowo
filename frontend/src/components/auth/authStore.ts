@@ -37,6 +37,12 @@ function subscribe(cb: () => void) {
 }
 
 /** `undefined` mientras carga, `null` sin sesión, o el usuario. */
+let logoutHook: (() => Promise<void>) | null = null;
+/** Una pantalla puede encargarse de cerrar la sesión a su manera (el editor limpia el borrador antes de salir). */
+export function setLogoutHook(fn: (() => Promise<void>) | null) { logoutHook = fn; }
+/** Cierre de sesión de la barra lateral: respeta lo que pida la pantalla actual. */
+export async function logoutFromShell() { if (logoutHook) await logoutHook(); else await logout(); }
+
 export function useUser(): PublicUser | null | undefined {
   return useSyncExternalStore(subscribe, () => user, () => undefined);
 }

@@ -28,7 +28,7 @@ export function businessColumns(c: Content) {
     hours: c.hours,
     design: c.design,
     settings: {
-      announcement: c.announcement, whatsappGreeting: c.whatsappGreeting, showQuantities: c.showQuantities,
+      announcement: c.announcement, whatsappGreeting: c.whatsappGreeting, showQuantities: c.showQuantities, ordersEnabled: c.ordersEnabled,
       askEventDate: c.askEventDate, extraWhatsapps: c.extraWhatsapps, nameIsExample: c.nameIsExample, textsAreExample: c.textsAreExample,
     },
   };
@@ -165,6 +165,7 @@ export async function loadContent(db: Db, userId: string) {
     announcement: typeof settings.announcement === "string" ? settings.announcement : "",
     whatsappGreeting: typeof settings.whatsappGreeting === "string" ? settings.whatsappGreeting : "Hola! Quiero hacer este pedido:",
     showQuantities: settings.showQuantities !== false,
+    ordersEnabled: settings.ordersEnabled !== false,
     askEventDate: settings.askEventDate === true,
     design: {
       layout: (design.layout as Content["design"]["layout"]) ?? "vidriera",

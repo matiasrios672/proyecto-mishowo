@@ -3,6 +3,14 @@ import { expect, type Page } from "@playwright/test";
 // Utilidades compartidas por los e2e que necesitan una cuenta real (backend + Mailpit del stack).
 export const MAILPIT = "http://localhost:8025/api/v1";
 export const PASS = "claveSegura123";
+/** Cierra sesión desde la barra lateral del panel (en celular está dentro del botón Menú). */
+export async function signOutFromShell(page: Page) {
+  const menu = page.getByRole("button", { name: "Menú" });
+  const logout = page.getByRole("button", { name: "Cerrar sesión" });
+  await menu.or(logout).first().waitFor(); // la barra tarda un instante en aparecer al cargar la sesión
+  if (await menu.isVisible()) await menu.click();
+  await page.getByRole("button", { name: "Cerrar sesión" }).click();
+}
 export const status = (page: Page) => page.getByTestId("save-status");
 export const uniq = (tag: string, project: string) => `${tag}-${project}-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
 

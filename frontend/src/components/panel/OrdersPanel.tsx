@@ -11,7 +11,7 @@ type Status = "nuevo" | "confirmado" | "listo" | "entregado" | "cancelado";
 interface Order {
   id: string; number: number; status: Status; nextStatuses: Status[];
   customerName: string | null; customerPhone: string | null; notes: string | null; eventDate: string | null;
-  total: number; createdAt: string;
+  total: number; discount?: number; couponCode?: string | null; createdAt: string;
   items: { name: string; optionLabel: string | null; unitPrice: number; quantity: number }[];
 }
 interface Summary { counts: Record<Status, number>; total: number }
@@ -141,6 +141,7 @@ export function OrdersPanel() {
                   </li>
                 ))}
               </ul>
+              {o.couponCode && !!o.discount && <p className="mt-2 flex justify-between text-sm text-muted-foreground" data-testid="order-coupon"><span>Cupón {o.couponCode}</span><span className="tabular-nums">-{formatPrice(o.discount)}</span></p>}
               <p className="mt-2 flex justify-between border-t pt-2 font-semibold"><span>Total</span><span className="tabular-nums">{formatPrice(o.total)}</span></p>
               {(o.customerName || o.customerPhone || o.eventDate || o.notes) && (
                 <dl className="mt-3 space-y-0.5 text-sm text-muted-foreground">

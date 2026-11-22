@@ -80,7 +80,7 @@ test("recorrido completo: el usuario avisa su pago, el admin lo confirma y el pl
   await expect(audit).toContainText(adminMail);
 
   // ── Nueva sesión: pide el código otra vez; uno incorrecto no entra
-  await a.page.getByRole("button", { name: "Salir" }).click();
+  await a.page.getByRole("button", { name: "Cerrar sesión" }).click();
   await a.page.goto("/ingresar?next=/admin");
   await a.page.getByLabel(/^Email/).fill(adminMail);
   await a.page.getByLabel(/^Contraseña/).fill(PASS);

@@ -109,7 +109,7 @@ export function adminRoutes(app: FastifyInstance, db: Db, config: Config, mailer
     if (!ctx) return;
     const one = async <T,>(q: ReturnType<typeof sql>) => ((await db.execute(q)).rows[0] ?? {}) as T;
     const many = async <T,>(q: ReturnType<typeof sql>) => (await db.execute(q)).rows as T[];
-    const [k, mrr, orders7, pending, churn, converted, reportsNew, byPlan, byIndustry, signups] = await Promise.all([
+    const [k, mrr, orders7, pending, churn, converted, reportsNew, byPlan, byIndustry, signups, stale] = await Promise.all([
       one<Record<string, number>>(sql`select
         count(*) filter (where deleted_at is null)::int as total,
         count(*) filter (where deleted_at is null and status = 'published')::int as published,
@@ -132,6 +132,7 @@ export function adminRoutes(app: FastifyInstance, db: Db, config: Config, mailer
       many<{ day: string; n: number }>(sql`select to_char(d, 'YYYY-MM-DD') as day, count(b.id)::int as n
         from generate_series(current_date - 29, current_date, interval '1 day') d
         left join businesses b on b.created_at::date = d::date and b.deleted_at is null group by d order by d`),
+      one<{ n: number }>(sql`select count(*)::int as n from payments where status = 'pendiente' and created_at < now() - interval '2 days'`),
     ]);
     const total = k.total ?? 0;
     reply.header("Cache-Control", "no-store");
@@ -144,7 +145,7 @@ export function adminRoutes(app: FastifyInstance, db: Db, config: Config, mailer
       byPlan: byPlan.map((r) => ({ plan: r.plan_id, count: r.n })),
       byIndustry: byIndustry.map((r) => ({ industry: r.industry, count: r.n })),
       signups: signups.map((r) => ({ day: r.day, count: r.n })),
-      alerts: { pendingPayments: pending.n ?? 0, oldestPending: pending.oldest, expiring7d: k.expiring_7d, newReports: reportsNew.n ?? 0 },
+      alerts: { pendingPayments: pending.n ?? 0, oldestPending: pending.oldest, expiring7d: k.expiring_7d, newReports: reportsNew.n ?? 0, stalePayments: stale.n ?? 0 },
     };
   });
 
@@ -179,13 +180,23 @@ export function adminRoutes(app: FastifyInstance, db: Db, config: Config, mailer
     const [row] = await db.select({ b: s.businesses, owner: { id: s.users.id, email: s.users.email, name: s.users.name, blockedAt: s.users.blockedAt } })
       .from(s.businesses).innerJoin(s.users, eq(s.users.id, s.businesses.ownerId)).where(eq(s.businesses.id, req.params.id));
     if (!row) return reply.code(404).send({ error: "not_found" });
-    const [counts, payments, history] = await Promise.all([
+    const [overview, counts, payments, history] = await Promise.all([
+      db.execute(sql`select
+        (select count(*)::int from categories where business_id = ${row.b.id}) as categories,
+        (select count(*)::int from products where business_id = ${row.b.id} and is_example = false and available) as available_products,
+        (select count(*)::int from media where business_id = ${row.b.id}) as media,
+        (select count(*)::int from reports where business_id = ${row.b.id} and status = 'nuevo') as open_reports,
+        (select max(created_at) from orders where business_id = ${row.b.id}) as last_order_at`),
       db.execute(sql`select (select count(*)::int from products where business_id = ${row.b.id}) as products, (select count(*)::int from orders where business_id = ${row.b.id}) as orders`),
       db.select().from(s.payments).where(eq(s.payments.businessId, row.b.id)).orderBy(desc(s.payments.createdAt)).limit(20),
       db.select().from(s.auditLog).where(and(eq(s.auditLog.entity, "business"), eq(s.auditLog.entityId, row.b.id))).orderBy(desc(s.auditLog.id)).limit(20),
     ]);
     const { settings: _s, hours: _h, ...b } = row.b; void _s; void _h;
-    return { business: b, owner: row.owner, counts: counts.rows[0], payments: payments.map((p) => ({ id: p.id, planId: p.planId, months: p.months, amount: Number(p.amount), status: p.status, createdAt: p.createdAt })), history };
+    const st = (row.b.settings ?? {}) as Record<string, unknown>;
+    const days = Array.isArray(row.b.hours) ? (row.b.hours as { open?: boolean }[]).filter((x) => x?.open).length : 0;
+    // Solo lectura: se ve lo mismo que vería el negocio, sin sesión del usuario (no hay "entrar como").
+    const view = { design: row.b.design, whatsappSet: !!row.b.whatsapp, instagramSet: !!row.b.instagram, addressSet: !!row.b.address, openDays: days, announcement: typeof st.announcement === "string" ? st.announcement : "", showQuantities: st.showQuantities !== false, askEventDate: st.askEventDate === true, ...overview.rows[0] };
+    return { business: b, view, owner: row.owner, counts: counts.rows[0], payments: payments.map((p) => ({ id: p.id, planId: p.planId, months: p.months, amount: Number(p.amount), status: p.status, createdAt: p.createdAt })), history };
   });
 
   const bizAction = (path: string, roles: readonly (typeof ADMIN_ROLES)[number][], run: (tx: Parameters<Parameters<Db["transaction"]>[0]>[0], biz: typeof s.businesses.$inferSelect, body: unknown, ctx: NonNullable<Awaited<ReturnType<typeof requireAdmin>>>) => Promise<{ action: string; after: Partial<typeof s.businesses.$inferSelect>; error?: undefined } | { error: string; status: number }>, method: "POST" | "PUT" | "DELETE" = "POST") => {

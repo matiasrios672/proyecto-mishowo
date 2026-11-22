@@ -16,7 +16,7 @@ const doc = (over: object = {}) => ({
   industryId: "rotiseria", name: "Lupe", nameIsExample: false, tagline: "Casera", description: "Empanadas", textsAreExample: false,
   whatsapp: "11 5555-0000", instagram: "@lupe", address: "", deliveryZone: "Villa Crespo", extraWhatsapps: [],
   hours: Array.from({ length: 7 }, (_, i) => ({ open: i < 6, from: "09:00", to: "18:00" })),
-  announcement: "", whatsappGreeting: "Hola!", showQuantities: true, askEventDate: false,
+  announcement: "", whatsappGreeting: "Hola!", showQuantities: true, ordersEnabled: true, askEventDate: false,
   design: { layout: "vidriera", theme: "terracota", fontPair: "calida", brandColor: null, buttonShape: "redondeado" },
   categories: [
     { id: "c1", name: "Empanadas", products: [

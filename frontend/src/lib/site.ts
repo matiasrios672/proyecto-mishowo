@@ -22,11 +22,16 @@ export interface SiteModel {
   design: SiteDesign;
   categories: SiteCategory[];
   showQuantities: boolean; askEventDate: boolean; whatsappGreeting: string;
+  /** false = sin carrito ni pedidos: solo catálogo y consultas por WhatsApp. */
+  ordersEnabled: boolean;
   hideBranding: boolean;
   exampleName: boolean; exampleTexts: boolean;
   /** URL de la foto de portada (llega con la subida de fotos). */
   cover: string | null;
   coverSet?: string | null;
+  /** Logo propio del negocio (WebP con transparencia). */
+  logo?: string | null;
+  logoSet?: string | null;
   /** URL del video de portada (MP4/WebM), si el negocio subió uno. */
   video?: string | null;
 }
@@ -45,7 +50,7 @@ export function draftToSite(d: Draft): SiteModel {
         options: p.options.map((o) => ({ id: o.id, label: o.label, price: o.price, soldOut: o.soldOut })),
       })),
     })),
-    showQuantities: d.showQuantities, askEventDate: d.askEventDate, whatsappGreeting: d.whatsappGreeting,
+    showQuantities: d.showQuantities, ordersEnabled: d.ordersEnabled, askEventDate: d.askEventDate, whatsappGreeting: d.whatsappGreeting,
     hideBranding: false,
     exampleName: d.nameIsExample, exampleTexts: d.textsAreExample, cover: null,
   };
@@ -81,10 +86,10 @@ export function publicToSite(site: PublicSite): SiteModel {
       brandColor: typeof design.brandColor === "string" ? design.brandColor : null, buttonShape: str(design.buttonShape, "redondeado"),
     },
     categories,
-    showQuantities: settings.showQuantities !== false, askEventDate: settings.askEventDate === true,
+    showQuantities: settings.showQuantities !== false, ordersEnabled: settings.ordersEnabled !== false, askEventDate: settings.askEventDate === true,
     whatsappGreeting: str(settings.whatsappGreeting, "Hola! Quiero hacer este pedido:"),
     hideBranding: b.planId === "pro",
-    exampleName: false, exampleTexts: false, cover: site.cover?.src ?? null, coverSet: site.cover?.srcSet ?? null, video: site.video ?? null,
+    exampleName: false, exampleTexts: false, cover: site.cover?.src ?? null, coverSet: site.cover?.srcSet ?? null, logo: site.logo?.src ?? null, logoSet: site.logo?.srcSet ?? null, video: site.video ?? null,
   };
 }
 

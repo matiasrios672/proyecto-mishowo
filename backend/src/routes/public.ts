@@ -27,6 +27,7 @@ export function publicRoutes(app: FastifyInstance, db: Db, config: Pick<Config, 
     ]);
     const firstImage = new Map<string | null, ReturnType<typeof mediaUrls>>();
     for (const m of files) if (!firstImage.has(m.productId)) firstImage.set(m.productId, mediaUrls(config, m.path, m.kind));
+    const logoRow = (await db.select().from(s.media).where(and(eq(s.media.businessId, biz.id), eq(s.media.kind, "logo"))).limit(1))[0];
     const video = (await db.select().from(s.media).where(and(eq(s.media.businessId, biz.id), eq(s.media.kind, "video"), isNull(s.media.productId))).limit(1))[0];
 
     reply.header("Cache-Control", "public, max-age=30, stale-while-revalidate=120");
@@ -39,6 +40,7 @@ export function publicRoutes(app: FastifyInstance, db: Db, config: Pick<Config, 
         planId: biz.planId,
       },
       cover: firstImage.get(null) ?? null,
+      logo: logoRow ? mediaUrls(config, logoRow.path, "image") : null,
       video: video ? mediaUrls(config, video.path, video.kind).src : null,
       categories: cats.map((c) => ({ id: c.id, name: c.name })),
       products: prods.map((p) => ({

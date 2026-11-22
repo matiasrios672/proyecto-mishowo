@@ -1,7 +1,7 @@
 import { useId, type ReactNode, type InputHTMLAttributes, type TextareaHTMLAttributes, type SelectHTMLAttributes } from "react";
 
 const base =
-  "w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-ring disabled:opacity-60";
+  "w-full min-h-11 rounded-lg border border-input bg-background px-3.5 py-2.5 text-base text-foreground sm:min-h-10 sm:px-3 sm:py-2 sm:text-sm placeholder:text-muted-foreground focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-ring disabled:opacity-60";
 
 interface FieldProps {
   label: string;

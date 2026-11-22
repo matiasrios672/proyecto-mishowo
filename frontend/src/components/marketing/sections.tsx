@@ -8,6 +8,8 @@ import { LiveDemo } from "./LiveDemo";
 import { HeroStage } from "./HeroStage";
 import { Underline } from "./Doodles";
 import { Glow } from "./Story";
+import { DEFAULT_FAQ, type FaqItem } from "@/content/faq";
+import { getSiteConfig } from "@/lib/siteConfig";
 
 const SOL = "#F6B40E";
 const TINTA = "#0E1B2C";
@@ -238,22 +240,25 @@ export function Testimonials() {
   );
 }
 
-export const FAQ = [
-  { q: "¿Cuánto cuesta?", a: "Podés empezar gratis, sin tarjeta. Si tu negocio crece, hay planes con más productos y herramientas. Los precios están en esta página, siempre actualizados." },
-  { q: "¿Necesito saber de tecnología?", a: "No. Elegís un rubro, cambiás lo que quieras y ves el resultado en vivo. Si sabés usar WhatsApp, sabés usar MiShowo." },
-  { q: "¿Cómo me llegan los pedidos?", a: "Por WhatsApp, con el pedido armado: productos, cantidades, total y aclaraciones. Además queda registrado en tu panel." },
-  { q: "¿Cómo cobro?", a: "El pago lo coordinás directamente con tu cliente (transferencia, efectivo, como prefieras). MiShowo no cobra comisión por tus ventas." },
-  { q: "¿Puedo usar mi propio dominio?", a: "Cada negocio tiene su link tunegocio.mishowo.com. Los dominios propios van a estar disponibles más adelante." },
-  { q: "¿Qué pasa con los datos de mis clientes?", a: "Son tuyos. Los tratamos según la Ley 25.326 de Protección de Datos Personales y podés pedirnos acceso o eliminación cuando quieras." },
-  { q: "¿Puedo cancelar cuando quiera?", a: "Sí. Si cancelás un plan pago, tu página sigue activa hasta que termine el período y después pasa al plan gratuito." },
-];
-
+/** Preguntas frecuentes: las del admin si cargó alguna; si no, las de siempre. Mientras llegan (o si falla la API) se ven las de siempre. */
 export function FaqSection() {
+  return (
+    <Suspense fallback={<FaqList items={DEFAULT_FAQ} />}>
+      <FaqDynamic />
+    </Suspense>
+  );
+}
+
+async function FaqDynamic() {
+  return <FaqList items={(await getSiteConfig()).faq} />;
+}
+
+function FaqList({ items }: { items: FaqItem[] }) {
   return (
     <section id="preguntas" aria-labelledby="faq-title" className={`${wrap} scroll-mt-20 py-16 sm:py-24`}>
       <h2 id="faq-title" className="mk-display text-4xl font-extrabold leading-tight tracking-tight sm:text-5xl">Preguntas frecuentes</h2>
       <div className="mt-10 max-w-3xl divide-y divide-border border-y border-border">
-        {FAQ.map((f) => (
+        {items.map((f) => (
           <details key={f.q} className="group py-5">
             <summary className="mk-display flex cursor-pointer list-none items-center justify-between gap-4 text-xl font-bold focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring">
               {f.q}

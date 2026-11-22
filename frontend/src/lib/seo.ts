@@ -24,6 +24,7 @@ export function localBusinessJsonLd(site: SiteModel, url: string, image?: string
     name: site.name, url,
     ...(site.description ? { description: site.description } : {}),
     ...(image ? { image } : {}),
+    ...(site.logo ? { logo: site.logo } : {}),
     ...(phone ? { telephone: `+${phone}` } : {}),
     ...(site.address ? { address: { "@type": "PostalAddress", streetAddress: site.address, addressCountry: "AR" } } : {}),
     ...(hours.length ? { openingHoursSpecification: hours } : {}),

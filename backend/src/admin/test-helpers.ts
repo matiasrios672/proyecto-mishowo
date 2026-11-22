@@ -50,4 +50,4 @@ export function makeEnv(conn: Conn, env: Record<string, string> = {}) {
 
 export const count = async (conn: Conn, table: string, where = "true") => (await conn.pool.query(`select count(*)::int as n from ${table} where ${where}`)).rows[0].n as number;
 export const lastAudit = async (conn: Conn, action: string) => (await conn.pool.query("select * from audit_log where action = $1 order by id desc limit 1", [action])).rows[0];
-export const RESET = "truncate table audit_log, subscriptions, payments, order_items, orders, product_options, products, categories, businesses, auth_tokens, sessions, users, reports, app_settings, plans restart identity cascade";
+export const RESET = "truncate table coupon_redemptions, coupons, appointments, appointment_settings, audit_log, subscriptions, payments, order_items, orders, product_options, products, categories, businesses, auth_tokens, sessions, users, reports, app_settings, plans restart identity cascade";

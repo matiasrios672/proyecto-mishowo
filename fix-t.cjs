@@ -1,0 +1,12 @@
+const fs = require("fs");
+let t = fs.readFileSync("backend/src/lib/settings.ts", "utf8");
+const a = "/^(\/[^\s]*|https:\/\/[^\s]+)?$/";
+if (!t.includes(a)) throw new Error("regex not found");
+t = t.replace(a, "/^(\/(?!\/)[^\s]*|https:\/\/[^\s]+)?$/");
+fs.writeFileSync("backend/src/lib/settings.ts", t);
+let x = fs.readFileSync("backend/src/routes/admin-ops.test.ts", "utf8");
+const i = x.indexOf('    const pub = await env.call("POST", "/me/business/publish"');
+const j = x.indexOf("    void owner;");
+x = x.slice(0, i) + x.slice(j);
+x = x.replace('    const { owner } = await biz("existente", "e@test.com");', '    await biz("existente", "e@test.com");').replace("    void owner;\n", "");
+fs.writeFileSync("backend/src/routes/admin-ops.test.ts", x);

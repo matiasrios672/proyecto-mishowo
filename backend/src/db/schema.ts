@@ -134,6 +134,9 @@ export const orders = pgTable("orders", {
   eventDate: date("event_date"),
   total: numeric("total", { precision: 12, scale: 2 }).notNull().default("0"),
   source: text("source"),
+  couponId: uuid("coupon_id"),
+  couponCode: text("coupon_code"),
+  discount: numeric("discount", { precision: 12, scale: 2 }).notNull().default("0"),
   createdAt: ts("created_at"),
 }, (t) => [uniqueIndex("orders_biz_number_idx").on(t.businessId, t.number), index("orders_biz_status_idx").on(t.businessId, t.status)]);
 
@@ -250,3 +253,53 @@ export const siteEvents = pgTable("site_events", {
   visitor: text("visitor").notNull(),
   createdAt: ts("created_at"),
 }, (t) => [index("site_events_biz_day_idx").on(t.businessId, t.day, t.type)]);
+
+// ---- Cupones de descuento (el descuento SIEMPRE lo calcula el servidor al crear el pedido) ----
+export const coupons = pgTable("coupons", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  businessId: uuid("business_id").notNull().references(() => businesses.id, { onDelete: "cascade" }),
+  code: text("code").notNull(), // siempre en mayúsculas: único por negocio sin distinguir mayúsculas
+  kind: text("kind").notNull(), // percent | fixed
+  value: numeric("value", { precision: 12, scale: 2 }).notNull(),
+  minPurchase: numeric("min_purchase", { precision: 12, scale: 2 }).notNull().default("0"),
+  expiresAt: timestamp("expires_at", { withTimezone: true }),
+  maxUses: integer("max_uses"),
+  maxUsesPerCustomer: integer("max_uses_per_customer"),
+  usedCount: integer("used_count").notNull().default(0),
+  active: boolean("active").notNull().default(true),
+  createdAt: ts("created_at"),
+}, (t) => [uniqueIndex("coupons_biz_code_idx").on(t.businessId, t.code)]);
+
+export const couponRedemptions = pgTable("coupon_redemptions", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  businessId: uuid("business_id").notNull().references(() => businesses.id, { onDelete: "cascade" }),
+  couponId: uuid("coupon_id").notNull().references(() => coupons.id, { onDelete: "cascade" }),
+  orderId: uuid("order_id").notNull().references(() => orders.id, { onDelete: "cascade" }),
+  customerKey: text("customer_key").notNull().default(""), // dígitos del teléfono
+  createdAt: ts("created_at"),
+}, (t) => [index("coupon_redemptions_idx").on(t.couponId, t.customerKey), uniqueIndex("coupon_redemptions_order_idx").on(t.orderId)]);
+
+// ---- Turnos / reservas ----
+export const appointmentSettings = pgTable("appointment_settings", {
+  businessId: uuid("business_id").primaryKey().references(() => businesses.id, { onDelete: "cascade" }),
+  enabled: boolean("enabled").notNull().default(false),
+  slotMinutes: integer("slot_minutes").notNull().default(30),
+  minNoticeHours: integer("min_notice_hours").notNull().default(2),
+  capacity: integer("capacity").notNull().default(1), // cupos por franja
+  horizonDays: integer("horizon_days").notNull().default(30),
+  services: jsonb("services").notNull().default([]),
+  updatedAt: ts("updated_at"),
+});
+
+export const appointments = pgTable("appointments", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  businessId: uuid("business_id").notNull().references(() => businesses.id, { onDelete: "cascade" }),
+  startsAt: timestamp("starts_at", { withTimezone: true }).notNull(),
+  endsAt: timestamp("ends_at", { withTimezone: true }).notNull(),
+  customerName: text("customer_name").notNull(),
+  customerPhone: text("customer_phone").notNull(),
+  service: text("service"),
+  notes: text("notes"),
+  status: text("status").notNull().default("pendiente"), // pendiente | confirmado | cancelado
+  createdAt: ts("created_at"),
+}, (t) => [index("appointments_biz_start_idx").on(t.businessId, t.startsAt)]);

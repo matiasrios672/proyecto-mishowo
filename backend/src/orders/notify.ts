@@ -10,6 +10,8 @@ export interface NewOrder {
   customerName: string | null;
   notes: string | null;
   eventDate: string | null;
+  discount?: number;
+  couponCode?: string | null;
 }
 
 export function orderEmailText(businessName: string, o: NewOrder, appUrl: string): string {
@@ -21,6 +23,7 @@ export function orderEmailText(businessName: string, o: NewOrder, appUrl: string
     "",
     ...lines,
     "",
+    ...(o.discount && o.couponCode ? [`Cupón ${o.couponCode}: -$ ${o.discount.toLocaleString("es-AR")}`] : []),
     `Total: $ ${o.total.toLocaleString("es-AR")}`,
     ...(o.notes ? ["", `Aclaraciones: ${o.notes}`] : []),
     "",

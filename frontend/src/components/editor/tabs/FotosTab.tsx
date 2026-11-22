@@ -4,11 +4,13 @@
 import { useCallback, useEffect, useState } from "react";
 import { Section } from "@/components/ui/fields";
 import { api, apiUpload } from "@/lib/authClient";
+import { extractBrandColor } from "@/lib/color";
 import type { TabProps } from "./types";
 
-interface MediaItem { id: string; kind: "image" | "video"; productId: string | null; src: string; srcSet: string | null }
+interface MediaItem { id: string; kind: "image" | "video" | "logo"; productId: string | null; src: string; srcSet: string | null }
 
 const ERR: Record<string, string> = {
+  logo_limit: "Ya tenés un logo. Borralo para subir otro.",
   photo_limit: "Llegaste al máximo de fotos de tu plan en este lugar. Borrá una o pasate a un plan con más fotos.",
   video_limit: "Ya tenés un video. Borrá el actual para subir otro.",
   file_too_large: "El archivo pesa más que el máximo de tu plan. Probá con uno más liviano.",
@@ -50,11 +52,12 @@ function Gallery({ title, hint, items, accept, busy, error, onAdd, onRemove }: {
   );
 }
 
-export function FotosTab({ draft, account }: TabProps) {
+export function FotosTab({ draft, update, account }: TabProps) {
   const [media, setMedia] = useState<MediaItem[]>([]);
   const [busy, setBusy] = useState<string | null>(null);
   const [errors, setErrors] = useState<Record<string, string | null>>({});
   const enabled = account?.enabled ?? false;
+  const [suggested, setSuggested] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     const r = await api<{ media: MediaItem[] }>("/me/media");
@@ -80,6 +83,11 @@ export function FotosTab({ draft, account }: TabProps) {
   async function add(key: string, target: string, file: File) {
     setBusy(key); setErrors((e) => ({ ...e, [key]: null }));
     await account!.settle(); // el producto tiene que existir en el servidor antes de colgarle una foto
+    if (key === "logo") {
+      // Un solo logo: el nuevo reemplaza al anterior.
+      for (const old of media.filter((m) => m.kind === "logo")) await api(`/me/media/${old.id}`, { method: "DELETE" });
+      setSuggested(await extractBrandColor(file));
+    }
     const r = await apiUpload(`/me/media?${target}`, file);
     setBusy(null);
     if (!r.ok) return setErrors((e) => ({ ...e, [key]: r.data.error ?? "network" }));
@@ -92,9 +100,23 @@ export function FotosTab({ draft, account }: TabProps) {
   }
 
   const products = draft.categories.flatMap((c) => c.products).filter((p) => !p.isExample);
-  const cover = media.filter((m) => m.productId === null);
+  const cover = media.filter((m) => m.productId === null && m.kind !== "logo");
+  const logo = media.filter((m) => m.kind === "logo");
+  const brand = draft.design.brandColor;
   return (
     <Section title="Fotos y videos" description="Las fotos hacen que vendas más. Las achicamos y les sacamos los datos de ubicación automáticamente.">
+      <Gallery title="Logo de tu negocio" hint="Una imagen cuadrada o horizontal (PNG con fondo transparente funciona muy bien). Se ve en la barra, la portada y el pie de tu página."
+        items={logo} accept="image/jpeg,image/png,image/webp" busy={busy === "logo"} error={errors.logo ?? null}
+        onAdd={(f) => void add("logo", "kind=logo", f)} onRemove={(id) => void remove("logo", id)} />
+      {suggested && suggested.toLowerCase() !== (brand ?? "").toLowerCase() && (
+        <div className="flex flex-wrap items-center gap-3 rounded-xl bg-muted p-3 text-sm" data-testid="brand-suggestion">
+          <span aria-hidden className="size-6 rounded-full ring-1 ring-black/10" style={{ background: suggested }} />
+          <span className="flex-1">Detectamos este color en tu logo. ¿Lo usamos como color de tu marca?</span>
+          <button type="button" className="rounded-lg bg-primary px-3 py-1.5 font-medium text-primary-foreground"
+            onClick={() => { update((d) => ({ ...d, design: { ...d.design, brandColor: suggested } })); setSuggested(null); }}>Usar este color</button>
+          <button type="button" className="underline" onClick={() => setSuggested(null)}>No, gracias</button>
+        </div>
+      )}
       <Gallery title="Portada" hint="Hasta 5 fotos y 1 video (JPG, PNG, WebP, MP4, MOV o WebM). Se muestra arriba de todo en tu página."
         items={cover} accept="image/jpeg,image/png,image/webp,video/mp4,video/quicktime,video/webm" busy={busy === "cover"} error={errors.cover ?? null}
         onAdd={(f) => void add("cover", "kind=cover", f)} onRemove={(id) => void remove("cover", id)} />

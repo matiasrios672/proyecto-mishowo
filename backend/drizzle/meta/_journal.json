@@ -64,6 +64,13 @@
       "when": 1795381435409,
       "tag": "0008_daily_hiroim",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1795384228729,
+      "tag": "0009_small_retro_girl",
+      "breakpoints": true
     }
   ]
 }

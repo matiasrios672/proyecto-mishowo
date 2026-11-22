@@ -83,7 +83,8 @@ test.describe("landing de MiShowo", () => {
 
   test("las preguntas frecuentes se abren y se cierran", async ({ page }) => {
     await page.goto("/");
-    const q = page.locator("details", { hasText: "¿Cómo cobro?" });
+    await page.waitForFunction(() => !document.querySelector('div[hidden][id^="S:"]')); // la FAQ llega por streaming: esperar a que termine de reemplazarse
+    const q = page.locator("details:visible", { hasText: "¿Cómo cobro?" });
     await expect(q).not.toHaveAttribute("open", "");
     await q.locator("summary").click();
     await expect(q).toContainText("no cobra comisión");

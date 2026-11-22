@@ -8,7 +8,7 @@ const product = (over: Partial<SiteProduct> = {}): SiteProduct => ({ id: "p", na
 const site = (over: Partial<SiteModel> = {}): SiteModel => ({
   name: "Lupe", tagline: "", description: "Panadería artesanal", whatsapp: "+54 9 11 5555-0000", instagram: "", address: "Av. Siempre Viva 123", deliveryZone: "",
   hours: null, announcement: "", design: { layout: "vidriera", theme: "blanco", fontPair: "moderna", brandColor: null, buttonShape: "recto" },
-  categories: [{ id: "c", name: "Panes", products: [product()] }], showQuantities: true, askEventDate: false, whatsappGreeting: "", hideBranding: false,
+  categories: [{ id: "c", name: "Panes", products: [product()] }], showQuantities: true, ordersEnabled: true, askEventDate: false, whatsappGreeting: "", hideBranding: false,
   exampleName: false, exampleTexts: false, cover: null, ...over,
 });
 
@@ -52,9 +52,13 @@ describe("localBusinessJsonLd", () => {
     const ld = localBusinessJsonLd(site({ hours }), "https://x") as Loose;
     expect(ld.openingHoursSpecification).toEqual([{ "@type": "OpeningHoursSpecification", dayOfWeek: "Monday", opens: "09:00", closes: "13:00" }]);
   });
+  it("incluye el logo del negocio cuando lo tiene", () => {
+    const ld = localBusinessJsonLd(site({ logo: "https://api/logo-800.webp" }), "https://x") as Loose;
+    expect(ld.logo).toBe("https://api/logo-800.webp");
+  });
   it("sin datos opcionales no inventa campos vacíos", () => {
     const ld = localBusinessJsonLd(site({ whatsapp: "", address: "", description: "", categories: [] }), "https://x") as Record<string, unknown>;
-    for (const k of ["telephone", "address", "description", "hasOfferCatalog", "openingHoursSpecification", "image"]) expect(ld).not.toHaveProperty(k);
+    for (const k of ["telephone", "address", "description", "hasOfferCatalog", "openingHoursSpecification", "image", "logo"]) expect(ld).not.toHaveProperty(k);
   });
 });
 

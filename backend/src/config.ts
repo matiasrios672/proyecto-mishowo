@@ -36,6 +36,8 @@ const schema = z.object({
   SESSION_DAYS: z.coerce.number().int().positive().default(30),
   // Intentos por minuto y por IP en cada ruta de /auth.
   AUTH_PER_MINUTE: z.coerce.number().int().positive().default(10),
+  COUPONS_VALIDATE_PER_MINUTE: z.coerce.number().int().positive().default(30),
+  APPOINTMENTS_PER_MINUTE: z.coerce.number().int().positive().default(10),
   ORDERS_PER_MINUTE: z.coerce.number().int().positive().default(20),
   COOKIE_DOMAIN: z.string().optional(),
   UPLOADS_DIR: z.string().default("./uploads"),

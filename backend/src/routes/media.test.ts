@@ -224,3 +224,49 @@ describe("sitio público", () => {
     expect(byName["Sin foto"].image).toBeNull();
   });
 });
+
+describe("logo del negocio", () => {
+  const png = (w = 300, h = 120) => sharp({ create: { width: w, height: h, channels: 4, background: { r: 0, g: 0, b: 0, alpha: 0 } } }).png().toBuffer();
+
+  it("sube un logo (máx. 1), conserva la transparencia y no cuenta como foto de portada", async () => {
+    const { owner } = await setup();
+    const res = await send("/me/media?kind=logo", owner.cookie, await png(), "logo.png", "image/png");
+    expect(res.statusCode).toBe(201);
+    expect(res.json()).toMatchObject({ kind: "logo", productId: null });
+    const k = [...env.files.keys()].find((x) => x.endsWith("-400.webp"))!;
+    expect((await sharp(env.files.get(k)!).metadata()).hasAlpha).toBe(true);
+    const second = await send("/me/media?kind=logo", owner.cookie, await png(301, 120), "logo2.png", "image/png");
+    expect(second.statusCode).toBe(422);
+    expect(second.json()).toMatchObject({ error: "logo_limit", limit: 1 });
+    // las 5 fotos de portada siguen disponibles
+    for (let i = 0; i < 5; i++) expect((await send("/me/media?kind=cover", owner.cookie, await photo(300 + i, 300, "#" + i + i + i))).statusCode).toBe(201);
+  });
+
+  it("un video o un archivo falso no puede ser logo", async () => {
+    const { owner } = await setup("pro");
+    expect((await send("/me/media?kind=logo", owner.cookie, MP4, "v.mp4", "video/mp4")).statusCode).toBe(415);
+    expect((await send("/me/media?kind=logo", owner.cookie, Buffer.from("<svg onload=alert(1)></svg>".repeat(5)), "l.svg", "image/svg+xml")).statusCode).toBe(415);
+  });
+
+  it("se puede borrar y volver a subir; la API pública lo expone como logo (y no como portada)", async () => {
+    const { owner } = await setup();
+    const up = (await send("/me/media?kind=logo", owner.cookie, await png(), "logo.png", "image/png")).json();
+    let site = (await env.app.inject({ method: "GET", url: "/public/sites/lupe" })).json();
+    expect(site.logo.src).toMatch(/-800.webp$/);
+    expect(site.logo.srcSet).toContain("400w");
+    expect(site.cover).toBeNull();
+    expect((await env.call("DELETE", `/me/media/${up.id}`, owner.cookie)).statusCode).toBe(200);
+    site = (await env.app.inject({ method: "GET", url: "/public/sites/lupe" })).json();
+    expect(site.logo).toBeNull();
+    expect((await send("/me/media?kind=logo", owner.cookie, await png(), "logo.png", "image/png")).statusCode).toBe(201);
+  });
+
+  it("el logo de otro negocio no aparece en el mío", async () => {
+    const { owner } = await setup();
+    const other = await env.account("otro@test.com");
+    await conn.db.insert(s.businesses).values({ slug: "otro", ownerId: other.id, name: "Otro", status: "published" });
+    await send("/me/media?kind=logo", other.cookie, await png(), "logo.png", "image/png");
+    expect((await env.app.inject({ method: "GET", url: "/public/sites/lupe" })).json().logo).toBeNull();
+    expect((await env.call("GET", "/me/media", owner.cookie)).json().media).toHaveLength(0);
+  });
+});

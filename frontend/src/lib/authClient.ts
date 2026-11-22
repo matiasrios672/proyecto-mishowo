@@ -35,6 +35,7 @@ export function authErrorMessage(code: string | undefined): string {
     case "invalid_token": return "Este enlace venció o ya se usó. Pedí uno nuevo.";
     case "invalid_request": return "Revisá los datos: algo no está bien escrito.";
     case "bad_origin": return "No pudimos validar tu pedido. Recargá la página e intentá de nuevo.";
+    case "maintenance": return "Estamos en mantenimiento: por ahora no se pueden crear cuentas nuevas. Volvé a intentar en unos minutos.";
     case "network": return "No pudimos conectarnos. Revisá tu conexión e intentá de nuevo.";
     default: return "Algo salió mal. Probá de nuevo en un momento.";
   }
@@ -44,6 +45,18 @@ export function authErrorMessage(code: string | undefined): string {
 export function safeNext(next: string | null | undefined, fallback = "/editor"): string {
   if (!next || !next.startsWith("/") || next.startsWith("//") || next.includes("\\") || /[\u0000-\u001f]/.test(next)) return fallback;
   return next;
+}
+
+/**
+ * Adónde va quien acaba de ingresar. Un `?next=` explícito siempre gana. Si no hay, quien ya armó su página
+ * (no es su primera vez) abre el panel, y quien todavía no tiene una va al editor para armarla.
+ */
+export async function landingAfterLogin(nextParam: string | null | undefined, role?: string): Promise<string> {
+  const explicit = safeNext(nextParam, "");
+  if (explicit) return explicit;
+  if (role === "owner" || role === "admin" || role === "support") return "/admin"; // el equipo de MiShowo entra a su panel de administración
+  const r = await api<{ business: unknown }>("/me/business");
+  return r.ok && r.data.business ? "/panel/pedidos" : "/editor";
 }
 
 /** Sube un archivo (multipart) con la sesión. Nunca lanza: una caída de red vuelve como `error: "network"`. */

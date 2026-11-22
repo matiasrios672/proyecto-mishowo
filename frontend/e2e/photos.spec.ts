@@ -14,7 +14,7 @@ test("subo una foto de producto y de portada: se ven en la página pública y se
 
   await page.getByRole("tab", { name: "Fotos", exact: true }).click();
   const product = page.getByTestId("gallery").filter({ hasText: "Torta de ricota" });
-  const cover = page.getByTestId("gallery").filter({ hasText: "Portada" });
+  const cover = page.getByTestId("gallery").filter({ has: page.getByText("Portada", { exact: true }) });
 
   // Un archivo que no es imagen se rechaza con un mensaje claro
   await product.locator('input[type="file"]').setInputFiles({ name: "falsa.png", mimeType: "image/png", buffer: TXT });

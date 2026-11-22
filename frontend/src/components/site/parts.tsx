@@ -1,6 +1,7 @@
 /* eslint-disable @next/next/no-img-element -- las fotos ya salen del backend en WebP con srcset propio */
 import type { CSSProperties } from "react";
 import type { SiteCategory, SiteModel, SiteProduct } from "@/lib/site";
+import { Brand } from "./Brand";
 import { formatPrice, normalizeSearch, priceLabel } from "@/lib/format";
 import { discountPercent } from "@/lib/draftOps";
 import { whatsappLink } from "@/lib/whatsapp";
@@ -66,20 +67,26 @@ function Thumb({ p, name, dim }: { p: SiteProduct; name: string; dim: boolean })
 
 const Soldout = () => <span className="text-xs font-medium text-destructive">Agotado</span>;
 
-function Card({ p, layout, preview, order, showQuantities }: { p: SiteProduct; layout: string; preview: boolean; order?: Orderable; showQuantities: boolean }) {
+function Card({ p, layout, preview, order, showQuantities, consultHref }: { p: SiteProduct; layout: string; preview: boolean; order?: Orderable; showQuantities: boolean; consultHref?: string | null }) {
   const name = p.name || "Producto sin nombre";
   const ex = preview && p.isExample ? <Example /> : null;
   const search = normalizeSearch(`${name} ${p.description}`);
   const dim = p.available ? "" : "text-muted-foreground";
   const artDim = p.available ? "" : " opacity-50";
-  const add = order ? <AddToCart slug={order.slug} product={p} showQuantities={showQuantities} /> : null;
+  const consult = consultHref ? (
+    <a href={consultHref} target="_blank" rel="noopener noreferrer" aria-label={`Consultar por ${name} por WhatsApp`}
+      className="mt-2.5 inline-flex min-h-9 items-center gap-1.5 rounded-full border border-primary/40 px-3.5 text-sm font-semibold text-primary transition-colors hover:bg-primary/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring">
+      <IconWhatsApp className="size-4" /> Consultar
+    </a>
+  ) : null;
+  const add = order ? <AddToCart slug={order.slug} product={p} showQuantities={showQuantities} /> : consult;
   const opts = p.options.length > 0 && <p className="mt-0.5 text-xs text-muted-foreground">{p.options.map((o) => o.label).join(" · ")}</p>;
   const soldout = !p.available && <div className="mt-1.5"><Soldout /></div>;
 
   if (layout === "vidriera")
     return (
-      <li data-search={search} data-product-id={p.id} className={dim}>
-        <Art name={name} image={p.image} imageSet={p.imageSet} className={`aspect-[16/10] w-full rounded-[1.25rem] @xl:aspect-[4/3]${artDim}`} />
+      <li data-search={search} data-product-id={p.id} className={`site-card ${dim}`}>
+        <div className="site-artwrap overflow-hidden rounded-[1.25rem]"><Art name={name} image={p.image} imageSet={p.imageSet} className={`site-art aspect-[16/10] w-full @xl:aspect-[4/3]${artDim}`} /></div>
         <div className="pt-3.5">
           <div className="flex items-baseline justify-between gap-4">
             <h4 className="site-display text-lg font-semibold leading-snug">{name}{ex}</h4>
@@ -93,8 +100,8 @@ function Card({ p, layout, preview, order, showQuantities }: { p: SiteProduct; l
 
   if (layout === "grilla")
     return (
-      <li data-search={search} data-product-id={p.id} className={dim}>
-        <Art name={name} image={p.image} imageSet={p.imageSet} className={`aspect-square w-full rounded-2xl${artDim}`} />
+      <li data-search={search} data-product-id={p.id} className={`site-card ${dim}`}>
+        <div className="site-artwrap overflow-hidden rounded-2xl"><Art name={name} image={p.image} imageSet={p.imageSet} className={`site-art aspect-square w-full${artDim}`} /></div>
         <div className="pt-3">
           <h4 className="text-sm font-semibold leading-snug @2xl:text-base">{name}{ex}</h4>
           <div className="mt-0.5 text-sm"><Price p={p} /></div>
@@ -145,6 +152,8 @@ const LIST: Record<string, string> = {
 export function Catalog({ site, cats, preview, order }: { site: SiteModel; cats: SiteCategory[]; preview: boolean; order?: Orderable }) {
   const layout = site.design.layout;
   const services = layout === "servicios";
+  // Sin pedidos: cada producto ofrece "Consultar" por WhatsApp con su nombre ya escrito.
+  const consultFor = (p: SiteProduct) => (site.ordersEnabled || !site.whatsapp || !p.name.trim() ? null : whatsappLink(site.whatsapp, `Hola! Quería consultarles por "${p.name}".`));
   return (
     <main id="catalog" className={`${container} scroll-mt-20 pb-6 pt-4 @4xl:pt-10`}>
       <h2 className="site-display text-3xl font-bold tracking-tight @4xl:text-4xl">{services ? "Nuestros servicios" : "Nuestros productos"}</h2>
@@ -153,7 +162,7 @@ export function Catalog({ site, cats, preview, order }: { site: SiteModel; cats:
         <section key={c.id} id={`sec-${slugify(c.name)}`} data-section className="scroll-mt-28 pt-8">
           <h3 className="mb-5 site-display text-xl font-semibold @4xl:text-2xl">{c.name}</h3>
           <ul className={LIST[layout] ?? LIST.vidriera}>
-            {c.products.map((p) => <Card key={p.id} p={p} layout={layout} preview={preview} order={order} showQuantities={site.showQuantities} />)}
+            {c.products.map((p) => <Card key={p.id} p={p} layout={layout} preview={preview} order={order} showQuantities={site.showQuantities} consultHref={consultFor(p)} />)}
           </ul>
         </section>
       ))}
@@ -202,6 +211,7 @@ export function Hero({ site, preview, items, whatsappHref }: { site: SiteModel; 
     <section id="top">
       <div className={`${container} grid grid-cols-[minmax(0,1fr)] items-center gap-12 pb-14 pt-6 @4xl:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)] @4xl:gap-10 @4xl:pb-24 @4xl:pt-14`}>
         <div>
+          {site.logo && <div className="site-rise mb-5" style={rise(0)}><Brand name={site.name} logo={site.logo} logoSet={site.logoSet} size="lg" /></div>}
           {site.hours && <div className="site-rise mb-4" style={rise(0)}><OpenBadge hours={site.hours} /></div>}
           <Title
             data-testid="site-name"
@@ -220,7 +230,7 @@ export function Hero({ site, preview, items, whatsappHref }: { site: SiteModel; 
           {site.description && <p className="site-rise mt-4 max-w-[56ch] leading-relaxed" style={rise(260)}>{site.description}</p>}
 
           <div className="site-rise mt-8 flex flex-wrap gap-3" style={rise(340)}>
-            <a href="#catalog" className={btnPrimary} style={radius}>{services ? "Ver servicios y precios" : "Hacer mi pedido"}</a>
+            <a href="#catalog" className={btnPrimary} style={radius}>{services ? "Ver servicios y precios" : site.ordersEnabled ? "Hacer mi pedido" : "Ver el catálogo"}</a>
             {whatsappHref && (
               <a href={whatsappHref} target="_blank" rel="noopener noreferrer" className={btnOutline} style={radius}>
                 <IconWhatsApp className="size-5" /> Escribinos por WhatsApp
@@ -242,8 +252,13 @@ export function Hero({ site, preview, items, whatsappHref }: { site: SiteModel; 
         </div>
 
         {site.cover ? (
-          <div className="relative">
-            <img src={site.cover} srcSet={site.coverSet ?? undefined} sizes="(min-width: 1024px) 32rem, 90vw" alt={`Portada de ${site.name}`} fetchPriority="high" className="aspect-[4/5] w-full rounded-[2rem] object-cover" />
+          <div className="site-cover relative">
+            <div aria-hidden className="absolute -inset-4 -z-10 rounded-[2.5rem] bg-primary/15 blur-2xl" />
+            <img src={site.cover} srcSet={site.coverSet ?? undefined} sizes="(min-width: 1024px) 32rem, 90vw" alt={`Portada de ${site.name}`} fetchPriority="high" className="aspect-[4/5] w-full rounded-[2rem] object-cover shadow-[0_30px_60px_-30px_rgba(0,0,0,0.5)]" />
+            <div className="absolute inset-x-4 bottom-4 flex items-center gap-3 rounded-2xl border border-white/40 bg-black/35 p-3 text-white backdrop-blur-md">
+              <Brand name={site.name} logo={site.logo} logoSet={site.logoSet} size="sm" />
+              <p className="min-w-0 text-sm leading-snug"><strong className="block truncate">{site.name}</strong>{site.tagline && <span className="block truncate opacity-85">{site.tagline}</span>}</p>
+            </div>
           </div>
         ) : site.video ? (
           <video src={site.video} controls muted playsInline preload="metadata" aria-label={`Video de ${site.name}`} className="aspect-[4/5] w-full rounded-[2rem] bg-black object-cover" />
@@ -277,15 +292,19 @@ export function Ticker({ items }: { items: SiteProduct[] }) {
   );
 }
 
-export function HowTo({ services, name }: { services: boolean; name: string }) {
-  const steps = [
+export function HowTo({ services, name, orders = true }: { services: boolean; name: string; orders?: boolean }) {
+  const steps = orders ? [
     { t: services ? "Elegí lo que necesitás" : "Elegí lo que querés", d: services ? "Mirá los servicios y tocá Agregar." : "Mirá el catálogo y tocá Agregar." },
     { t: "Armá tu pedido", d: "Revisá las cantidades, sumá aclaraciones y tocá Enviar." },
     { t: "Lo coordinamos por WhatsApp", d: `${name || "El negocio"} recibe tu pedido y coordinan el pago y la entrega o el retiro.` },
+  ] : [
+    { t: services ? "Mirá los servicios" : "Mirá el catálogo", d: "Precios y fotos siempre al día, a cualquier hora." },
+    { t: "Consultá lo que te interese", d: "Tocá Consultar y se abre WhatsApp con el producto ya escrito." },
+    { t: "Lo coordinamos con vos", d: `${name || "El negocio"} te responde y coordinan el pago y la entrega o el retiro.` },
   ];
   return (
     <section aria-labelledby="como-pedir" className={`${container} py-14 @4xl:py-20`}>
-      <h2 id="como-pedir" className="site-display text-3xl font-bold tracking-tight @4xl:text-4xl">Pedir es fácil</h2>
+      <h2 id="como-pedir" className="site-display text-3xl font-bold tracking-tight @4xl:text-4xl">{orders ? "Pedir es fácil" : "Consultar es fácil"}</h2>
       <ol className="mt-8 grid gap-8 @3xl:grid-cols-3 @3xl:gap-10">
         {steps.map((s, i) => (
           <li key={s.t} className="flex gap-4">
@@ -342,15 +361,15 @@ export function InfoSection({ site, whatsappHref }: { site: SiteModel; whatsappH
   );
 }
 
-export function CtaBand({ whatsapp, services }: { whatsapp: string; services: boolean }) {
+export function CtaBand({ whatsapp, services, orders = true }: { whatsapp: string; services: boolean; orders?: boolean }) {
   const href = whatsappLink(whatsapp, "Hola! Quería consultarles algo.");
   if (!href) return null;
   return (
     <section aria-labelledby="cta-title" className="bg-primary text-primary-foreground">
       <div className={`${container} flex flex-col gap-6 py-12 @3xl:flex-row @3xl:items-center @3xl:justify-between @4xl:py-16`}>
         <div>
-          <h2 id="cta-title" className="site-display text-3xl font-bold leading-tight tracking-tight @4xl:text-4xl">Hacé tu pedido por WhatsApp</h2>
-          <p className="mt-2 max-w-[44ch] opacity-90">{services ? "Contanos qué necesitás y lo coordinamos con vos." : "Elegí lo que querés y lo coordinamos con vos."}</p>
+          <h2 id="cta-title" className="site-display text-3xl font-bold leading-tight tracking-tight @4xl:text-4xl">{orders ? "Hacé tu pedido por WhatsApp" : "Consultanos por WhatsApp"}</h2>
+          <p className="mt-2 max-w-[44ch] opacity-90">{services || !orders ? "Contanos qué necesitás y lo coordinamos con vos." : "Elegí lo que querés y lo coordinamos con vos."}</p>
         </div>
         <a href={href} target="_blank" rel="noopener noreferrer" className="inline-flex shrink-0 items-center justify-center gap-2 bg-primary-foreground px-7 py-4 text-base font-semibold text-primary transition-transform active:scale-95 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-foreground" style={radius}>
           <IconWhatsApp className="size-5" /> Abrir WhatsApp

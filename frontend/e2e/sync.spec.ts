@@ -1,4 +1,5 @@
 import { test, expect, type Browser, type Page } from "@playwright/test";
+import { signOutFromShell } from "./helpers";
 
 // Requiere el stack (`docker compose up -d`): backend + Postgres.
 const BASE = "http://localhost:3100";
@@ -29,7 +30,7 @@ async function signUp(page: Page, mail: string) {
 }
 
 async function signIn(page: Page, mail: string) {
-  await page.goto("/ingresar");
+  await page.goto("/ingresar?next=/editor");
   await page.getByLabel(/^Email/).fill(mail);
   await page.getByLabel(/^Contraseña/).fill(PASS);
   await page.getByRole("button", { name: "Ingresar" }).click();
@@ -62,7 +63,7 @@ test.describe("guardado en la cuenta", () => {
     await signUp(page, mail);
     await rename(page, "Mi negocio privado");
 
-    await page.getByRole("button", { name: "Salir" }).click();
+    await signOutFromShell(page);
     await expect(page.getByRole("heading", { name: /Todavía no elegiste un rubro/ })).toBeVisible();
     const left = await page.evaluate(() => Object.keys(window.localStorage).filter((k) => k.startsWith("mishowo:draft") || k.startsWith("mishowo:sync")));
     expect(left).toEqual([]); // nada del negocio queda en el navegador

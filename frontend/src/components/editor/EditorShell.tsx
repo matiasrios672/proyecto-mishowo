@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { useUser } from "@/components/auth/authStore";
 import type { PublicUser } from "@/lib/authClient";
 import { Editor } from "./Editor";
+import { PanelFrame } from "@/components/panel/PanelShell";
 
 const LOADING = "__loading__";
 
@@ -50,7 +51,8 @@ export function EditorShell() {
 
   if (user === undefined || local === undefined) return <main className="p-6 text-muted-foreground">Cargando tu borrador…</main>;
   if (user === null) return local ? <Editor key="local" initial={local} /> : <NoDraft />;
-  return <AccountEditor user={user} local={local} />;
+  // Con sesión, el editor vive dentro del mismo panel del negocio (barra lateral angosta, a pantalla completa).
+  return <PanelFrame compact fullBleed><AccountEditor user={user} local={local} /></PanelFrame>;
 }
 
 function AccountEditor({ user, local }: { user: PublicUser; local: Draft | null }) {

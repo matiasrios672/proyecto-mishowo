@@ -16,12 +16,12 @@ const E: Record<string, string> = {
   forbidden_role: "Tu rol no permite esta acción.", not_pending: "Ese pago ya estaba resuelto.", invalid_request: "Revisá los datos: algo no está bien escrito.",
   already_suspended: "Ya estaba suspendido.", not_suspended: "No está suspendido.", not_published: "No está publicado.", days_required: "Para un plan pago hay que indicar cuántos días.",
   cannot_target_self: "No podés hacerlo sobre tu propia cuenta.", user_not_found: "Esa persona todavía no tiene cuenta: pedile que se registre primero.", is_owner: "No se puede cambiar a un Owner.",
-  gratis_must_stay_free: "El plan gratuito tiene que seguir activo y costar $ 0.", invalid_plan: "Ese plan no sirve para esto.", network: "No pudimos conectarnos.",
+  already_resolved: "Otra persona ya resolvió esta denuncia.", note_required: "Escribí la nota antes de guardarla.", business_gone: "El negocio ya no existe.", gratis_must_stay_free: "El plan gratuito tiene que seguir activo y costar $ 0.", invalid_plan: "Ese plan no sirve para esto.", network: "No pudimos conectarnos.",
 };
-const msg = (e?: string) => E[e ?? ""] ?? "No se pudo completar la acción.";
+export const msg = (e?: string) => E[e ?? ""] ?? "No se pudo completar la acción.";
 
 /** Carga un recurso del admin y lo recarga con `reload()`. */
-function useLoad<T>(path: string) {
+export function useLoad<T>(path: string) {
   const [data, setData] = useState<T | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [tick, setTick] = useState(0);
@@ -36,7 +36,7 @@ function useLoad<T>(path: string) {
 // ───────────── Resumen ─────────────
 interface Dash {
   kpis: Record<string, number>; byPlan: { plan: string; count: number }[]; byIndustry: { industry: string; count: number }[];
-  signups: { day: string; count: number }[]; alerts: { pendingPayments: number; expiring7d: number; newReports: number; oldestPending: string | null };
+  signups: { day: string; count: number }[]; alerts: { pendingPayments: number; expiring7d: number; newReports: number; stalePayments: number; oldestPending: string | null };
 }
 export function Dashboard() {
   const { data: d, error } = useLoad<Dash>("/admin/dashboard");
@@ -51,11 +51,12 @@ export function Dashboard() {
   return (
     <div className="space-y-8">
       <h1 className="text-2xl font-bold">Resumen</h1>
-      {(d.alerts.pendingPayments > 0 || d.alerts.expiring7d > 0 || d.alerts.newReports > 0) && (
+      {(d.alerts.pendingPayments > 0 || d.alerts.expiring7d > 0 || d.alerts.newReports > 0 || d.alerts.stalePayments > 0) && (
         <ul className="flex flex-wrap gap-3" aria-label="Alertas">
           {d.alerts.pendingPayments > 0 && <li><Link href="/admin/pagos" className="block rounded-lg border-2 border-primary px-4 py-2 text-sm font-medium">{d.alerts.pendingPayments} pago{d.alerts.pendingPayments === 1 ? "" : "s"} para confirmar</Link></li>}
           {d.alerts.expiring7d > 0 && <li className="rounded-lg border px-4 py-2 text-sm">{d.alerts.expiring7d} plan{d.alerts.expiring7d === 1 ? "" : "es"} por vencer en 7 días</li>}
-          {d.alerts.newReports > 0 && <li className="rounded-lg border border-destructive/50 px-4 py-2 text-sm text-destructive">{d.alerts.newReports} denuncia{d.alerts.newReports === 1 ? "" : "s"} nueva{d.alerts.newReports === 1 ? "" : "s"}</li>}
+          {d.alerts.stalePayments > 0 && <li><Link href="/admin/pagos" className="block rounded-lg border border-destructive/50 px-4 py-2 text-sm font-medium text-destructive">{d.alerts.stalePayments} pago{d.alerts.stalePayments === 1 ? "" : "s"} esperando hace más de 2 días</Link></li>}
+          {d.alerts.newReports > 0 && <li><Link href="/admin/denuncias" className="block rounded-lg border border-destructive/50 px-4 py-2 text-sm text-destructive">{d.alerts.newReports} denuncia{d.alerts.newReports === 1 ? "" : "s"} nueva{d.alerts.newReports === 1 ? "" : "s"}</Link></li>}
         </ul>
       )}
       <dl className="grid grid-cols-2 gap-x-6 gap-y-5 sm:grid-cols-3 lg:grid-cols-4" data-testid="kpis">
@@ -198,6 +199,7 @@ export function Businesses() {
 
 interface Detail {
   business: { id: string; slug: string; name: string; status: string; planId: string; planExpiresAt: string | null; internalNote: string | null; createdAt: string };
+  view: { design: { layout?: string; theme?: string; fontPair?: string } | null; whatsappSet: boolean; instagramSet: boolean; addressSet: boolean; openDays: number; announcement: string; categories: number; available_products: number; media: number; open_reports: number; last_order_at: string | null };
   owner: { id: string; email: string; blockedAt: string | null }; counts: { products: number; orders: number };
   payments: { id: string; planId: string; months: number; amount: number; status: string; createdAt: string }[];
   history: { id: number; action: string; createdAt: string }[];
@@ -227,6 +229,14 @@ export function BusinessDetail({ id }: { id: string }) {
         {([["Dueño", data.owner.email], ["Productos", data.counts.products], ["Pedidos", data.counts.orders], ["Alta", when(b.createdAt)]] as const).map(([k, v]) => <div key={k}><dt className="text-xs text-muted-foreground">{k}</dt><dd className="font-medium">{v}</dd></div>)}
       </dl>
       {b.status === "published" && <a className="inline-block text-sm underline underline-offset-4" href={siteUrl(b.slug)} target="_blank" rel="noopener noreferrer">Ver la página publicada</a>}
+
+      <section aria-labelledby="view-title" data-testid="business-view">
+        <h2 id="view-title" className="mb-2 font-semibold">Cómo está armada su página <span className="text-xs font-normal text-muted-foreground">(solo lectura)</span></h2>
+        <dl className="grid grid-cols-2 gap-3 text-sm sm:grid-cols-4">
+          {([["Diseño", `${data.view.design?.layout ?? "—"} · ${data.view.design?.theme ?? "—"}`], ["Categorías", data.view.categories], ["Productos disponibles", data.view.available_products], ["Fotos y videos", data.view.media], ["Días con horario", data.view.openDays], ["WhatsApp", data.view.whatsappSet ? "Cargado" : "Falta"], ["Instagram", data.view.instagramSet ? "Cargado" : "No"], ["Dirección", data.view.addressSet ? "Cargada" : "No"], ["Último pedido", data.view.last_order_at ? when(data.view.last_order_at) : "Ninguno"], ["Denuncias abiertas", data.view.open_reports]] as const).map(([k, v]) => <div key={k}><dt className="text-xs text-muted-foreground">{k}</dt><dd className="font-medium">{v}</dd></div>)}
+        </dl>
+        {data.view.announcement && <p className="mt-2 text-sm">Anuncio: “{data.view.announcement}”</p>}
+      </section>
 
       <section className="space-y-2"><h2 className="font-semibold">Nota interna</h2>
         <TextArea aria-label="Nota interna" rows={3} maxLength={1000} value={note ?? b.internalNote ?? ""} onChange={(e) => setNote(e.target.value)} />

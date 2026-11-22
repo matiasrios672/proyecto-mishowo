@@ -7,6 +7,7 @@ import { createDb } from "./db/index.js";
 import { createSmtpMailer } from "./lib/mailer.js";
 import { createRevalidator } from "./lib/revalidate.js";
 import { expirePlans, remindExpiring } from "./jobs/plans.js";
+import { CRON_KEY, putSetting } from "./lib/settings.js";
 
 const task = process.argv[2];
 const known = ["expire-plans", "remind-expiring", "all"];
@@ -23,6 +24,7 @@ const notify = createRevalidator(config, (m) => console.warn(m));
 try {
   if (task === "expire-plans" || task === "all") console.log(`Planes vencidos pasados a gratis: ${await expirePlans(db, mailer, notify)}`);
   if (task === "remind-expiring" || task === "all") console.log(`Recordatorios enviados: ${await remindExpiring(db, mailer)}`);
+  await putSetting(db, CRON_KEY, { task, at: new Date().toISOString() }); // el admin la muestra en "Estado del sistema"
 } catch (e) {
   console.error("La tarea falló:", e);
   process.exitCode = 1;

@@ -20,6 +20,8 @@ export interface Draft {
   announcement: string;
   whatsappGreeting: string;
   showQuantities: boolean;
+  /** false = catálogo sin carrito: la página ofrece consultar por WhatsApp. */
+  ordersEnabled: boolean;
   askEventDate: boolean;
   design: DraftDesign;
   categories: DraftCategory[];
@@ -45,7 +47,7 @@ export function createDraftFromTemplate(t: TemplateInput): Draft {
     tagline: t.tagline, description: t.description, textsAreExample: true,
     whatsapp: "", instagram: "", address: "", deliveryZone: t.deliveryZone,
     extraWhatsapps: [], hours: defaultHours(), announcement: "",
-    whatsappGreeting: "Hola! Quiero hacer este pedido:", showQuantities: true,
+    whatsappGreeting: "Hola! Quiero hacer este pedido:", showQuantities: true, ordersEnabled: true,
     askEventDate: t.eventDate,
     design: { layout: t.layout, theme: t.theme, fontPair: t.fontPair, brandColor: null, buttonShape: "redondeado" },
     categories: t.categories.map((c) => ({
@@ -83,6 +85,7 @@ export function normalizeDraft(d: Draft): Draft {
     announcement: d.announcement ?? "",
     whatsappGreeting: d.whatsappGreeting ?? "Hola! Quiero hacer este pedido:",
     showQuantities: d.showQuantities ?? true,
+    ordersEnabled: d.ordersEnabled ?? true,
   };
 }
 

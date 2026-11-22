@@ -6,6 +6,7 @@ import * as s from "../db/schema.js";
 import { requireUser } from "../auth/session.js";
 import { toCsv } from "../orders/csv.js";
 import { STATUSES, canTransition, nextStatuses } from "../orders/status.js";
+import { releaseCoupon } from "../coupons/apply.js";
 
 /** Panel de pedidos del negocio. Se registra dentro del contexto de /me (con sesión y chequeo de origen). */
 export function orderPanelRoutes(app: FastifyInstance, db: Db) {
@@ -21,7 +22,7 @@ export function orderPanelRoutes(app: FastifyInstance, db: Db) {
   const view = (o: typeof s.orders.$inferSelect, items: (typeof s.orderItems.$inferSelect)[]) => ({
     id: o.id, number: o.number, status: o.status, nextStatuses: nextStatuses(o.status),
     customerName: o.customerName, customerPhone: o.customerPhone, notes: o.notes, eventDate: o.eventDate,
-    total: Number(o.total), source: o.source, createdAt: o.createdAt,
+    total: Number(o.total), discount: Number(o.discount), couponCode: o.couponCode, source: o.source, createdAt: o.createdAt,
     items: items.map((i) => ({ name: i.name, optionLabel: i.optionLabel, unitPrice: Number(i.unitPrice), quantity: i.quantity })),
   });
 
@@ -71,10 +72,10 @@ export function orderPanelRoutes(app: FastifyInstance, db: Db) {
     const rows = await db.select().from(s.orders).where(eq(s.orders.businessId, biz.id)).orderBy(desc(s.orders.createdAt)).limit(5000);
     const items = await itemsFor(biz.id, rows.map((o) => o.id));
     const csv = toCsv(
-      ["Pedido", "Fecha", "Estado", "Cliente", "Teléfono", "Total", "Fecha del evento", "Notas", "Productos"],
+      ["Pedido", "Fecha", "Estado", "Cliente", "Teléfono", "Total", "Cupón", "Descuento", "Fecha del evento", "Notas", "Productos"],
       rows.map((o) => [
         o.number, new Date(o.createdAt).toLocaleString("es-AR", { timeZone: "America/Argentina/Buenos_Aires" }), o.status,
-        o.customerName, o.customerPhone, Number(o.total).toFixed(2).replace(".", ","), o.eventDate, o.notes,
+        o.customerName, o.customerPhone, Number(o.total).toFixed(2).replace(".", ","), o.couponCode, Number(o.discount).toFixed(2).replace(".", ","), o.eventDate, o.notes,
         (items.get(o.id) ?? []).map((i) => `${i.quantity} x ${i.name}${i.optionLabel ? ` (${i.optionLabel})` : ""}`).join(" | "),
       ]),
     );
@@ -121,6 +122,7 @@ export function orderPanelRoutes(app: FastifyInstance, db: Db) {
           }
         }
       }
+      if (body.data.status === "cancelado") await releaseCoupon(tx, biz.id, o.id); // el uso del cupón vuelve a estar disponible
       const [updated] = await tx.update(s.orders).set({ status: body.data.status }).where(eq(s.orders.id, o.id)).returning();
       const items = await tx.select().from(s.orderItems).where(eq(s.orderItems.orderId, o.id));
       return { order: view(updated!, items) };

@@ -1,6 +1,7 @@
 import type { CSSProperties, ReactNode } from "react";
 import { Bricolage_Grotesque, Figtree } from "next/font/google";
 import { MarketingHeader, MarketingFooter } from "@/components/marketing/MarketingShell";
+import { SiteNotice } from "@/components/marketing/SiteNotice";
 
 const display = Bricolage_Grotesque({ subsets: ["latin"], weight: ["600", "700", "800"], variable: "--font-mk-display", display: "swap" });
 const body = Figtree({ subsets: ["latin"], weight: ["400", "500", "600", "700"], variable: "--font-mk-text", display: "swap" });
@@ -21,6 +22,7 @@ export default function MarketingLayout({ children }: { children: ReactNode }) {
   return (
     <div className={`${display.variable} ${body.variable} mk-text flex min-h-dvh flex-col bg-background text-foreground`} style={brand}>
       <a href="#contenido" className="sr-only focus:not-sr-only focus:absolute focus:left-3 focus:top-3 focus:z-50 focus:rounded-md focus:bg-background focus:px-3 focus:py-2">Saltar al contenido</a>
+      <SiteNotice />
       <MarketingHeader />
       <div id="contenido" className="flex-1">{children}</div>
       <MarketingFooter />

@@ -5,8 +5,9 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Field, TextInput } from "@/components/ui/fields";
-import { api, authErrorMessage, type PublicUser } from "@/lib/authClient";
+import { api, authErrorMessage, landingAfterLogin, type PublicUser } from "@/lib/authClient";
 import { FormError, FormNotice } from "./AuthShell";
+import { PasswordField } from "./PasswordField";
 import { refreshUser, setUser } from "./authStore";
 
 export function ForgotForm() {
@@ -61,9 +62,7 @@ export function ResetForm() {
   );
   return (
     <form onSubmit={submit} className="space-y-4" noValidate>
-      <Field label="Contraseña nueva" required hint="Mínimo 8 caracteres">
-        {(id, d) => <TextInput id={id} aria-describedby={d} name="password" type="password" autoComplete="new-password" minLength={8} required />}
-      </Field>
+      <PasswordField label="Contraseña nueva" autoComplete="new-password" minLength={8} hint="Mínimo 8 caracteres" />
       <FormError message={error} />
       <Button type="submit" size="lg" className="w-full" disabled={busy}>{busy ? "Guardando…" : "Guardar contraseña"}</Button>
     </form>
@@ -114,7 +113,7 @@ export function MagicConsume() {
     const r = await api<{ user: PublicUser }>("/auth/magic/consume", { body: { token } });
     if (!r.ok) { setError(authErrorMessage(r.data.error)); setBusy(false); return; }
     setUser(r.data.user);
-    router.push("/editor");
+    router.push(await landingAfterLogin(null, r.data.user.role));
   }
 
   if (error) return (

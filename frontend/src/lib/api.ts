@@ -21,6 +21,7 @@ export interface PublicSite {
   categories?: { id: string; name: string }[];
   products?: PublicProduct[];
   cover?: { src: string; srcSet: string | null } | null;
+  logo?: { src: string; srcSet: string | null } | null;
   video?: string | null;
 }
 

@@ -1,8 +1,9 @@
 import { Suspense } from "react";
 import type { Metadata } from "next";
 import {
-  Benefits, DemoSection, Examples, FAQ, FaqSection, FinalCta, Hero, Plans, PlansList, Soon, Testimonials,
+  Benefits, DemoSection, Examples, FaqSection, FinalCta, Hero, Plans, PlansList, Soon, Testimonials,
 } from "@/components/marketing/sections";
+import { getSiteConfig } from "@/lib/siteConfig";
 import { Compare, RubrosMarquee, Story, TrustStrip } from "@/components/marketing/Story";
 
 export const metadata: Metadata = {
@@ -16,18 +17,24 @@ export const metadata: Metadata = {
   },
 };
 
-export default function Home() {
+/** Datos estructurados: la FAQ tiene que coincidir con la que se ve (la del admin si la editó). */
+async function LandingJsonLd() {
+  const { faq } = await getSiteConfig();
   const jsonLd = {
     "@context": "https://schema.org",
     "@graph": [
       { "@type": "Organization", name: "MiShowo", url: "https://mishowo.com" },
       { "@type": "SoftwareApplication", name: "MiShowo", applicationCategory: "BusinessApplication", operatingSystem: "Web", offers: { "@type": "Offer", price: "0", priceCurrency: "ARS" } },
-      { "@type": "FAQPage", mainEntity: FAQ.map((f) => ({ "@type": "Question", name: f.q, acceptedAnswer: { "@type": "Answer", text: f.a } })) },
+      { "@type": "FAQPage", mainEntity: faq.map((f) => ({ "@type": "Question", name: f.q, acceptedAnswer: { "@type": "Answer", text: f.a } })) },
     ],
   };
+  return <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }} />;
+}
+
+export default function Home() {
   return (
     <>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }} />
+      <Suspense fallback={null}><LandingJsonLd /></Suspense>
       <Hero />
       <TrustStrip />
       <RubrosMarquee />

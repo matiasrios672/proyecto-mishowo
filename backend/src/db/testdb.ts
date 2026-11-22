@@ -14,7 +14,7 @@ export async function setupTestDb(name = "mishowo_test") {
   await runMigrations(url);
   const conn = createDb(url);
   await conn.pool.query(
-    "truncate table order_items, orders, product_options, media, products, categories, memberships, subscriptions, payments, reports, contact_requests, app_settings, audit_log, auth_tokens, businesses, sessions, users restart identity cascade",
+    "truncate table coupon_redemptions, coupons, appointments, appointment_settings, order_items, orders, product_options, media, products, categories, memberships, subscriptions, payments, reports, contact_requests, app_settings, audit_log, auth_tokens, businesses, sessions, users restart identity cascade",
   );
   return conn;
 }

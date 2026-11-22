@@ -9,10 +9,13 @@ import { loadContent, saveContent } from "../business/sync.js";
 import { missingForPublish, productLimit, realProducts } from "../business/publish.js";
 import { requireUser, strictOriginOk } from "../auth/session.js";
 import { checkSlug } from "../lib/slug.js";
+import { getReservedSlugs } from "../lib/settings.js";
 import { orderPanelRoutes } from "./orders-panel.js";
 import { billingRoutes } from "./billing.js";
 import { mediaRoutes } from "./media.js";
 import { statsRoutes } from "./stats.js";
+import { couponPanelRoutes } from "./coupons.js";
+import { appointmentPanelRoutes } from "./appointments.js";
 import type { StorageProvider } from "../storage/index.js";
 import type { Mailer } from "../lib/mailer.js";
 import type { SiteChanged } from "../lib/revalidate.js";
@@ -38,6 +41,8 @@ export function meRoutes(app: FastifyInstance, db: Db, config: Config, notify: S
   billingRoutes(app, db, storage, mailer, config.PAYMENTS_PER_MINUTE);
   mediaRoutes(app, db, config, storage, notify, config.UPLOADS_PER_MINUTE);
   statsRoutes(app, db);
+  couponPanelRoutes(app, db);
+  appointmentPanelRoutes(app, db);
 
   const ownBusiness = async (userId: string) =>
     (await db.select().from(s.businesses).where(and(eq(s.businesses.ownerId, userId), isNull(s.businesses.deletedAt))))[0] ?? null;
@@ -68,7 +73,7 @@ export function meRoutes(app: FastifyInstance, db: Db, config: Config, notify: S
     if (!user) return;
     const q = z.object({ slug: z.string().max(60) }).safeParse(req.query);
     if (!q.success) return reply.code(400).send({ error: "invalid_request" });
-    const chk = checkSlug(q.data.slug);
+    const chk = checkSlug(q.data.slug, await getReservedSlugs(db));
     if (!chk.ok) return { available: false, reason: chk.reason };
     const own = await ownBusiness(user.id);
     const [taken] = await db.select({ id: s.businesses.id }).from(s.businesses)
@@ -91,7 +96,7 @@ export function meRoutes(app: FastifyInstance, db: Db, config: Config, notify: S
     const missing = loaded ? missingForPublish(loaded.content) : (["name", "whatsapp", "products"] as const);
     if (missing.length > 0) return reply.code(422).send({ error: "not_ready", missing });
 
-    const chk = checkSlug(p.data.slug);
+    const chk = checkSlug(p.data.slug, await getReservedSlugs(db));
     if (!chk.ok) return reply.code(422).send({ error: "invalid_slug", reason: chk.reason });
 
     const limit = await productLimit(db, biz.planId);

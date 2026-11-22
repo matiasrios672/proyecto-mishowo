@@ -16,7 +16,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const model = publicToSite(site);
   const url = siteUrl(slug);
   const description = seoDescription(model);
-  const image = model.cover ?? model.categories.flatMap((c) => c.products).find((p) => p.image)?.image ?? null;
+  const image = model.cover ?? model.categories.flatMap((c) => c.products).find((p) => p.image)?.image ?? model.logo ?? null;
   return {
     title: { absolute: model.name }, description,
     alternates: { canonical: `${url}/` },
@@ -48,7 +48,7 @@ async function SiteContent({ params }: Props) {
   }
 
   const model = publicToSite(site);
-  const image = model.cover ?? model.categories.flatMap((c) => c.products).find((p) => p.image)?.image ?? null;
+  const image = model.cover ?? model.categories.flatMap((c) => c.products).find((p) => p.image)?.image ?? model.logo ?? null;
   return (
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd(localBusinessJsonLd(model, `${siteUrl(slug)}/`, image)) }} />

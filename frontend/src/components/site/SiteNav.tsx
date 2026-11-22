@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { totals } from "@/lib/cart";
 import { IconCart, IconWhatsApp } from "./icons";
 import { useCart } from "./cart/cartStore";
+import { Brand } from "./Brand";
 
 export interface NavLink { id: string; label: string }
 
@@ -34,7 +35,7 @@ function CartButton({ slug }: { slug: string }) {
  * Barra fija del sitio. Se condensa (fondo y borde) al scrollear y marca la sección que se está viendo.
  * Usa IntersectionObserver, no escucha el scroll.
  */
-export function SiteNav({ name, links, orderableSlug, whatsappHref }: { name: string; links: NavLink[]; orderableSlug?: string; whatsappHref: string | null }) {
+export function SiteNav({ name, links, orderableSlug, whatsappHref, logo, logoSet }: { name: string; links: NavLink[]; orderableSlug?: string; whatsappHref: string | null; logo?: string | null; logoSet?: string | null }) {
   const rootRef = useRef<HTMLDivElement>(null);
   const sentinelRef = useRef<HTMLDivElement>(null);
   const [scrolled, setScrolled] = useState(false);
@@ -60,10 +61,13 @@ export function SiteNav({ name, links, orderableSlug, whatsappHref }: { name: st
       <div ref={rootRef} className="sticky top-0 z-30">
         <nav
           aria-label="Secciones"
-          className={`transition-[background-color,border-color,backdrop-filter] duration-300 ${scrolled ? "border-b border-border bg-background/90 backdrop-blur" : "border-b border-transparent"}`}
+          className={`transition-[background-color,border-color,backdrop-filter,box-shadow] duration-300 ${scrolled ? "border-b border-border bg-background/80 shadow-[0_8px_30px_-18px_rgba(0,0,0,0.35)] backdrop-blur-xl" : "border-b border-transparent"}`}
         >
           <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-x-4 gap-y-2 px-5 py-3 @2xl:px-8">
-            <a href="#top" className="max-w-[60%] truncate site-display text-lg font-bold leading-none">{name || "Tu negocio"}</a>
+            <a href="#top" className="flex max-w-[62%] items-center gap-2.5" aria-label={name || "Tu negocio"}>
+              <Brand name={name} logo={logo} logoSet={logoSet} size="sm" />
+              <span className={`truncate site-display text-lg font-bold leading-none ${logo ? "hidden @xl:inline" : ""}`}>{name || "Tu negocio"}</span>
+            </a>
 
             {links.length > 1 && (
               <div className="order-last -mx-5 basis-full overflow-x-auto px-5 @4xl:order-none @4xl:mx-0 @4xl:ml-6 @4xl:basis-auto @4xl:px-0">
