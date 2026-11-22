@@ -9,7 +9,7 @@ Especificación completa: `PROMPT_MiShowo_ClaudeCode.md` (no copiarla acá). Pla
 - Docker + Coolify (Traefik, SSL wildcard con Cloudflare DNS challenge). Sin Nginx/PM2/systemd/Redis.
 
 ## Comandos (se completan en Épica 1)
-- Dev: `docker compose up`
+- Dev: `docker compose up --build` (frontend :3000, backend :4000, mailpit :8025)
 - Backend: `cd backend && npm run dev | test | lint | typecheck | db:generate | db:migrate | build` (Postgres: `docker compose up -d db`)
 - Frontend: `cd frontend && npm run dev | test | e2e | lint | typecheck | build`. Next 16: usar `proxy.ts` (no middleware); leer `node_modules/next/dist/docs/` ante dudas.
 - E2E: `cd frontend && npx playwright test`
@@ -31,5 +31,5 @@ Especificación completa: `PROMPT_MiShowo_ClaudeCode.md` (no copiarla acá). Pla
 - Frenar y preguntar: precios finales, datos de cobro, logo, credenciales (Cloudflare, SMTP), decisiones irreversibles.
 
 ## Estado actual
-- Fase: Épica 1 en curso, desarrollo local.
-- Próximo paso: 1.6 Dockerfiles, 1.7 compose completo y .env.example, 1.9 ARCHITECTURE.md. Luego Épica 2.
+- Fase: Épica 1 completa (falta review). Siguiente: Épica 2.
+- Próximo paso: Épica 2, tarea 2.1 (esquema multi-tenant en backend/src/db/schema.ts).

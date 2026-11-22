@@ -19,11 +19,11 @@ Criterio general de aceptación por tarea: typecheck + lint + tests verdes; para
 - [x] 1.3 Drizzle + conexión Postgres + migraciones automáticas al iniciar. *AC: migración inicial corre en contenedor limpio.*
 - [x] 1.4 Frontend base: Next.js standalone, Tailwind, shadcn/ui, fuentes. *AC: página de inicio renderiza en dev y build.*
 - [x] 1.5 Design system: tokens, tipografía, 9+ temas de color, componentes base, wordmark `MiShowo` en un solo componente. *AC: página `/_design` con todos los componentes, AA de contraste.*
-- [ ] 1.6 `Dockerfile` backend y frontend (multi-stage, no root, HEALTHCHECK, <300 MB), `.dockerignore`. *AC: ambas imágenes buildean y arrancan.*
-- [ ] 1.7 `docker-compose.yml` dev (frontend + backend + Postgres + Mailpit) y `.env.example`. *AC: `docker compose up` deja todo sano.*
+- [x] 1.6 `Dockerfile` backend y frontend (multi-stage, no root, HEALTHCHECK, <300 MB), `.dockerignore`. *AC: ambas imágenes buildean y arrancan.*
+- [x] 1.7 `docker-compose.yml` dev (frontend + backend + Postgres + Mailpit) y `.env.example`. *AC: `docker compose up` deja todo sano.*
 - [x] 1.8 Vitest en ambos, Playwright en frontend, ESLint/Prettier, scripts npm. *AC: un test de ejemplo pasa en cada uno.*
-- [ ] 1.9 `docs/ARCHITECTURE.md` inicial y CLAUDE.md con comandos reales. *AC: comandos documentados funcionan.*
-- [ ] 1.10 GitHub Actions opcional (lint, typecheck, test, build de imágenes).
+- [x] 1.9 `docs/ARCHITECTURE.md` inicial y CLAUDE.md con comandos reales. *AC: comandos documentados funcionan.*
+- [x] 1.10 GitHub Actions opcional (lint, typecheck, test, build de imágenes).
 
 ## Épica 2 — Modelo de datos multi-tenant
 - [ ] 2.1 Esquema: users, sessions, businesses (slug único), memberships, categories, products, product_options, media, orders, order_items, plans, subscriptions, payments, audit_log, jobs.
