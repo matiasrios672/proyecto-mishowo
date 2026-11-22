@@ -54,8 +54,15 @@ export function CartDrawer({ slug, businessName, whatsapp, greeting, showQuantit
     return () => window.removeEventListener("keydown", onKey);
   }, [open]);
 
-  function openDrawer(e: React.MouseEvent<HTMLElement>) {
-    openerRef.current = e.currentTarget;
+  // La barra superior (computadora) pide abrir el pedido con un evento: así no comparten estado.
+  useEffect(() => {
+    const onOpen = () => openDrawer(document.activeElement instanceof HTMLElement ? document.activeElement : null);
+    window.addEventListener("mishowo:open-cart", onOpen);
+    return () => window.removeEventListener("mishowo:open-cart", onOpen);
+  }, []);
+
+  function openDrawer(opener: HTMLElement | null) {
+    openerRef.current = opener;
     const d = new Date();
     setToday(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`);
     setStatus((s) => (s.kind === "done" ? s : { kind: "idle" }));
@@ -113,8 +120,8 @@ export function CartDrawer({ slug, businessName, whatsapp, greeting, showQuantit
   return (
     <>
       {!open && count > 0 && (
-        <div className="fixed inset-x-0 bottom-0 z-30 p-3">
-          <button type="button" onClick={openDrawer} data-testid="cart-bar"
+        <div className="fixed inset-x-0 bottom-0 z-30 p-3 @2xl:hidden">
+          <button type="button" onClick={(e) => openDrawer(e.currentTarget)} data-testid="cart-bar"
             className={`mx-auto flex w-full max-w-2xl items-center justify-between shadow-lg ${primary}`} style={radius}>
             <span>Ver mi pedido · {count} {count === 1 ? "producto" : "productos"}</span>
             <span>{formatPrice(total)}{hasUnpriced ? "+" : ""}</span>
@@ -125,7 +132,7 @@ export function CartDrawer({ slug, businessName, whatsapp, greeting, showQuantit
       {open && (
         <div className="fixed inset-0 z-40 flex items-end justify-center bg-black/50" onClick={close}>
           <div role="dialog" aria-modal="true" aria-label="Tu pedido" onClick={(e) => e.stopPropagation()}
-            className="max-h-[92dvh] w-full max-w-2xl overflow-y-auto rounded-t-2xl bg-background p-4 text-foreground shadow-xl">
+            className="site-sheet max-h-[92dvh] w-full max-w-2xl overflow-y-auto rounded-t-2xl bg-background p-4 text-foreground shadow-xl @2xl:mb-auto @2xl:mt-16 @2xl:rounded-2xl">
             <div className="mb-3 flex items-center justify-between">
               <h2 className="text-lg font-semibold" style={{ fontFamily: "var(--font-heading)" }}>Tu pedido</h2>
               <button ref={closeRef} type="button" onClick={close} className="rounded-md border px-3 py-1.5 text-sm">Cerrar</button>

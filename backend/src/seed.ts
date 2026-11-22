@@ -51,5 +51,31 @@ if (process.env.SEED_DEMO === '1') {
     for (const [name, description, price] of extra) await t.products.create({ name, description, price, categoryId: platos.id });
   }
   console.log('Negocio demo: lupe-empanadas');
+
+  // Un negocio demo por rubro, con el contenido y el diseño de su plantilla (para ver todos los layouts).
+  const { INDUSTRIES } = await import('./templates/industries.js');
+  const hours = Array.from({ length: 7 }, (_, i) => ({ open: i < 6, from: '09:00', to: '19:00' }));
+  for (const tpl of INDUSTRIES.filter((i) => ['ropa', 'belleza', 'muebles', 'gimnasio', 'eventos', 'salud'].includes(i.id))) {
+    const slug = `demo-${tpl.id}`;
+    await db.delete(businesses).where(eq(businesses.slug, slug));
+    const [biz] = await db.insert(businesses).values({
+      slug, ownerId: u!.id, name: tpl.businessName, industry: tpl.id, description: tpl.description, tagline: tpl.tagline,
+      whatsapp: '+5491155550000', instagram: '@' + slug.replace(/-/g, ''), deliveryZone: tpl.deliveryZone,
+      address: tpl.id === 'gimnasio' || tpl.id === 'salud' ? tpl.deliveryZone : null, hours,
+      design: { layout: tpl.layout, theme: tpl.theme, fontPair: tpl.fontPair, brandColor: null, buttonShape: 'redondeado' },
+      settings: { askEventDate: tpl.eventDate, showQuantities: true, whatsappGreeting: 'Hola! Quiero hacer este pedido:' },
+      status: 'published',
+    }).returning();
+    const t = tenantScope(db, biz!.id);
+    let pos = 0;
+    for (const cat of tpl.categories) {
+      const c = await t.categories.create({ name: cat.name, position: pos++ });
+      for (const p of cat.products) {
+        const prod = await t.products.create({ name: p.name, description: p.description, price: String(p.price), categoryId: c.id });
+        for (const [i, o] of (p.options ?? []).entries()) await t.options.create(prod.id, { label: o.label, price: o.price ? String(o.price) : null, position: i });
+      }
+    }
+    console.log(`Negocio demo: ${slug}`);
+  }
 }
 await pool.end();

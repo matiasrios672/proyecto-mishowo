@@ -1,0 +1,344 @@
+import type { CSSProperties } from "react";
+import type { SiteCategory, SiteModel, SiteProduct } from "@/lib/site";
+import { formatPrice, normalizeSearch, priceLabel } from "@/lib/format";
+import { discountPercent } from "@/lib/draftOps";
+import { whatsappLink } from "@/lib/whatsapp";
+import { AddToCart } from "./cart/AddToCart";
+import { HoursList } from "./HoursList";
+import { IconInstagram, IconPin, IconWhatsApp } from "./icons";
+import { OpenBadge } from "./OpenBadge";
+
+export interface Orderable { slug: string }
+
+export const slugify = (s: string) =>
+  s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+
+const hash = (s: string) => {
+  let h = 0;
+  for (const c of s) h = (h * 31 + c.charCodeAt(0)) >>> 0;
+  return h;
+};
+
+const btnPrimary = "inline-flex items-center justify-center gap-2 bg-primary px-6 py-3.5 text-base font-semibold text-primary-foreground transition-transform active:scale-95 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring";
+const btnOutline = "inline-flex items-center justify-center gap-2 border-2 border-primary px-6 py-3 text-base font-semibold text-primary transition-transform active:scale-95 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring";
+const radius: CSSProperties = { borderRadius: "var(--btn-radius)" };
+const container = "mx-auto w-full max-w-6xl px-5 @2xl:px-8";
+
+const Example = () => (
+  <span className="ml-1.5 rounded-full border border-dashed px-1.5 py-0.5 align-middle text-[10px] font-normal text-muted-foreground">Ejemplo</span>
+);
+const Leader = () => <span aria-hidden className="mb-[0.35em] min-w-4 flex-1 self-end border-b-2 border-dotted border-current opacity-25" />;
+
+function Price({ p }: { p: SiteProduct }) {
+  const off = discountPercent({ price: p.price, comparePrice: p.comparePrice });
+  const label = priceLabel(p.price, p.options);
+  if (!label && !off) return null;
+  return (
+    <span className="whitespace-nowrap font-semibold tabular-nums">
+      {p.comparePrice !== null && off !== null && <s className="mr-1.5 text-xs font-normal text-muted-foreground">{formatPrice(p.comparePrice)}</s>}
+      {label}
+      {off !== null && <span className="ml-1.5 rounded bg-primary px-1 py-0.5 text-[10px] font-medium text-primary-foreground">-{off}%</span>}
+    </span>
+  );
+}
+
+/** Foto del producto o, sin foto, una pieza de color del tema con la inicial (cada nombre tiene su ángulo). */
+function Art({ name, image, className }: { name: string; image: string | null; className: string }) {
+  if (image)
+    return <img src={image} alt={name} loading="lazy" decoding="async" className={`object-cover ${className}`} />;
+  return (
+    <div
+      aria-hidden
+      className={`grid place-items-center overflow-hidden ${className}`}
+      style={{ backgroundImage: `linear-gradient(${hash(name) % 360}deg, color-mix(in oklab, var(--primary) 24%, var(--card)), color-mix(in oklab, var(--primary) 7%, var(--card)))` }}
+    >
+      <span className="select-none site-display text-[clamp(3rem,16cqw,5.5rem)] leading-none text-primary/30">{name.trim().charAt(0).toUpperCase() || "·"}</span>
+    </div>
+  );
+}
+
+const Soldout = () => <span className="text-xs font-medium text-destructive">Agotado</span>;
+
+function Card({ p, layout, preview, order, showQuantities }: { p: SiteProduct; layout: string; preview: boolean; order?: Orderable; showQuantities: boolean }) {
+  const name = p.name || "Producto sin nombre";
+  const ex = preview && p.isExample ? <Example /> : null;
+  const search = normalizeSearch(`${name} ${p.description}`);
+  const dim = p.available ? "" : "text-muted-foreground";
+  const artDim = p.available ? "" : " opacity-50";
+  const add = order ? <AddToCart slug={order.slug} product={p} showQuantities={showQuantities} /> : null;
+  const opts = p.options.length > 0 && <p className="mt-0.5 text-xs text-muted-foreground">{p.options.map((o) => o.label).join(" · ")}</p>;
+  const soldout = !p.available && <div className="mt-1.5"><Soldout /></div>;
+
+  if (layout === "vidriera")
+    return (
+      <li data-search={search} className={dim}>
+        <Art name={name} image={p.image} className={`aspect-[16/10] w-full rounded-[1.25rem] @xl:aspect-[4/3]${artDim}`} />
+        <div className="pt-3.5">
+          <div className="flex items-baseline justify-between gap-4">
+            <h4 className="site-display text-lg font-semibold leading-snug">{name}{ex}</h4>
+            <Price p={p} />
+          </div>
+          {p.description && <p className="mt-1 max-w-[52ch] text-sm leading-relaxed text-muted-foreground">{p.description}</p>}
+          {opts}{soldout}{add}
+        </div>
+      </li>
+    );
+
+  if (layout === "grilla")
+    return (
+      <li data-search={search} className={dim}>
+        <Art name={name} image={p.image} className={`aspect-square w-full rounded-2xl${artDim}`} />
+        <div className="pt-3">
+          <h4 className="text-sm font-semibold leading-snug @2xl:text-base">{name}{ex}</h4>
+          <div className="mt-0.5 text-sm"><Price p={p} /></div>
+          {soldout}{add}
+        </div>
+      </li>
+    );
+
+  if (layout === "servicios")
+    return (
+      <li data-search={search} className={`border-l-4 border-primary py-1 pl-4 ${dim}`}>
+        <div className="flex items-baseline justify-between gap-4">
+          <h4 className="site-display text-lg font-semibold">{name}{ex}</h4>
+          <Price p={p} />
+        </div>
+        {p.description && <p className="mt-1 max-w-[56ch] text-sm leading-relaxed text-muted-foreground">{p.description}</p>}
+        {opts}{soldout}{add}
+      </li>
+    );
+
+  // mostrador: la carta de un bar, con puntos guía hasta el precio
+  return (
+    <li data-search={search} className={`border-b border-border py-3.5 ${dim}`}>
+      <div className="flex items-baseline gap-2">
+        <h4 className="font-medium leading-snug">{name}{ex}</h4>
+        <Leader />
+        <Price p={p} />
+      </div>
+      {p.description && <p className="mt-0.5 max-w-[56ch] text-sm text-muted-foreground">{p.description}</p>}
+      {opts}{soldout}{add}
+    </li>
+  );
+}
+
+const LIST: Record<string, string> = {
+  vidriera: "grid gap-x-6 gap-y-10 @xl:grid-cols-2 @4xl:grid-cols-3",
+  grilla: "grid grid-cols-2 gap-x-4 gap-y-8 @2xl:grid-cols-3 @4xl:grid-cols-4",
+  mostrador: "grid gap-x-14 @3xl:grid-cols-2",
+  servicios: "grid gap-x-10 gap-y-7 @2xl:grid-cols-2",
+};
+
+export function Catalog({ site, cats, preview, order }: { site: SiteModel; cats: SiteCategory[]; preview: boolean; order?: Orderable }) {
+  const layout = site.design.layout;
+  const services = layout === "servicios";
+  return (
+    <main id="catalog" className={`${container} scroll-mt-20 pb-6 pt-4 @4xl:pt-10`}>
+      <h2 className="site-display text-3xl font-bold tracking-tight @4xl:text-4xl">{services ? "Nuestros servicios" : "Nuestros productos"}</h2>
+      {cats.length === 0 && <p className="py-12 text-muted-foreground">Todavía no hay {services ? "servicios" : "productos"} cargados.</p>}
+      {cats.map((c) => (
+        <section key={c.id} id={`sec-${slugify(c.name)}`} data-section className="scroll-mt-28 pt-8">
+          <h3 className="mb-5 site-display text-xl font-semibold @4xl:text-2xl">{c.name}</h3>
+          <ul className={LIST[layout] ?? LIST.vidriera}>
+            {c.products.map((p) => <Card key={p.id} p={p} layout={layout} preview={preview} order={order} showQuantities={site.showQuantities} />)}
+          </ul>
+        </section>
+      ))}
+    </main>
+  );
+}
+
+/** La comanda: el menú del negocio impreso en un ticket. Es lo primero que se ve y se "imprime" al cargar. */
+function Ticket({ site, items }: { site: SiteModel; items: SiteProduct[] }) {
+  const services = site.design.layout === "servicios";
+  return (
+    <aside aria-label={services ? "Algunos de nuestros servicios" : "Algunos de nuestros productos"} className="mx-auto w-full max-w-sm @4xl:mx-0 @4xl:ml-auto">
+      <div className="ticket-tilt" style={{ "--tilt": "-1.6deg" } as CSSProperties}>
+        <div className="ticket-edge bg-card px-6 pb-9 pt-6 text-card-foreground shadow-xl" style={{ borderRadius: "0.5rem 0.5rem 0 0" }}>
+          <p className="site-display text-xl font-bold leading-tight">{site.name || "Tu negocio"}</p>
+          <p className="text-sm text-muted-foreground">{services ? "Algunos de nuestros servicios" : "Algunos de nuestros productos"}</p>
+          <div className="my-4 border-t-2 border-dashed border-border" />
+          <div className="space-y-2.5">
+            {items.map((p, i) => (
+              <div key={p.id} className="site-print flex items-baseline gap-2 text-[0.95rem]" style={{ "--d": `${650 + i * 230}ms` } as CSSProperties}>
+                <span className="min-w-0 truncate font-medium">{p.name}</span>
+                <Leader />
+                <span className="shrink-0 whitespace-nowrap font-semibold tabular-nums">{formatPrice(p.price)}</span>
+              </div>
+            ))}
+          </div>
+          <div className="my-4 border-t-2 border-dashed border-border" />
+          <p className="site-print text-sm" style={{ "--d": `${650 + items.length * 230 + 100}ms` } as CSSProperties}>
+            Pedí por WhatsApp y lo coordinamos con vos.
+          </p>
+        </div>
+      </div>
+    </aside>
+  );
+}
+
+export function Hero({ site, preview, items, whatsappHref }: { site: SiteModel; preview: boolean; items: SiteProduct[]; whatsappHref: string | null }) {
+  const services = site.design.layout === "servicios";
+  const long = site.name.length > 24;
+  const ig = site.instagram.replace(/^@/, "").trim();
+  const showAddress = site.address.trim() !== "" && site.address.trim() !== site.deliveryZone.trim();
+  const rise = (ms: number) => ({ "--d": `${ms}ms` }) as CSSProperties;
+  return (
+    <section id="top">
+      <div className={`${container} grid grid-cols-[minmax(0,1fr)] items-center gap-12 pb-14 pt-6 @4xl:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)] @4xl:gap-10 @4xl:pb-24 @4xl:pt-14`}>
+        <div>
+          {site.hours && <div className="site-rise mb-4" style={rise(0)}><OpenBadge hours={site.hours} /></div>}
+          <h1
+            data-testid="site-name"
+            className={`site-rise site-display font-bold leading-[0.98] tracking-tight [text-wrap:balance] ${long ? "text-[clamp(2.1rem,6.5cqw,3.9rem)]" : "text-[clamp(2.7rem,9cqw,5.6rem)]"}`}
+            style={rise(80)}
+          >
+            {site.name || "Tu negocio"}
+            {preview && site.exampleName && <Example />}
+          </h1>
+          {site.tagline && (
+            <p className="site-rise mt-5 max-w-[34ch] text-xl leading-snug text-muted-foreground @4xl:text-2xl" style={rise(180)}>
+              {site.tagline}
+              {preview && site.exampleTexts && <Example />}
+            </p>
+          )}
+          {site.description && <p className="site-rise mt-4 max-w-[56ch] leading-relaxed" style={rise(260)}>{site.description}</p>}
+
+          <div className="site-rise mt-8 flex flex-wrap gap-3" style={rise(340)}>
+            <a href="#catalog" className={btnPrimary} style={radius}>{services ? "Ver servicios y precios" : "Hacer mi pedido"}</a>
+            {whatsappHref && (
+              <a href={whatsappHref} target="_blank" rel="noopener noreferrer" className={btnOutline} style={radius}>
+                <IconWhatsApp className="size-5" /> Escribinos por WhatsApp
+              </a>
+            )}
+          </div>
+
+          {(site.deliveryZone || showAddress || ig) && (
+            <div className="site-rise mt-8 grid gap-2.5 text-sm text-muted-foreground" style={rise(420)}>
+              {site.deliveryZone && <p className="flex items-start gap-2.5"><IconPin className="mt-0.5 size-4 shrink-0 text-primary" />{site.deliveryZone}</p>}
+              {showAddress && <p className="flex items-start gap-2.5"><IconPin className="mt-0.5 size-4 shrink-0 text-primary" />{site.address}</p>}
+              {ig && (
+                <a className="flex items-center gap-2.5 underline-offset-4 hover:underline" href={`https://instagram.com/${encodeURIComponent(ig)}`} target="_blank" rel="noopener noreferrer">
+                  <IconInstagram className="size-4 shrink-0 text-primary" />@{ig}
+                </a>
+              )}
+            </div>
+          )}
+        </div>
+
+        {site.cover ? (
+          <div className="relative">
+            <img src={site.cover} alt={`Portada de ${site.name}`} fetchPriority="high" className="aspect-[4/5] w-full rounded-[2rem] object-cover" />
+          </div>
+        ) : (
+          items.length > 0 && <Ticket site={site} items={items} />
+        )}
+      </div>
+    </section>
+  );
+}
+
+/** Cinta de productos en movimiento. Decorativa (repite el catálogo): fuera del orden de lectura. */
+export function Ticker({ items }: { items: SiteProduct[] }) {
+  const loop = Array.from({ length: Math.max(1, Math.ceil(8 / items.length)) }, () => items).flat();
+  const group = (dup: boolean) => (
+    <div className={`flex shrink-0 items-center gap-8 pr-8 ${dup ? "site-marquee-dup" : ""}`}>
+      {loop.map((p, i) => (
+        <span key={`${p.id}-${i}`} className="flex items-center gap-8 whitespace-nowrap">
+          <span>{p.name}<span className="ml-2 opacity-75 tabular-nums">{formatPrice(p.price)}</span></span>
+          <span className="size-1.5 rounded-full bg-current opacity-50" />
+        </span>
+      ))}
+    </div>
+  );
+  return (
+    <div aria-hidden className="site-marquee overflow-hidden bg-primary py-3.5 text-sm font-medium text-primary-foreground">
+      <div className="site-marquee-track flex w-max" style={{ "--dur": `${Math.max(30, loop.length * 5)}s` } as CSSProperties}>
+        {group(false)}{group(true)}
+      </div>
+    </div>
+  );
+}
+
+export function HowTo({ services, name }: { services: boolean; name: string }) {
+  const steps = [
+    { t: services ? "Elegí lo que necesitás" : "Elegí lo que querés", d: services ? "Mirá los servicios y tocá Agregar." : "Mirá el catálogo y tocá Agregar." },
+    { t: "Armá tu pedido", d: "Revisá las cantidades, sumá aclaraciones y tocá Enviar." },
+    { t: "Lo coordinamos por WhatsApp", d: `${name || "El negocio"} recibe tu pedido y coordinan el pago y la entrega o el retiro.` },
+  ];
+  return (
+    <section aria-labelledby="como-pedir" className={`${container} py-14 @4xl:py-20`}>
+      <h2 id="como-pedir" className="site-display text-3xl font-bold tracking-tight @4xl:text-4xl">Pedir es fácil</h2>
+      <ol className="mt-8 grid gap-8 @3xl:grid-cols-3 @3xl:gap-10">
+        {steps.map((s, i) => (
+          <li key={s.t} className="flex gap-4">
+            <span aria-hidden className="site-display text-5xl font-bold leading-none text-primary/40 tabular-nums">{i + 1}</span>
+            <div>
+              <h3 className="site-display text-lg font-semibold">{s.t}</h3>
+              <p className="mt-1 text-muted-foreground">{s.d}</p>
+            </div>
+          </li>
+        ))}
+      </ol>
+    </section>
+  );
+}
+
+export function InfoSection({ site, whatsappHref }: { site: SiteModel; whatsappHref: string | null }) {
+  const ig = site.instagram.replace(/^@/, "").trim();
+  const showAddress = site.address.trim() !== "" && site.address.trim() !== site.deliveryZone.trim();
+  const hasPlace = !!(site.deliveryZone || showAddress || ig);
+  if (!site.hours && !hasPlace) return null;
+  const mapHref = site.address ? `https://www.openstreetmap.org/search?query=${encodeURIComponent(site.address)}` : null;
+  return (
+    <section aria-labelledby="info-title" className={`${container} py-12 @4xl:py-16`}>
+      <h2 id="info-title" className="site-display text-3xl font-bold tracking-tight @4xl:text-4xl">Horarios y cómo llegar</h2>
+      <div className="mt-8 grid gap-10 @3xl:grid-cols-2">
+        {site.hours && (
+          <div>
+            <h3 className="mb-3 site-display text-lg font-semibold">Cuándo atendemos</h3>
+            <HoursList hours={site.hours} />
+          </div>
+        )}
+        {hasPlace && (
+          <div className="rounded-3xl bg-[color-mix(in_oklab,var(--primary)_9%,var(--card))] p-6 @4xl:p-8">
+            <h3 className="mb-3 site-display text-lg font-semibold">Dónde y cómo</h3>
+            <div className="space-y-3 text-sm">
+              {site.deliveryZone && <p className="flex items-start gap-2.5"><IconPin className="mt-0.5 size-4 shrink-0 text-primary" />{site.deliveryZone}</p>}
+              {showAddress && <p className="flex items-start gap-2.5"><IconPin className="mt-0.5 size-4 shrink-0 text-primary" />{site.address}</p>}
+              {mapHref && <a className="inline-block underline underline-offset-4" href={mapHref} target="_blank" rel="noopener noreferrer">Ver en el mapa</a>}
+              {ig && (
+                <a className="flex items-center gap-2.5 underline-offset-4 hover:underline" href={`https://instagram.com/${encodeURIComponent(ig)}`} target="_blank" rel="noopener noreferrer">
+                  <IconInstagram className="size-4 shrink-0 text-primary" />@{ig}
+                </a>
+              )}
+            </div>
+            {whatsappHref && (
+              <a href={whatsappHref} target="_blank" rel="noopener noreferrer" className={`${btnPrimary} mt-6`} style={radius}>
+                <IconWhatsApp className="size-5" /> Escribinos por WhatsApp
+              </a>
+            )}
+          </div>
+        )}
+      </div>
+    </section>
+  );
+}
+
+export function CtaBand({ whatsapp, services }: { whatsapp: string; services: boolean }) {
+  const href = whatsappLink(whatsapp, "Hola! Quería consultarles algo.");
+  if (!href) return null;
+  return (
+    <section aria-labelledby="cta-title" className="bg-primary text-primary-foreground">
+      <div className={`${container} flex flex-col gap-6 py-12 @3xl:flex-row @3xl:items-center @3xl:justify-between @4xl:py-16`}>
+        <div>
+          <h2 id="cta-title" className="site-display text-3xl font-bold leading-tight tracking-tight @4xl:text-4xl">Hacé tu pedido por WhatsApp</h2>
+          <p className="mt-2 max-w-[44ch] opacity-90">{services ? "Contanos qué necesitás y lo coordinamos con vos." : "Elegí lo que querés y lo coordinamos con vos."}</p>
+        </div>
+        <a href={href} target="_blank" rel="noopener noreferrer" className="inline-flex shrink-0 items-center justify-center gap-2 bg-primary-foreground px-7 py-4 text-base font-semibold text-primary transition-transform active:scale-95 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-foreground" style={radius}>
+          <IconWhatsApp className="size-5" /> Abrir WhatsApp
+        </a>
+      </div>
+    </section>
+  );
+}

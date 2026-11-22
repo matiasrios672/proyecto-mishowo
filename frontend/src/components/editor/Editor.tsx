@@ -90,7 +90,7 @@ export function Editor({ initial, sync }: { initial: Draft; sync?: SyncConfig })
 
   const props = { draft, update, goTab };
   const preview = (
-    <div className={`mx-auto bg-background ${device === "celular" ? "w-[390px] max-w-full rounded-[2rem] border-8 border-foreground/80" : "w-full max-w-2xl rounded-lg border"} overflow-hidden`} data-testid="preview-frame" data-device={device}>
+    <div className={`mx-auto bg-background ${device === "celular" ? "w-[390px] max-w-full rounded-[2rem] border-8 border-foreground/80" : "w-full max-w-5xl rounded-lg border"} overflow-hidden`} data-testid="preview-frame" data-device={device}>
       <SiteView site={site} preview />
     </div>
   );
@@ -193,7 +193,7 @@ export function Editor({ initial, sync }: { initial: Draft; sync?: SyncConfig })
           <div className="sticky top-0 z-10 flex justify-end border-b bg-background p-2">
             <Button onClick={() => setFullscreen(false)} autoFocus>Cerrar vista previa</Button>
           </div>
-          <div className="mx-auto max-w-2xl"><SiteView site={site} preview /></div>
+          <SiteView site={site} preview />
         </div>
       )}
     </div>

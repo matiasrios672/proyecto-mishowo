@@ -9,6 +9,8 @@ export interface SiteOption { id: string; label: string; price: number | null; s
 export interface SiteProduct {
   id: string; name: string; description: string; price: number | null; comparePrice: number | null;
   available: boolean; isExample: boolean; options: SiteOption[];
+  /** URL de la foto principal (llega con la subida de fotos). */
+  image: string | null;
 }
 export interface SiteCategory { id: string; name: string; products: SiteProduct[] }
 export interface SiteDesign { layout: string; theme: string; fontPair: string; brandColor: string | null; buttonShape: string }
@@ -21,6 +23,8 @@ export interface SiteModel {
   showQuantities: boolean; askEventDate: boolean; whatsappGreeting: string;
   hideBranding: boolean;
   exampleName: boolean; exampleTexts: boolean;
+  /** URL de la foto de portada (llega con la subida de fotos). */
+  cover: string | null;
 }
 
 export function draftToSite(d: Draft): SiteModel {
@@ -33,13 +37,13 @@ export function draftToSite(d: Draft): SiteModel {
       id: c.id, name: c.name,
       products: c.products.map((p) => ({
         id: p.id, name: p.name, description: p.description, price: p.price, comparePrice: p.comparePrice,
-        available: isAvailable(p), isExample: p.isExample,
+        available: isAvailable(p), isExample: p.isExample, image: null,
         options: p.options.map((o) => ({ id: o.id, label: o.label, price: o.price, soldOut: o.soldOut })),
       })),
     })),
     showQuantities: d.showQuantities, askEventDate: d.askEventDate, whatsappGreeting: d.whatsappGreeting,
     hideBranding: false,
-    exampleName: d.nameIsExample, exampleTexts: d.textsAreExample,
+    exampleName: d.nameIsExample, exampleTexts: d.textsAreExample, cover: null,
   };
 }
 
@@ -55,7 +59,7 @@ export function publicToSite(site: PublicSite): SiteModel {
   const prods = site.products ?? [];
   const toProduct = (p: (typeof prods)[number]): SiteProduct => ({
     id: p.id, name: p.name, description: p.description, price: num(p.price), comparePrice: num(p.comparePrice),
-    available: p.available, isExample: false,
+    available: p.available, isExample: false, image: null,
     options: p.options.map((o) => ({ id: o.id, label: o.label, price: num(o.price), soldOut: o.soldOut })),
   });
   const categories: SiteCategory[] = cats.map((c) => ({ id: c.id, name: c.name, products: prods.filter((p) => p.categoryId === c.id).map(toProduct) }));
@@ -76,7 +80,7 @@ export function publicToSite(site: PublicSite): SiteModel {
     showQuantities: settings.showQuantities !== false, askEventDate: settings.askEventDate === true,
     whatsappGreeting: str(settings.whatsappGreeting, "Hola! Quiero hacer este pedido:"),
     hideBranding: b.planId === "pro",
-    exampleName: false, exampleTexts: false,
+    exampleName: false, exampleTexts: false, cover: null,
   };
 }
 

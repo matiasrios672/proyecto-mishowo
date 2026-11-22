@@ -48,17 +48,22 @@ export function openStatus(hours: Hours | null | undefined, now: Date = new Date
   return { open: false, label: "Cerrado" };
 }
 
-/** Resumen compacto: agrupa días consecutivos con el mismo horario. */
-export function summarizeHours(hours: Hours): string[] {
-  const lines: string[] = [];
+export interface HoursGroup { text: string; open: boolean; first: number; last: number }
+
+/** Agrupa días consecutivos con el mismo horario. `first`/`last` son índices de día (lunes = 0). */
+export function groupHours(hours: Hours): HoursGroup[] {
+  const groups: HoursGroup[] = [];
   let i = 0;
   while (i < 7) {
     const h = hours[i]!;
     let j = i;
     while (j + 1 < 7 && hours[j + 1]!.open === h.open && (!h.open || (hours[j + 1]!.from === h.from && hours[j + 1]!.to === h.to))) j++;
     const days = i === j ? DAY_NAMES[i]! : `${DAY_NAMES[i]} a ${DAY_NAMES[j]}`;
-    lines.push(`${days}: ${h.open ? `${h.from} a ${h.to}` : "cerrado"}`);
+    groups.push({ text: `${days}: ${h.open ? `${h.from} a ${h.to}` : "cerrado"}`, open: h.open, first: i, last: j });
     i = j + 1;
   }
-  return lines;
+  return groups;
 }
+
+/** Resumen compacto en texto. */
+export const summarizeHours = (hours: Hours): string[] => groupHours(hours).map((g) => g.text);

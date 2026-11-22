@@ -28,7 +28,7 @@ export function CatalogSearch({ rootId }: { rootId: string }) {
   }
 
   return (
-    <div className="px-4 pb-2">
+    <div className="pb-2">
       <label htmlFor={id} className="sr-only">Buscar en el catálogo</label>
       <input id={id} type="search" placeholder="Buscar productos…" onChange={(e) => filter(e.target.value)}
         className="w-full rounded-full border border-input bg-card px-4 py-2 text-sm text-foreground placeholder:text-muted-foreground" />

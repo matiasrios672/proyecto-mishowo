@@ -68,3 +68,10 @@ Formato: ID · fecha · decisión · motivo · consecuencias. Las más nuevas ar
 ## D-012 · 2026-11-22 · Cerrar sesión: el logout nunca espera a un guardado
 - Bug real (intermitente bajo carga): "Salir" subía primero lo pendiente al servidor, aunque no hubiera cambios, y si la persona recargaba o cerraba la pestaña enseguida el pedido de logout no salía y la sesión quedaba abierta en el servidor.
 - Ahora: se frena el guardado local, se espera solo si hay cambios sin subir (tope 3 s, `settle()`), se borra lo local y el logout se manda con `keepalive`, que el navegador completa aunque la página se cierre.
+
+## D-013 · 2026-11-22 · Rediseño de las páginas públicas de los negocios
+- Concepto: **la comanda**. La portada pone el nombre del negocio enorme y, al lado, un ticket con el menú (puntos guía hasta el precio, borde aserrado) que se "imprime" al cargar; es el único elemento memorable. Cinta de productos en movimiento, "Pedir es fácil" (3 pasos reales), horarios con el día de hoy resaltado, franja final con WhatsApp. El catálogo no usa cajas idénticas: Vidriera (imagen + texto), Mostrador (carta con puntos guía), Grilla, Servicios (barra de color).
+- Responsive por **container queries** (`@container` en la raíz), no por viewport: la vista previa del editor (marco de celular de 390 px o de computadora) muestra el diseño real. Los colores y tipografías siguen viniendo de los 9 temas y 4 pares.
+- Movimiento: una entrada orquestada, la cinta, y respuestas a acciones (rebote del contador, hoja del pedido). Todo se apaga con `prefers-reduced-motion` (testeado). Sin fade-in por sección.
+- Detalle técnico: la utilidad `font-heading` de shadcn apunta a la fuente de texto; las páginas de negocio usan `.site-display` para la fuente de títulos del par elegido.
+- Espacio listo para fotos: `cover` en el sitio e `image` en cada producto (hoy null); sin foto se usa una pieza de color del tema con la inicial.

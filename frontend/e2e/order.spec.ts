@@ -3,6 +3,8 @@ import { test, expect, type Page } from "@playwright/test";
 // Requiere el backend y el negocio demo: `docker compose up -d` + `SEED_DEMO=1 npm run db:seed` en backend.
 const SITE = "http://lupe-empanadas.localhost:3100/";
 const jamon = (page: Page) => page.locator("li", { hasText: "Empanada de jamón y queso" });
+// En celular el pedido se abre desde la barra inferior; en computadora, desde el botón de la barra superior.
+const cartEntry = (page: Page) => page.locator("[data-testid=cart-bar]:visible, [data-testid=nav-cart]:visible");
 const carne = (page: Page) => page.locator("li", { hasText: "Empanada de carne cortada" });
 
 async function fillCart(page: Page) {
@@ -25,8 +27,8 @@ test.describe("pedido en la página pública", () => {
     await expect(page.getByText("Agotado")).toBeVisible(); // la humita no se puede pedir
     await expect(page.getByRole("button", { name: /Agregar Empanada de humita/ })).toHaveCount(0);
 
-    const bar = page.getByTestId("cart-bar");
-    await expect(bar).toContainText("3 productos");
+    const bar = cartEntry(page);
+    await expect(bar).toContainText("3");
     await bar.click();
     const dialog = page.getByRole("dialog", { name: "Tu pedido" });
     await expect(dialog.getByTestId("cart-total")).toContainText("22.600"); // 2 x 1.700 + 19.200
@@ -49,14 +51,16 @@ test.describe("pedido en la página pública", () => {
 
     await expect(page.getByTestId("order-done")).toContainText("¡Pedido #");
     await page.getByRole("button", { name: "Seguir mirando" }).click();
-    await expect(page.getByTestId("cart-bar")).toHaveCount(0); // el carrito se vació
+    // el carrito se vació: en celular desaparece la barra; en computadora el botón sigue, pero sin cantidad
+    if (info.project.name === "mobile") await expect(cartEntry(page)).toHaveCount(0);
+    else await expect(page.getByTestId("nav-cart")).not.toContainText(/\d/);
   });
 
   test("el carrito persiste al recargar y se puede editar desde el panel", async ({ page }) => {
     await fillCart(page);
     await page.reload();
-    await expect(page.getByTestId("cart-bar")).toContainText("3 productos");
-    await page.getByTestId("cart-bar").click();
+    await expect(cartEntry(page)).toContainText("3");
+    await cartEntry(page).click();
     const dialog = page.getByRole("dialog", { name: "Tu pedido" });
     await dialog.getByRole("button", { name: /Quitar una unidad de Empanada de jamón/ }).click();
     await expect(dialog.getByTestId("cart-total")).toContainText("20.900");
@@ -71,7 +75,7 @@ test.describe("pedido en la página pública", () => {
   test("sin conexión con el servidor ofrece mandarlo igual por WhatsApp y no pierde el carrito", async ({ page }) => {
     await fillCart(page);
     await page.route("**/public/orders", (r) => r.abort());
-    await page.getByTestId("cart-bar").click();
+    await cartEntry(page).click();
     const dialog = page.getByRole("dialog", { name: "Tu pedido" });
     await dialog.getByTestId("send-order").click();
     await expect(dialog.getByRole("alert")).toContainText("No pudimos conectarnos");
@@ -82,7 +86,7 @@ test.describe("pedido en la página pública", () => {
   test("un error del servidor se explica en castellano", async ({ page }) => {
     await fillCart(page);
     await page.route("**/public/orders", (r) => r.fulfill({ status: 409, contentType: "application/json", body: JSON.stringify({ error: "out_of_stock" }) }));
-    await page.getByTestId("cart-bar").click();
+    await cartEntry(page).click();
     const dialog = page.getByRole("dialog", { name: "Tu pedido" });
     await dialog.getByTestId("send-order").click();
     await expect(dialog.getByRole("alert")).toContainText("se quedó sin stock");
