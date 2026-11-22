@@ -33,7 +33,7 @@ services:
     environment:
       NODE_ENV: production
       DATABASE_URL: postgres://mishowo:mishowo@db:5432/mishowo
-      FRONTEND_ORIGIN: http://localhost:3000
+      FRONTEND_ORIGIN: http://localhost:3000,http://localhost:3100
       UPLOADS_DIR: /app/uploads
     ports:
       - "4000:4000"

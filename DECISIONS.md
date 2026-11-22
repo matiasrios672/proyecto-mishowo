@@ -34,3 +34,8 @@ Formato: ID · fecha · decisión · motivo · consecuencias. Las más nuevas ar
 
 ## D-006 · 2026-11-22 · Imágenes Docker >300 MB
 - Frontend ~308 MB y backend ~354 MB sin comprimir. La base `node:alpine` ya pesa ~240 MB. No se persigue el objetivo de 300 MB.
+
+## D-007 · 2026-11-22 · Precios, planes y límites se gestionan desde el admin
+- Pedido del dueño. La tabla `plans` es la fuente de verdad; `backend/src/config/plans.ts` solo da valores iniciales del seed (que no pisa ediciones).
+- Landing, pantalla de planes y límites del backend leen de la DB (`GET /public/plans`). Nada de precios hardcodeados en el frontend.
+- El editor de planes del admin se construye en la Épica 13 (13.1); hasta entonces se editan en la tabla `plans`.

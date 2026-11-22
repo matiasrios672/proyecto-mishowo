@@ -30,3 +30,15 @@ export async function getSite(slug: string): Promise<PublicSite | null> {
   if (!res.ok) throw new Error(`API respondió ${res.status}`);
   return (await res.json()) as PublicSite;
 }
+
+export interface TemplateSummary { id: string; name: string; blurb: string; mode: "productos" | "servicios"; layout: string; theme: string }
+
+/** Rubros disponibles para el onboarding. */
+export async function getTemplates(): Promise<TemplateSummary[]> {
+  "use cache";
+  cacheLife("minutes");
+  cacheTag("templates");
+  const res = await fetch(`${API_URL}/public/templates`);
+  if (!res.ok) throw new Error(`API respondió ${res.status}`);
+  return (await res.json()) as TemplateSummary[];
+}

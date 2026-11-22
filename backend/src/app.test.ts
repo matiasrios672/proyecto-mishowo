@@ -20,3 +20,14 @@ describe("GET /api/health", () => {
     expect(res.statusCode).toBe(503);
   });
 });
+
+describe('plantillas públicas', () => {
+  it('lista y devuelve el detalle de un rubro', async () => {
+    const app = buildApp(config);
+    const list = await app.inject({ method: 'GET', url: '/public/templates' });
+    expect(list.json().length).toBeGreaterThanOrEqual(10);
+    const one = await app.inject({ method: 'GET', url: '/public/templates/rotiseria' });
+    expect(one.json().categories[0].products[0].name).toContain('Empanada');
+    expect((await app.inject({ method: 'GET', url: '/public/templates/nada' })).statusCode).toBe(404);
+  });
+});

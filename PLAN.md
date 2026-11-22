@@ -33,10 +33,10 @@ Criterio general de aceptación por tarea: typecheck + lint + tests verdes; para
 - [x] 2.5 Resolución de tenant por `Host`: endpoint público `GET /public/sites/:slug` + middleware Next.js. *AC: `demo.localhost` muestra el negocio demo.*
 
 ## Épica 3 — Onboarding por rubro
-- [ ] 3.1 Contenido de ejemplo realista (rotisería, ropa, muebles/deco, eventos/alquileres, gimnasio, oficios, belleza, salud, otro rubro productos/servicios), sin lorem ipsum.
-- [ ] 3.2 Pantalla "¿De qué es tu negocio?" con tarjetas de rubro + "Otro rubro" + "Contame tu idea" con badge Próximamente.
-- [ ] 3.3 Borrador en localStorage y badge "Ejemplo" en contenido sin reemplazar.
-- [ ] 3.4 Stub `backend/src/lib/ai/` (interfaz provider vacía, sin llamadas).
+- [x] 3.1 Contenido de ejemplo realista (rotisería, ropa, muebles/deco, eventos/alquileres, gimnasio, oficios, belleza, salud, otro rubro productos/servicios), sin lorem ipsum.
+- [x] 3.2 Pantalla "¿De qué es tu negocio?" con tarjetas de rubro + "Otro rubro" + "Contame tu idea" con badge Próximamente.
+- [x] 3.3 Borrador en localStorage y badge "Ejemplo" en contenido sin reemplazar.
+- [x] 3.4 Stub `backend/src/lib/ai/` (interfaz provider vacía, sin llamadas).
 
 ## Épica 4 — Editor con preview en vivo
 - [ ] 4.1 Layout editor: formulario + preview (toggle celular/compu, pantalla completa); en móvil botón flotante "Ver cómo queda".

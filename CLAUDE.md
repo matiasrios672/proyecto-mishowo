@@ -31,5 +31,5 @@ Especificación completa: `PROMPT_MiShowo_ClaudeCode.md` (no copiarla acá). Pla
 - Frenar y preguntar: precios finales, datos de cobro, logo, credenciales (Cloudflare, SMTP), decisiones irreversibles.
 
 ## Estado actual
-- Fase: Épicas 1 y 2 completas (falta review independiente). Siguiente: Épica 3.
-- Próximo paso: Épica 3, tarea 3.1 (contenido de ejemplo por rubro). Demo local: `SEED_DEMO=1 npm run db:seed` y abrir http://lupe-empanadas.localhost:3000
+- Fase: Épicas 1-3 completas (falta review independiente). Siguiente: Épica 4 (editor).
+- Próximo paso: Épica 4, tarea 4.1 (layout del editor: formulario + preview). El editor actual (frontend/src/components/editor/EditorShell.tsx) es provisorio y solo lee el borrador de localStorage. Precios: siempre desde la DB (D-007).
