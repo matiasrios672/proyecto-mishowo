@@ -13,6 +13,7 @@ import { reportRoutes } from "./routes/reports.js";
 import { authRoutes } from "./routes/auth.js";
 import { meRoutes } from "./routes/me.js";
 import { contactRoutes } from "./routes/contact.js";
+import { adminRoutes } from "./routes/admin.js";
 import { createSmtpMailer, type Mailer } from "./lib/mailer.js";
 import { createRevalidator, type SiteChanged } from "./lib/revalidate.js";
 import { DiskStorage, type StorageProvider } from "./storage/index.js";
@@ -72,7 +73,10 @@ export function buildApp(config: Config, dbCheck: HealthCheck = async () => true
       contactRoutes(api, db, mailer, config.REPORTS_PER_MINUTE);
       // Contextos propios: el chequeo de origen de /auth y /me no debe afectar a las rutas públicas (pedidos, denuncias).
       api.register(async (authScope) => authRoutes(authScope, db, config, mailer));
-      api.register(async (meScope) => meRoutes(meScope, db, config, deps.onSiteChanged ?? createRevalidator(config, (m) => app.log.warn(m)), deps.storage ?? new DiskStorage(config.UPLOADS_DIR), mailer));
+      const notify = deps.onSiteChanged ?? createRevalidator(config, (m) => app.log.warn(m));
+      const storage = deps.storage ?? new DiskStorage(config.UPLOADS_DIR);
+      api.register(async (meScope) => meRoutes(meScope, db, config, notify, storage, mailer));
+      api.register(async (adminScope) => adminRoutes(adminScope, db, config, mailer, storage, notify));
     }
   });
 

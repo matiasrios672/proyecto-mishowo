@@ -27,9 +27,13 @@ function cookieOptions(config: Config, maxAgeSec: number) {
 }
 
 /** Crea la sesión y la deja en una cookie httpOnly. En la DB solo se guarda el hash del token. */
-export async function startSession(db: Db, config: Config, reply: FastifyReply, userId: string) {
+export const ADMIN_ROLES = ["owner", "admin", "support"] as const;
+export const isAdminRole = (role: string) => (ADMIN_ROLES as readonly string[]).includes(role);
+
+export async function startSession(db: Db, config: Config, reply: FastifyReply, userId: string, role = "user") {
   const token = newToken();
-  const maxAge = config.SESSION_DAYS * 24 * 3600;
+  // Las sesiones de administración duran mucho menos que las de los usuarios.
+  const maxAge = isAdminRole(role) ? Math.round(config.ADMIN_SESSION_HOURS * 3600) : config.SESSION_DAYS * 24 * 3600;
   await db.insert(s.sessions).values({ id: sha256(token), userId, expiresAt: new Date(Date.now() + maxAge * 1000) });
   reply.setCookie(SESSION_COOKIE, token, cookieOptions(config, maxAge));
 }
@@ -55,6 +59,19 @@ export async function currentUser(db: Db, req: FastifyRequest): Promise<SessionU
     .where(and(eq(s.sessions.id, sha256(token)), gt(s.sessions.expiresAt, new Date())));
   const user = rows[0]?.user ?? null;
   return user && !user.blockedAt ? user : null;
+}
+
+export type SessionRow = typeof s.sessions.$inferSelect;
+
+/** Usuario y fila de sesión actuales (la fila trae si pasó el segundo factor de administración). */
+export async function currentSession(db: Db, req: FastifyRequest): Promise<{ user: SessionUser; session: SessionRow } | null> {
+  const token = req.cookies[SESSION_COOKIE];
+  if (!token) return null;
+  const rows = await db.select({ user: s.users, session: s.sessions }).from(s.sessions)
+    .innerJoin(s.users, eq(s.users.id, s.sessions.userId))
+    .where(and(eq(s.sessions.id, sha256(token)), gt(s.sessions.expiresAt, new Date())));
+  const row = rows[0];
+  return row && !row.user.blockedAt ? row : null;
 }
 
 /** Devuelve el usuario o responde 401. Las rutas que lo usan: `const user = await requireUser(...); if (!user) return;` */

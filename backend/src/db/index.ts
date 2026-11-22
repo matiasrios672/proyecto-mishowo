@@ -2,6 +2,7 @@ import pg from "pg";
 import { drizzle } from "drizzle-orm/node-postgres";
 import { migrate } from "drizzle-orm/node-postgres/migrator";
 import * as schema from "./schema.js";
+import { AUDIT_GUARD_SQL } from "./audit-guard.js";
 
 export function createDb(databaseUrl: string) {
   const pool = new pg.Pool({ connectionString: databaseUrl, max: 10 });
@@ -18,5 +19,6 @@ export function createDb(databaseUrl: string) {
 export async function runMigrations(databaseUrl: string, folder = "./drizzle") {
   const { db, pool } = createDb(databaseUrl);
   await migrate(db, { migrationsFolder: folder });
+  await pool.query(AUDIT_GUARD_SQL); // idempotente: deja el registro de auditoría de solo lectura
   await pool.end();
 }

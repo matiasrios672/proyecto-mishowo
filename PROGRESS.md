@@ -1,5 +1,11 @@
 # PROGRESS — MiShowo (bitácora, lo más nuevo arriba)
 
+## 2026-11-22 — Épicas 7 y 8 (backend): cobro manual, admin con 2FA, auditoría y vencimientos
+- Backend completo: /me/plan, /me/payments (+comprobante), /admin/* (2FA, dashboard, negocios, usuarios, pagos, planes, ajustes de cobro, administradores, auditoría), jobs de vencimiento y recordatorio, CLI admin:promote. Migración 0007.
+- Verificado con mutaciones: sin 2FA fallan 3 tests; sin trigger de auditoría falla el de inmutabilidad; sin lock de activación y sin la condición del pago pendiente fallan los de concurrencia.
+- Tests de backend: más de 260 (incluye vectores RFC del TOTP).
+- Falta: interfaz de /planes y de /admin (frontend), "ver como el usuario", embudo de onboarding.
+
 ## 2026-11-22 — Épica 9: panel de pedidos
 - Backend: GET /me/orders (filtro, paginación por cursor), /summary, /orders.csv, /:id y PATCH /:id/status (transiciones, reposición de stock, lock). Aviso por email al dueño. Migración 0006 (order_items.option_id).
 - Frontend: /panel/pedidos (filtros con contadores, actualización cada 30 s, acciones por estado, cancelación con confirmación, WhatsApp al cliente, CSV, estados vacíos), PanelShell con guardia de sesión.

@@ -72,17 +72,17 @@ Criterio general de aceptación por tarea: typecheck + lint + tests verdes; para
 ## Épica 7 — Publicación, slug y planes con cobro manual
 - [x] 7.1 Elegir y reservar slug, publicar/despublicar.
 - [x] 7.2 Límites por plan aplicados en backend (productos, fotos, WhatsApp).
-- [ ] 7.3 Pantalla de planes, datos de pago configurables, "Ya pagué" con comprobante.
-- [ ] 7.4 Cron `expire-plans` (degrada a Gratis) y recordatorios previos.
+- [x] 7.3 Pantalla de planes, datos de pago configurables, "Ya pagué" con comprobante.
+- [x] 7.4 Cron `expire-plans` (degrada a Gratis) y recordatorios previos.
 
 ## Épica 8 — Panel de administración v1
-- [ ] 8.1 Layout `/admin`, login separado, roles Owner/Admin/Soporte.
-- [ ] 8.2 2FA TOTP obligatorio, sesiones cortas, IPs permitidas opcional.
-- [ ] 8.3 Log de auditoría inmutable (antes/después).
-- [ ] 8.4 Dashboard: KPIs, gráficos, embudo de onboarding, alertas.
-- [ ] 8.5 Negocios: tabla con filtros, ficha, acciones (impersonar con banner, suspender, soft delete 30 días, transferir, destacar).
-- [ ] 8.6 Usuarios: lista, ficha, acciones, exportar/eliminar datos (Ley 25.326).
-- [ ] 8.7 Bandeja de pagos: confirmar/rechazar, registrar pago manual, vencimientos, recordatorios, regalar días, reporte CSV.
+- [x] 8.1 Layout `/admin`, login separado, roles Owner/Admin/Soporte.
+- [x] 8.2 2FA TOTP obligatorio, sesiones cortas, IPs permitidas opcional.
+- [x] 8.3 Log de auditoría inmutable (antes/después).
+- [~] 8.4 Dashboard: KPIs, gráficos, embudo de onboarding, alertas.
+- [~] 8.5 Negocios: tabla con filtros, ficha, acciones (impersonar con banner, suspender, soft delete 30 días, transferir, destacar).
+- [x] 8.6 Usuarios: lista, ficha, acciones, exportar/eliminar datos (Ley 25.326).
+- [x] 8.7 Bandeja de pagos: confirmar/rechazar, registrar pago manual, vencimientos, recordatorios, regalar días, reporte CSV.
 
 ## Épica 9 — Panel de pedidos del negocio
 - [x] 9.1 Lista y detalle de pedidos con estados (nuevo, confirmado, listo, entregado, cancelado).

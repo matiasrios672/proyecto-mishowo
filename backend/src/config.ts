@@ -8,6 +8,13 @@ const schema = z.object({
   // Dominio raíz: sus subdominios (las páginas de los negocios) pueden llamar a la API.
   ROOT_DOMAIN: z.string().default("localhost"),
   // Pedidos por minuto por IP en el endpoint público de pedidos.
+  // Administración: clave AES-256 (32 bytes en base64) para cifrar los secretos 2FA; sin ella el 2FA no se puede activar.
+  ADMIN_SECRET_KEY: z.string().optional(),
+  // Lista de IPs permitidas para /admin (separadas por coma). Vacío = sin restricción.
+  ADMIN_ALLOWED_IPS: z.string().optional(),
+  ADMIN_VERIFY_HOURS: z.coerce.number().positive().default(8),
+  ADMIN_SESSION_HOURS: z.coerce.number().positive().default(12),
+  ADMIN_2FA_PER_MINUTE: z.coerce.number().int().positive().default(6),
   PAYMENTS_PER_MINUTE: z.coerce.number().int().positive().default(10),
   PUBLISH_PER_MINUTE: z.coerce.number().int().positive().default(20),
   REPORTS_PER_MINUTE: z.coerce.number().int().positive().default(5),

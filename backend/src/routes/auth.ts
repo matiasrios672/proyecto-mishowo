@@ -77,7 +77,7 @@ export function authRoutes(app: FastifyInstance, db: Db, config: Config, mailer:
     if (!user || !ok) return reply.code(401).send({ error: "invalid_credentials" });
     if (user.blockedAt) return reply.code(403).send({ error: "blocked" });
     await db.update(s.users).set({ lastLoginAt: new Date() }).where(eq(s.users.id, user.id));
-    await startSession(db, config, reply, user.id);
+    await startSession(db, config, reply, user.id, user.role);
     return { user: toPublicUser(user) };
   });
 
@@ -146,7 +146,7 @@ export function authRoutes(app: FastifyInstance, db: Db, config: Config, mailer:
       .set({ emailVerifiedAt: sql`coalesce(${s.users.emailVerifiedAt}, now())`, lastLoginAt: new Date() })
       .where(eq(s.users.id, user.id)).returning();
     if (!fresh) return reply.code(400).send({ error: "invalid_token" });
-    await startSession(db, config, reply, fresh.id);
+    await startSession(db, config, reply, fresh.id, fresh.role);
     return { user: toPublicUser(fresh) };
   });
 }
