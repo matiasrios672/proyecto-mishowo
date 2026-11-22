@@ -24,7 +24,8 @@ export const users = pgTable("users", {
   role: text("role").notNull().default("user"), // user | owner | admin | support
   emailVerifiedAt: timestamp("email_verified_at", { withTimezone: true }),
   blockedAt: timestamp("blocked_at", { withTimezone: true }),
-  totpSecret: text("totp_secret"),
+  totpSecret: text("totp_secret"), // cifrado (AES-256-GCM)
+  totpEnabledAt: timestamp("totp_enabled_at", { withTimezone: true }),
   lastLoginAt: timestamp("last_login_at", { withTimezone: true }),
   createdAt: ts("created_at"),
 }, (t) => [uniqueIndex("users_email_idx").on(t.email)]);
@@ -33,6 +34,7 @@ export const sessions = pgTable("sessions", {
   id: text("id").primaryKey(), // hash del token
   userId: uuid("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
   expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+  adminVerifiedAt: timestamp("admin_verified_at", { withTimezone: true }),
   createdAt: ts("created_at"),
 }, (t) => [index("sessions_user_idx").on(t.userId)]);
 
@@ -55,6 +57,8 @@ export const businesses = pgTable("businesses", {
   status: text("status").notNull().default("draft"), // draft | published | suspended
   planId: text("plan_id").notNull().default("gratis"),
   planExpiresAt: timestamp("plan_expires_at", { withTimezone: true }),
+  planReminderFor: timestamp("plan_reminder_for", { withTimezone: true }), // vencimiento para el cual ya se mandó el recordatorio
+  internalNote: text("internal_note"),
   publishedAt: timestamp("published_at", { withTimezone: true }),
   deletedAt: timestamp("deleted_at", { withTimezone: true }),
   // Sube en cada guardado del editor: detecta ediciones simultáneas desde dos dispositivos.
@@ -177,6 +181,7 @@ export const payments = pgTable("payments", {
   rejectReason: text("reject_reason"),
   createdAt: ts("created_at"),
   resolvedAt: timestamp("resolved_at", { withTimezone: true }),
+  resolvedBy: uuid("resolved_by"),
 }, (t) => [index("payments_status_idx").on(t.status)]);
 
 // ---- Auditoría (solo se inserta) ----
@@ -226,3 +231,10 @@ export const contactRequests = pgTable("contact_requests", {
   status: text("status").notNull().default("nuevo"), // nuevo | resuelto
   createdAt: ts("created_at"),
 }, (t) => [index("contact_requests_status_idx").on(t.status, t.createdAt)]);
+
+// ---- Ajustes editables desde el admin (datos para transferir, etc.) ----
+export const appSettings = pgTable("app_settings", {
+  key: text("key").primaryKey(),
+  value: jsonb("value").notNull().default({}),
+  updatedAt: ts("updated_at"),
+});

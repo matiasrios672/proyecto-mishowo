@@ -8,6 +8,7 @@ const schema = z.object({
   // Dominio raíz: sus subdominios (las páginas de los negocios) pueden llamar a la API.
   ROOT_DOMAIN: z.string().default("localhost"),
   // Pedidos por minuto por IP en el endpoint público de pedidos.
+  PAYMENTS_PER_MINUTE: z.coerce.number().int().positive().default(10),
   PUBLISH_PER_MINUTE: z.coerce.number().int().positive().default(20),
   REPORTS_PER_MINUTE: z.coerce.number().int().positive().default(5),
   // Frontend público (para armar los links de los emails).

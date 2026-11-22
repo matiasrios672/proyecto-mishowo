@@ -10,6 +10,9 @@ import { missingForPublish, productLimit, realProducts } from "../business/publi
 import { requireUser, strictOriginOk } from "../auth/session.js";
 import { checkSlug } from "../lib/slug.js";
 import { orderPanelRoutes } from "./orders-panel.js";
+import { billingRoutes } from "./billing.js";
+import type { StorageProvider } from "../storage/index.js";
+import type { Mailer } from "../lib/mailer.js";
 import type { SiteChanged } from "../lib/revalidate.js";
 
 const putBody = z.object({
@@ -23,13 +26,14 @@ const slugBody = z.object({ slug: z.string().trim().toLowerCase().min(1).max(60)
 // Drizzle envuelve el error de Postgres: el código (23505 = clave duplicada) puede venir en `cause`.
 const isUniqueViolation = (e: unknown) => [e, (e as { cause?: unknown })?.cause].some((x) => (x as { code?: string } | undefined)?.code === "23505");
 
-export function meRoutes(app: FastifyInstance, db: Db, config: Config, notify: SiteChanged) {
+export function meRoutes(app: FastifyInstance, db: Db, config: Config, notify: SiteChanged, storage: StorageProvider, mailer: Mailer) {
   // CSRF: solo pedidos que vengan del sitio principal.
   app.addHook("onRequest", async (req, reply) => {
     if (!strictOriginOk(config, req)) return reply.code(403).send({ error: "bad_origin" });
   });
 
   orderPanelRoutes(app, db);
+  billingRoutes(app, db, storage, mailer, config.PAYMENTS_PER_MINUTE);
 
   const ownBusiness = async (userId: string) =>
     (await db.select().from(s.businesses).where(and(eq(s.businesses.ownerId, userId), isNull(s.businesses.deletedAt))))[0] ?? null;
