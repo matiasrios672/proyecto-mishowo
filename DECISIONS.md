@@ -106,3 +106,10 @@ Formato: ID · fecha · decisión · motivo · consecuencias. Las más nuevas ar
 - **Auditoría inmutable:** cada acción guarda quién, qué, antes, después e IP en la misma transacción, y un trigger de Postgres impide UPDATE y DELETE (verificado). Los intentos fallidos de 2FA también se registran.
 - **Vencimientos:** `node dist/cron.js expire-plans|remind-expiring|all` (Scheduled Task de Coolify). Idempotentes y a prueba de corridas simultáneas; los productos que pasan el límite gratuito se conservan. Un plan que vence no se renueva solo.
 - Pendiente del admin v1: embudo de onboarding (necesita la analítica propia de la Épica 11) y "ver como el usuario".
+
+## D-018 · 2026-11-22 · Panel del cliente por módulos con un único editor
+- El panel pasa a tener barra lateral izquierda (AppShell, compartido con el admin). "Diseñar mi página" se separa en módulos de uso distinto: **Catálogo** (se toca todos los días), **Mi página** (se toca poco: textos, fotos, diseño, SEO, publicar) y **Ajustes** (negocio y pedidos), más un **Inicio** con checklist.
+- Los tres módulos comparten UN editor montado en el layout `(workspace)`: Next 16 con cacheComponents mantiene montada la pantalla anterior, y dos editores sobre el mismo negocio se pisarían con datos viejos. Mantener uno solo evita recargas, estado viejo y conflictos.
+- El borrador local y la marca de sincronización se leen **una sola vez al abrir** (no en cada render): el propio editor los va actualizando al guardar y, releídos, parecen un conflicto.
+- El editor completo y guiado (`/editor`) queda para la primera vez y para quien aún no tiene cuenta.
+- Pedidos opcionales: `ordersEnabled` en `businesses.settings` (default true); con pedidos apagados el servidor rechaza `POST /public/orders` (409 `orders_disabled`).

@@ -1,5 +1,15 @@
 # PROGRESS — MiShowo (bitácora, lo más nuevo arriba)
 
+## 2026-11-22 — Panel del cliente por módulos, identidad en login/panel/admin, pedidos opcionales
+- **Panel del cliente con barra lateral izquierda** (AppShell compartido con el admin; accesible: salto al contenido, landmarks, aria-current, 44 px, foco visible, menú móvil con Escape). Módulos: Inicio (resumen + checklist con enlaces directos), Catálogo, Pedidos, Cupones, Turnos, Estadísticas, QR, Mi página, Ajustes, Plan. El editor completo y guiado se mantiene para la primera vez y para quien no tiene cuenta (/editor).
+- **Un único editor compartido** por Catálogo / Mi página / Ajustes (vive en el layout): al cambiar de módulo no se desmonta. Antes de salir a otras pantallas, una guarda de navegación espera a que se guarde lo último que se tipeó.
+- **Login y registro rediseñados** con la identidad de MiShowo (panel de marca, pestañas con flechas, mostrar/ocultar contraseña, campos de 44 px y 16 px). Login: quien ya tiene página va a Inicio; quien no, al editor; el equipo de MiShowo, a /admin; `?next=` siempre gana.
+- **Pedidos opcionales** por negocio (`ordersEnabled`): sin carrito, con "Consultar" por WhatsApp; el panel oculta Pedidos y Cupones.
+- **Logo propio del negocio** (barra, portada, pie, SEO) y vista previa del editor con logo, portada y fotos reales.
+- Cupones, turnos, admin v2 (denuncias, contenido, slugs reservados, estado, mantenimiento).
+- Bugs reales atrapados: el editor leía el borrador local en cada render y, al cambiar de módulo, confundía lo que él mismo había guardado con un conflicto ("Ya tenés una página guardada"); Next mantiene montada la pantalla anterior (dos editores a la vez); decisión de sincronización ahora fija al abrir.
+- Tests: backend 341, frontend 146 unitarios + 178 e2e.
+
 ## 2026-11-22 — Épica 11 (parcial): estadísticas, QR y SEO por negocio
 - Analítica propia sin cookies ni IP guardada (visitante = hash diario): visitas únicas por día, vistas de producto, clics a WhatsApp, origen (utm_source/QR, Instagram, Google…). Filtra robots, valida que el producto sea del negocio, límite por IP. Panel /panel/estadisticas (7/30/90 días).
 - QR /panel/qr (PNG + imprimir/PDF) con utm_source=qr.

@@ -2,17 +2,21 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { IconBag, IconBolt, IconChat, IconEdit, IconGoogle, IconSparkle, IconStore } from "@/components/marketing/Doodles";
 import { IconArrowLeft, IconArrowRight, IconImage, IconRedo, IconUndo } from "@/components/marketing/Icons2";
 import { SiteView } from "@/components/site/SiteView";
 import { draftToSite } from "@/lib/site";
+import { withMedia, type MediaItem } from "@/lib/previewMedia";
 import { quality, type EditorTab } from "@/lib/score";
 import { clearDraft, contentToDraft, type Draft } from "@/lib/draft";
 import { clearSyncMarker, fetchServerBusiness } from "@/lib/serverSync";
 import { saveLabel, useEditor, type SyncConfig } from "./useEditor";
 import { logout, setLogoutHook, useUser } from "@/components/auth/authStore";
 import { api } from "@/lib/authClient";
+import { setNavGuard } from "@/lib/navGuard";
+import { MODULE_ROUTE, MODULE_TABS, MODULE_TITLE, isTab, moduleOf, type EditorModule } from "@/lib/modules";
 import { NegocioTab } from "./tabs/NegocioTab";
 import { TextosTab } from "./tabs/TextosTab";
 import { FotosTab } from "./tabs/FotosTab";
@@ -22,7 +26,7 @@ import { DisenoTab } from "./tabs/DisenoTab";
 import { SeoTab } from "./tabs/SeoTab";
 import { PublicarTab } from "./tabs/PublicarTab";
 
-const TABS: { id: EditorTab; label: string; hint: string; Icon: (p: { className?: string }) => React.ReactNode }[] = [
+const ALL_TABS: { id: EditorTab; label: string; hint: string; Icon: (p: { className?: string }) => React.ReactNode }[] = [
   { id: "negocio", label: "Negocio", hint: "Nombre, WhatsApp, horarios", Icon: IconStore },
   { id: "textos", label: "Textos", hint: "Cómo te presentás", Icon: IconEdit },
   { id: "fotos", label: "Fotos", hint: "Logo, portada y productos", Icon: IconImage },
@@ -36,10 +40,19 @@ const TABS: { id: EditorTab; label: string; hint: string; Icon: (p: { className?
 const isTyping = (t: EventTarget | null) =>
   t instanceof HTMLElement && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.tagName === "SELECT" || t.isContentEditable);
 
-export function Editor({ initial, sync }: { initial: Draft; sync?: SyncConfig }) {
+export function Editor({ initial, sync, module = "all" }: { initial: Draft; sync?: SyncConfig; module?: EditorModule }) {
+  const router = useRouter();
+  const TABS = MODULE_TABS[module].map((id) => ALL_TABS.find((t) => t.id === id)!);
+  const rail = module === "all"; // el editor completo y guiado lleva la lista de secciones a la izquierda; los módulos, pestañas arriba
   const { draft, update, undo, redo, canUndo, canRedo, save, now, syncState, syncEnabled, keepMine, adoptServer, resumeSync, prepareSignOut, settleNow } = useEditor(initial, sync);
   const [conflictBusy, setConflictBusy] = useState(false);
-  const [tab, setTab] = useState<EditorTab>("negocio");
+  // La sección activa se deriva del módulo y de ?tab= (así cambia sola al navegar entre módulos, sin reiniciar el editor).
+  const asked = useSearchParams().get("tab");
+  const slot = `${module}|${asked ?? ""}`;
+  const [picked, setPicked] = useState<{ slot: string; tab: EditorTab } | null>(null);
+  const fallback = isTab(asked) && MODULE_TABS[module].includes(asked) ? asked : MODULE_TABS[module][0]!;
+  const tab: EditorTab = picked && picked.slot === slot ? picked.tab : fallback;
+  const setTab = (t: EditorTab) => setPicked({ slot, tab: t });
   const [device, setDevice] = useState<"celular" | "computadora">("celular");
   const [mobileView, setMobileView] = useState<"editar" | "ver">("editar");
   const [fullscreen, setFullscreen] = useState(false);
@@ -47,7 +60,8 @@ export function Editor({ initial, sync }: { initial: Draft; sync?: SyncConfig })
   const user = useUser();
   const [resend, setResend] = useState<"idle" | "sending" | "sent" | "error">("idle");
   const q = quality(draft);
-  const site = draftToSite(draft);
+  const [media, setMedia] = useState<MediaItem[]>([]);
+  const site = withMedia(draftToSite(draft), media);
 
   // Deshacer/rehacer con teclado, salvo dentro de un campo de texto (ahí manda el navegador).
   useEffect(() => {
@@ -76,6 +90,13 @@ export function Editor({ initial, sync }: { initial: Draft; sync?: SyncConfig })
     await logout();
   }
 
+  const settleRef = useRef(settleNow);
+  useEffect(() => { settleRef.current = settleNow; });
+  useEffect(() => {
+    setNavGuard(() => settleRef.current());
+    return () => setNavGuard(null);
+  }, []);
+
   // La barra lateral del panel cierra la sesión por acá: así siempre se limpia el borrador de esta computadora.
   const signOutRef = useRef(signOut);
   useEffect(() => { signOutRef.current = signOut; });
@@ -92,12 +113,25 @@ export function Editor({ initial, sync }: { initial: Draft; sync?: SyncConfig })
   }
 
   function goTab(t: EditorTab) {
+    if (!MODULE_TABS[module].includes(t)) {
+      // La sección vive en otro módulo del panel: se guarda lo pendiente y se va para allá.
+      void settleNow().then(() => router.push(`${MODULE_ROUTE[moduleOf(t)]}?tab=${t}`));
+      return;
+    }
     setTab(t);
     setMobileView("editar");
     panelRef.current?.scrollTo({ top: 0 });
   }
 
-  const props = { draft, update, goTab, account: { enabled: syncEnabled, settle: settleNow } };
+  // La vista previa muestra las fotos y el logo de la cuenta (el borrador no los trae).
+  useEffect(() => {
+    if (!syncEnabled) return;
+    let alive = true;
+    api<{ media: MediaItem[] }>("/me/media").then((r) => { if (alive && r.ok) setMedia(r.data.media); });
+    return () => { alive = false; };
+  }, [syncEnabled]);
+
+  const props = { draft, update, goTab, account: { enabled: syncEnabled, settle: settleNow }, onMedia: setMedia };
   const preview = (
     <div className={`mx-auto bg-background ${device === "celular" ? "w-[390px] max-w-full rounded-[2rem] border-8 border-foreground/80" : "w-full max-w-5xl rounded-lg border"} overflow-hidden`} data-testid="preview-frame" data-device={device}>
       <SiteView site={site} preview />
@@ -113,6 +147,7 @@ export function Editor({ initial, sync }: { initial: Draft; sync?: SyncConfig })
     <div className={`flex flex-col bg-white ${user ? "h-full" : "h-dvh"}`}>
       <header className="flex shrink-0 items-center gap-2 border-b border-[#D6E4F2] bg-white px-3 py-2 sm:gap-3 sm:px-4">
         {!user && <Link href="/" aria-label="MiShowo, ir al inicio" className="font-heading text-lg font-bold">Mi<span className="text-primary">Showo</span></Link>}
+        {!rail && <h1 className="hidden shrink-0 text-lg font-extrabold text-[#2F6FB0] sm:block">{MODULE_TITLE[module]}</h1>}
         <div className="min-w-0 flex-1 leading-tight">
           <p className="truncate text-sm font-bold" data-testid="header-name">{draft.name}</p>
           <p className="truncate text-xs text-muted-foreground" role="status" aria-live="polite" data-testid="save-status">{saveLabel(save, now, syncState, syncEnabled)}</p>
@@ -156,7 +191,7 @@ export function Editor({ initial, sync }: { initial: Draft; sync?: SyncConfig })
         </div>
       )}
 
-      <div className="flex min-h-0 flex-1 flex-col lg:grid lg:grid-cols-[minmax(0,30rem)_minmax(0,1fr)] lg:grid-rows-[auto_minmax(0,1fr)] xl:grid-cols-[15rem_minmax(0,30rem)_minmax(0,1fr)] xl:grid-rows-1">
+      <div className={`flex min-h-0 flex-1 flex-col lg:grid lg:grid-cols-[minmax(0,32rem)_minmax(0,1fr)] lg:grid-rows-[auto_minmax(0,1fr)] ${rail ? "xl:grid-cols-[15rem_minmax(0,30rem)_minmax(0,1fr)] xl:grid-rows-1" : ""}`}>
         <div role="tablist" aria-label="Secciones del editor" aria-orientation="horizontal"
           onKeyDown={(e) => {
             const keys = ["ArrowRight", "ArrowLeft", "ArrowDown", "ArrowUp", "Home", "End"];
@@ -166,21 +201,21 @@ export function Editor({ initial, sync }: { initial: Draft; sync?: SyncConfig })
             setTab(TABS[i]!.id);
             document.getElementById(`tab-${TABS[i]!.id}`)?.focus();
           }}
-          className={`mk-tabstrip relative flex shrink-0 gap-1 overflow-x-auto border-b border-[#D6E4F2] bg-[#F4F9FE] px-2 py-2 lg:col-start-1 lg:row-start-1 xl:flex-col xl:gap-0.5 xl:overflow-y-auto xl:border-b-0 xl:border-r xl:px-3 xl:py-4 ${mobileView === "ver" ? "hidden lg:flex" : "flex"}`}>
+          className={`${rail ? "mk-tabstrip overflow-x-auto" : "mk-tabstrip-m overflow-x-auto lg:flex-wrap lg:overflow-visible"} relative flex shrink-0 gap-1 border-b border-[#D6E4F2] bg-[#F4F9FE] px-2 py-2 lg:col-start-1 lg:row-start-1 ${rail ? "xl:flex-col xl:gap-0.5 xl:overflow-y-auto xl:border-b-0 xl:border-r xl:px-3 xl:py-4" : ""} ${mobileView === "ver" ? "hidden lg:flex" : "flex"}`}>
           {TABS.map((t, n) => (
             <button key={t.id} id={`tab-${t.id}`} role="tab" type="button" aria-label={t.label} aria-posinset={n + 1} aria-setsize={TABS.length} title={t.hint} aria-selected={tab === t.id} aria-controls="panel" tabIndex={tab === t.id ? 0 : -1}
               onClick={() => setTab(t.id)} ref={(el) => { if (el && tab === t.id) el.scrollIntoView?.({ block: "nearest", inline: "center" }); }}
-              className={`flex min-h-11 shrink-0 items-center gap-2.5 whitespace-nowrap rounded-xl px-3.5 text-[15px] font-semibold transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring xl:w-full ${tab === t.id ? "bg-[#2F6FB0] text-white shadow-[0_8px_18px_-10px_rgba(47,111,176,0.9)]" : "text-[#0E1B2C] hover:bg-[#EAF4FC]"}`}>
+              className={`flex min-h-11 shrink-0 items-center gap-2.5 whitespace-nowrap rounded-xl px-3.5 text-[15px] font-semibold transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring ${rail ? "xl:w-full" : ""} ${tab === t.id ? "bg-[#2F6FB0] text-white shadow-[0_8px_18px_-10px_rgba(47,111,176,0.9)]" : "text-[#0E1B2C] hover:bg-[#EAF4FC]"}`}>
               <t.Icon className={`size-5 shrink-0 ${tab === t.id ? "text-white" : "text-[#2F6FB0]"}`} />
               <span className="flex flex-col items-start text-left leading-tight">
                 <span>{t.label}</span>
-                <span className={`hidden text-xs font-normal xl:block ${tab === t.id ? "text-white/80" : "text-[#47566A]"}`}>{t.hint}</span>
+                <span className={`${rail ? "hidden text-xs font-normal xl:block" : "hidden"} ${tab === t.id ? "text-white/80" : "text-[#47566A]"}`}>{t.hint}</span>
               </span>
             </button>
           ))}
         </div>
 
-        <div className={`min-h-0 min-w-0 flex-1 flex-col lg:col-start-1 lg:row-start-2 xl:col-start-2 xl:row-start-1 ${mobileView === "ver" ? "hidden lg:flex" : "flex"}`}>
+        <div className={`min-h-0 min-w-0 flex-1 flex-col ${rail ? "lg:col-start-1 lg:row-start-2 xl:col-start-2 xl:row-start-1" : "lg:col-start-1 lg:row-start-2"} ${mobileView === "ver" ? "hidden lg:flex" : "flex"}`}>
           <div id="panel" role="tabpanel" aria-labelledby={`tab-${tab}`} ref={panelRef} tabIndex={-1} className="min-h-0 flex-1 overflow-y-auto p-4 pb-6 outline-none sm:p-5">
             {tab === "negocio" && <NegocioTab {...props} />}
             {tab === "textos" && <TextosTab {...props} />}
@@ -197,7 +232,7 @@ export function Editor({ initial, sync }: { initial: Draft; sync?: SyncConfig })
           </nav>
         </div>
 
-        <aside aria-label="Vista previa" className={`min-h-0 min-w-0 flex-1 flex-col border-l border-[#D6E4F2] bg-[#EAF4FC]/60 lg:col-start-2 lg:row-span-2 lg:row-start-1 xl:col-start-3 xl:row-span-1 ${mobileView === "ver" ? "flex" : "hidden lg:flex"}`}>
+        <aside aria-label="Vista previa" className={`min-h-0 min-w-0 flex-1 flex-col border-l border-[#D6E4F2] bg-[#EAF4FC]/60 ${rail ? "lg:col-start-2 lg:row-span-2 lg:row-start-1 xl:col-start-3 xl:row-span-1" : "lg:col-start-2 lg:row-span-2 lg:row-start-1"} ${mobileView === "ver" ? "flex" : "hidden lg:flex"}`}>
           <div className="flex shrink-0 items-center justify-between gap-2 border-b border-[#D6E4F2] bg-white/70 px-3 py-2">
             <div role="group" aria-label="Dispositivo" className="flex gap-1">
               {(["celular", "computadora"] as const).map((d) => (

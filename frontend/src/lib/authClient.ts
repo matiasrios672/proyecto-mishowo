@@ -56,7 +56,7 @@ export async function landingAfterLogin(nextParam: string | null | undefined, ro
   if (explicit) return explicit;
   if (role === "owner" || role === "admin" || role === "support") return "/admin"; // el equipo de MiShowo entra a su panel de administración
   const r = await api<{ business: unknown }>("/me/business");
-  return r.ok && r.data.business ? "/panel/pedidos" : "/editor";
+  return r.ok && r.data.business ? "/panel/inicio" : "/editor";
 }
 
 /** Sube un archivo (multipart) con la sesión. Nunca lanza: una caída de red vuelve como `error: "network"`. */

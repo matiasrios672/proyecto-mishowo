@@ -31,5 +31,5 @@ Especificación completa: `PROMPT_MiShowo_ClaudeCode.md` (no copiarla acá). Pla
 - Frenar y preguntar: precios finales, datos de cobro, logo, credenciales (Cloudflare, SMTP), decisiones irreversibles.
 
 ## Estado actual
-- Fase: Épicas 1-10 completas (fotos incluidas). Falta: estadísticas/SEO/QR (11), cupones y turnos (12), admin v2 (13), deploy (14, fuera de alcance por ahora).
-- Próximo paso: Épica 11. Admin: nombrar al primer Owner con `npm run admin:promote -- email owner`; el 2FA exige ADMIN_SECRET_KEY; las fotos exigen API_PUBLIC_URL.
+- Fase: Épicas 1-13 completas salvo detalles (ver PLAN.md: reseñas/píxeles, referidos, embudo de onboarding, edición de rubros/temas desde el admin). Falta: deploy (14, fuera de alcance por ahora).
+- Próximo paso: revisión independiente (/code-review), cargar datos reales de cobro y revisión legal, luego deploy. Panel del cliente por módulos en `/panel/*` (editor único en `(workspace)/layout`); primer Owner: `npm run admin:promote -- email owner` (2FA exige ADMIN_SECRET_KEY); fotos exigen API_PUBLIC_URL.

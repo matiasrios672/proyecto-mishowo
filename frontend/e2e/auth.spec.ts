@@ -94,7 +94,7 @@ test.describe("cuentas", () => {
 
     await page.getByLabel(/^Contraseña/).fill(PASS);
     await page.getByRole("button", { name: "Ingresar" }).click();
-    await page.waitForURL(/\/(editor|panel\/pedidos)/);
+    await page.waitForURL(/\/(editor|panel\/inicio)/);
     await expect(page.getByTestId("account")).toContainText(email);
 
     await page.reload(); // la sesión sobrevive a recargar
@@ -128,7 +128,7 @@ test.describe("cuentas", () => {
     await expect(page.locator("p[role=alert]:visible")).toContainText("no son correctos");
     await page.getByLabel(/^Contraseña/).fill("otraClave456789");
     await page.getByRole("button", { name: "Ingresar" }).click();
-    await page.waitForURL(/\/(editor|panel\/pedidos)/);
+    await page.waitForURL(/\/(editor|panel\/inicio)/);
   });
 
   test("entrar con un enlace mágico crea la cuenta ya verificada", async ({ page }, info) => {
@@ -142,7 +142,7 @@ test.describe("cuentas", () => {
     const token = await tokenFromMail(email);
     await page.goto(`/enlace?token=${encodeURIComponent(token)}`);
     await page.getByRole("button", { name: "Entrar a MiShowo" }).click(); // exige un clic: un escáner de links no lo gasta
-    await page.waitForURL(/\/(editor|panel\/pedidos)/);
+    await page.waitForURL(/\/(editor|panel\/inicio)/);
     await page.goto("/editor");
     await startDraft(page);
     await expect(page.getByTestId("account")).toContainText(email);
@@ -159,7 +159,7 @@ test.describe("cuentas", () => {
     await page.getByLabel(/^Email/).fill(email);
     await page.getByLabel(/^Contraseña/).fill(PASS);
     await page.getByRole("button", { name: "Ingresar" }).click();
-    await page.waitForURL(/\/(editor|panel\/pedidos)/);
+    await page.waitForURL(/\/(editor|panel\/inicio)/);
     expect(new URL(page.url()).hostname).toBe("localhost");
   });
 

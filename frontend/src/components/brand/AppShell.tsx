@@ -2,7 +2,8 @@
 
 import { useRef, useState, type KeyboardEvent, type ReactNode } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
+import { getNavGuard } from "@/lib/navGuard";
 import { Wordmark } from "@/components/brand/Wordmark";
 import { IconLogout, IconMenu, IconCross } from "@/components/marketing/Doodles";
 
@@ -22,6 +23,7 @@ export function AppShell({ groups, areaLabel, homeHref = "/", userLabel, onLogou
   fullBleed?: boolean;
 }) {
   const path = usePathname();
+  const router = useRouter();
   const [open, setOpen] = useState(false);
   const toggle = useRef<HTMLButtonElement>(null);
 
@@ -51,8 +53,14 @@ export function AppShell({ groups, areaLabel, homeHref = "/", userLabel, onLogou
                     const active = isActive(i);
                     return (
                       <li key={i.href}>
-                        <Link href={i.href} aria-current={active ? "page" : undefined} onClick={() => setOpen(false)} title={compact ? i.label : undefined}
-                          className={`flex min-h-11 items-center gap-3 rounded-xl px-3 ${compact ? "lg:justify-center lg:px-0" : ""} text-[15px] font-semibold transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring ${active ? "bg-[#2F6FB0] text-white shadow-[0_8px_18px_-8px_rgba(47,111,176,0.8)]" : "text-[#0E1B2C] hover:bg-[#EAF4FC]"}`}>
+                        <Link href={i.href} aria-current={active ? "page" : undefined} onClick={(e) => {
+                            setOpen(false);
+                            const guard = getNavGuard();
+                            if (!guard || e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) return;
+                            e.preventDefault(); // antes de salir, se termina de guardar lo último que se escribió
+                            void guard().then(() => router.push(i.href));
+                          }} title={compact ? i.label : undefined}
+                          className={`flex min-h-11 [@media(max-height:820px)]:lg:min-h-10 items-center gap-3 rounded-xl px-3 ${compact ? "lg:justify-center lg:px-0" : ""} text-[15px] font-semibold transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring ${active ? "bg-[#2F6FB0] text-white shadow-[0_8px_18px_-8px_rgba(47,111,176,0.8)]" : "text-[#0E1B2C] hover:bg-[#EAF4FC]"}`}>
                           <i.Icon className={`size-5 shrink-0 ${active ? "text-white" : "text-[#2F6FB0]"}`} />
                           <span className={`flex-1 ${compact ? "lg:sr-only" : ""}`}>{i.label}</span>
                           {i.badge ? <span className={`rounded-full px-2 py-0.5 text-xs font-bold ${active ? "bg-white/25 text-white" : "bg-[#2F6FB0] text-white"}`}><span className="sr-only">Pendientes: </span>{i.badge}</span> : null}

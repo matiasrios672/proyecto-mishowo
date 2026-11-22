@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { useUser } from "@/components/auth/authStore";
 import type { PublicUser } from "@/lib/authClient";
 import { Editor } from "./Editor";
+import type { EditorModule } from "@/lib/modules";
 import { PanelFrame } from "@/components/panel/PanelShell";
 
 const LOADING = "__loading__";
@@ -40,7 +41,7 @@ const NoDraft = () => (
 );
 
 /** Decide con qué arranca el editor: el borrador de este dispositivo, o la página guardada en la cuenta. */
-export function EditorShell() {
+export function EditorShell({ module = "all" }: { module?: EditorModule }) {
   const user = useUser();
   const raw = useSyncExternalStore(subscribe, readRaw, () => LOADING);
   // El editor usa este valor solo al montarse y desde ahí es dueño del estado (guarda por su cuenta).
@@ -50,12 +51,18 @@ export function EditorShell() {
   );
 
   if (user === undefined || local === undefined) return <main className="p-6 text-muted-foreground">Cargando tu borrador…</main>;
-  if (user === null) return local ? <Editor key="local" initial={local} /> : <NoDraft />;
+  if (user === null) return local ? <Editor key="local" initial={local} module={module} /> : <NoDraft />;
   // Con sesión, el editor vive dentro del mismo panel del negocio (barra lateral angosta, a pantalla completa).
-  return <PanelFrame compact fullBleed><AccountEditor user={user} local={local} /></PanelFrame>;
+  const account = <AccountEditor user={user} local={local} module={module} />;
+  // Los módulos del panel ya traen su barra lateral; el editor completo la lleva angosta.
+  return module === "all" ? <PanelFrame compact fullBleed>{account}</PanelFrame> : account;
 }
 
-function AccountEditor({ user, local }: { user: PublicUser; local: Draft | null }) {
+function AccountEditor({ user, local: localNow, module }: { user: PublicUser; local: Draft | null; module: EditorModule }) {
+  // El borrador de este dispositivo se lee SOLO al abrir. Si se releyera en cada render, lo que el propio editor va guardando
+  // (siempre más nuevo que la versión del servidor cargada al abrir) se confundiría con un borrador distinto y pediría elegir.
+  const [local] = useState(localNow);
+  const [markerAtOpen] = useState(() => getSyncMarker()); // idem: la marca avanza cada vez que el editor guarda
   const [server, setServer] = useState<ServerState>({ kind: "loading" });
   const [attempt, setAttempt] = useState(0);
   const [choice, setChoice] = useState<"server" | "local" | "offline" | null>(null);
@@ -78,31 +85,31 @@ function AccountEditor({ user, local }: { user: PublicUser; local: Draft | null 
         </div>
       </Message>
     );
-  if (server.kind === "error") return local ? <Editor key="offline" initial={local} /> : <NoDraft />;
+  if (server.kind === "error") return local ? <Editor key="offline" initial={local} module={module} /> : <NoDraft />;
 
   const { business, content } = server;
 
   // Cuenta sin negocio todavía: el borrador local se migra al servidor al abrir el editor.
   if (!business || !content)
-    return local ? <Editor key={`new:${user.id}`} initial={local} sync={{ userId: user.id, initialVersion: null }} /> : <NoDraft />;
+    return local ? <Editor key={`new:${user.id}`} initial={local} sync={{ userId: user.id, initialVersion: null }} module={module} /> : <NoDraft />;
 
   const fromServer = () => contentToDraft(content);
 
   // Sin borrador local: se abre lo guardado en la cuenta.
   if (!local)
-    return <Editor key={`srv:${user.id}`} initial={fromServer()} sync={{ userId: user.id, initialVersion: business.version }} />;
+    return <Editor key={`srv:${user.id}`} initial={fromServer()} sync={{ userId: user.id, initialVersion: business.version }} module={module} />;
 
   // Lo que la persona eligió manda sobre cualquier otra regla. (Va primero: al elegir la versión de la
   // cuenta se guarda la marca de sincronización, y eso haría creer que el borrador local está al día.)
   if (choice === "server")
-    return <Editor key={`srv:${user.id}`} initial={fromServer()} sync={{ userId: user.id, initialVersion: business.version }} />;
+    return <Editor key={`srv:${user.id}`} initial={fromServer()} sync={{ userId: user.id, initialVersion: business.version }} module={module} />;
   if (choice === "local")
-    return <Editor key={`mine:${user.id}`} initial={local} sync={{ userId: user.id, initialVersion: business.version }} />;
+    return <Editor key={`mine:${user.id}`} initial={local} sync={{ userId: user.id, initialVersion: business.version }} module={module} />;
 
   // El borrador local es exactamente lo último que se sincronizó: se sigue desde ahí.
-  const marker = getSyncMarker();
+  const marker = markerAtOpen;
   if (marker?.userId === user.id && marker.version === business.version)
-    return <Editor key={`cur:${user.id}`} initial={local} sync={{ userId: user.id, initialVersion: business.version }} />;
+    return <Editor key={`cur:${user.id}`} initial={local} sync={{ userId: user.id, initialVersion: business.version }} module={module} />;
 
   return (
     <Message title="Ya tenés una página guardada">

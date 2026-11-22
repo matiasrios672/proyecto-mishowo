@@ -8,4 +8,6 @@ export interface TabProps {
   goTab: (t: EditorTab) => void;
   /** Hay sesión y el borrador se está sincronizando con la cuenta. `settle` espera a que lo pendiente llegue al servidor. */
   account?: { enabled: boolean; settle: () => Promise<void> };
+  /** Avisa al editor cuando cambian los archivos subidos, para que la vista previa los muestre. */
+  onMedia?: (media: import("@/lib/previewMedia").MediaItem[]) => void;
 }

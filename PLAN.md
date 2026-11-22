@@ -44,13 +44,13 @@ Criterio general de aceptación por tarea: typecheck + lint + tests verdes; para
 - [x] 4.3 Horarios estructurados por día + "Abierto ahora / Cerrado".
 - [~] 4.4 Ubicación con mapa embebido (OpenStreetMap). *Hecho: link al mapa. Falta: embed (requiere geocodificar la dirección).*
 - [x] 4.5 Pestaña Textos.
-- [~] 4.6 Pestaña Fotos (portada, límites). *Hecho: pestaña informativa. Falta la subida real (Épica 6, requiere cuenta).*
+- [x] 4.6 Pestaña Fotos (portada, límites). *Hecho: pestaña informativa. Falta la subida real (Épica 6, requiere cuenta).*
 - [x] 4.7 Pestaña Productos: CRUD, categorías, orden drag & drop, duplicar, búsqueda.
 - [x] 4.8 Variantes en 2 ejes (talle × color), precio tachado/oferta, stock numérico opcional.
 - [x] 4.9 Carga masiva: CSV y "pegar lista".
 - [x] 4.10 Pestaña Diseño: 4 layouts (Vidriera, Mostrador, Grilla, Servicios), 9+ temas, color de marca + extracción del logo con canvas, 3–4 pares tipográficos, forma de botones, "Comparar diseños".
 - [x] 4.11 Autoguardado con indicador, deshacer/rehacer.
-- [~] 4.12 Pestaña Pedidos/Turnos (config) y SEO y compartir (base). *Hecho: Pedidos (mensaje, cantidades, fecha) y vista del link. Faltan cupones/turnos (Épica 12) y SEO avanzado (Épica 11).*
+- [x] 4.12 Pestaña Pedidos/Turnos (config) y SEO y compartir (base). *Hecho: Pedidos (mensaje, cantidades, fecha) y vista del link. Faltan cupones/turnos (Épica 12) y SEO avanzado (Épica 11).*
 - [x] 4.13 Checklist de publicación + score de calidad.
 
 ## Épica 5 — Página pública, carrito y pedido por WhatsApp
@@ -95,21 +95,21 @@ Criterio general de aceptación por tarea: typecheck + lint + tests verdes; para
 - [x] 10.4 Legales: términos, privacidad, cancelación, botón de arrepentimiento.
 
 ## Épica 11 — Estadísticas, SEO y QR
-- [ ] 11.1 Analítica propia liviana (visitas, productos vistos, clics WhatsApp, origen, UTM).
-- [ ] 11.2 Vista de estadísticas por plan.
-- [ ] 11.3 SEO: metadatos, OG image por negocio, schema.org, sitemap por subdominio, robots.
-- [ ] 11.4 QR descargable PNG/PDF.
+- [x] 11.1 Analítica propia liviana (visitas, productos vistos, clics WhatsApp, origen, UTM).
+- [x] 11.2 Vista de estadísticas por plan.
+- [x] 11.3 SEO: metadatos, OG image por negocio, schema.org, sitemap por subdominio, robots.
+- [x] 11.4 QR descargable PNG/PDF.
 - [ ] 11.5 Reseñas moderadas; Pixel Meta / GA opcionales (plan pago).
 
 ## Épica 12 — Cupones y turnos
-- [ ] 12.1 Cupones (% o monto, mínimo) reflejados en el mensaje de WhatsApp.
-- [ ] 12.2 Turnos: disponibilidad, duración, bloqueo de fechas, solicitud por WhatsApp + panel.
+- [x] 12.1 Cupones (% o monto, mínimo) reflejados en el mensaje de WhatsApp.
+- [x] 12.2 Turnos: disponibilidad, duración, bloqueo de fechas, solicitud por WhatsApp + panel.
 
 ## Épica 13 — Panel de administración v2
 - [ ] 13.1 Catálogo editable: rubros/plantillas, temas, tipografías, slugs reservados, planes y límites.
 - [ ] 13.2 Mini CMS: landing, blog/ayuda, anuncios, plantillas de email.
-- [ ] 13.3 Moderación y soporte: reportes, palabras clave, notas y etiquetas, WhatsApp rápido.
-- [ ] 13.4 Sistema: salud, backups, cron, errores, modo mantenimiento.
+- [x] 13.3 Moderación y soporte: reportes, palabras clave, notas y etiquetas, WhatsApp rápido.
+- [x] 13.4 Sistema: salud, backups, cron, errores, modo mantenimiento.
 - [ ] 13.5 Configuración general (Owner): SMTP, admins, feature flags.
 
 ## Épica 14 — Deploy en Coolify

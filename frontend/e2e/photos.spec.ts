@@ -52,3 +52,26 @@ test("sin cuenta, la pestaña Fotos explica que hace falta una", async ({ page }
   await page.getByRole("tab", { name: "Fotos", exact: true }).click();
   await expect(page.getByText("Para subir fotos necesitás una cuenta.")).toBeVisible();
 });
+
+test("la vista previa del editor muestra el logo y la foto de cada producto apenas se suben", async ({ page }, info) => {
+  test.setTimeout(120_000);
+  await signUp(page, `${uniq("prev", info.project.name)}@test.com`);
+  await fillBusiness(page, "Vista Previa SA", { product: "Budín de limón" });
+  await page.goto("/panel/pagina?tab=fotos");
+  const preview = page.getByTestId("preview-frame");
+  if (info.project.name === "mobile") await expect(page.getByTestId("toggle-view")).toBeVisible();
+  const logo = page.getByTestId("gallery").filter({ has: page.getByText("Logo de tu negocio") });
+  await logo.locator('input[type="file"]').setInputFiles({ name: "logo.png", mimeType: "image/png", buffer: PNG });
+  await expect(logo.locator("img")).toHaveCount(1);
+  if (info.project.name === "mobile") await page.getByTestId("toggle-view").click();
+  await expect(preview.locator('img[src*="/uploads/media/"]').first()).toBeVisible();
+
+  // Foto de producto: se carga desde el módulo Catálogo y también se ve en la vista previa
+  if (info.project.name === "mobile") await page.getByTestId("toggle-view").click();
+  await page.goto("/panel/catalogo?tab=fotos");
+  const prod = page.getByTestId("gallery").filter({ has: page.getByText("Budín de limón", { exact: true }) });
+  await prod.locator('input[type="file"]').setInputFiles({ name: "budin.png", mimeType: "image/png", buffer: Buffer.concat([PNG, Buffer.from([0])]) });
+  await expect(prod.locator("img")).toHaveCount(1);
+  if (info.project.name === "mobile") await page.getByTestId("toggle-view").click();
+  await expect(preview.locator('img[alt="Budín de limón"]')).toBeVisible();
+});

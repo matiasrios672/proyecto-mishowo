@@ -5,10 +5,12 @@ import { usePathname, useRouter } from "next/navigation";
 import { AppShell, type NavGroup } from "@/components/brand/AppShell";
 import { logoutFromShell, useUser } from "@/components/auth/authStore";
 import { api } from "@/lib/authClient";
-import { IconBag, IconCalendar, IconCard, IconChart, IconQr, IconShield, IconStore, IconTag } from "@/components/marketing/Doodles";
+import { IconBag, IconCalendar, IconCard, IconChart, IconChat, IconHome, IconQr, IconShield, IconSparkle, IconStore, IconTag } from "@/components/marketing/Doodles";
 
 const GROUPS: NavGroup[] = [
+  { label: "General", items: [{ href: "/panel/inicio", label: "Inicio", Icon: IconHome, exact: true }] },
   { label: "Vender", items: [
+    { href: "/panel/catalogo", label: "Catálogo", Icon: IconStore },
     { href: "/panel/pedidos", label: "Pedidos", Icon: IconBag },
     { href: "/panel/cupones", label: "Cupones", Icon: IconTag },
     { href: "/panel/turnos", label: "Turnos", Icon: IconCalendar },
@@ -18,7 +20,8 @@ const GROUPS: NavGroup[] = [
     { href: "/panel/qr", label: "Código QR", Icon: IconQr },
   ] },
   { label: "Mi negocio", items: [
-    { href: "/editor", label: "Diseñar mi página", Icon: IconStore },
+    { href: "/panel/pagina", label: "Mi página", Icon: IconSparkle },
+    { href: "/panel/ajustes", label: "Ajustes", Icon: IconChat },
     { href: "/panel/plan", label: "Plan y pagos", Icon: IconCard },
   ] },
 ];

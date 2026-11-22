@@ -52,7 +52,7 @@ function Gallery({ title, hint, items, accept, busy, error, onAdd, onRemove }: {
   );
 }
 
-export function FotosTab({ draft, update, account }: TabProps) {
+export function FotosTab({ draft, update, account, onMedia }: TabProps) {
   const [media, setMedia] = useState<MediaItem[]>([]);
   const [busy, setBusy] = useState<string | null>(null);
   const [errors, setErrors] = useState<Record<string, string | null>>({});
@@ -61,8 +61,8 @@ export function FotosTab({ draft, update, account }: TabProps) {
 
   const load = useCallback(async () => {
     const r = await api<{ media: MediaItem[] }>("/me/media");
-    if (r.ok) setMedia(r.data.media);
-  }, []);
+    if (r.ok) { setMedia(r.data.media); onMedia?.(r.data.media); }
+  }, [onMedia]);
   useEffect(() => {
     if (!enabled) return;
     let alive = true;
