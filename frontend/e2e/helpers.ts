@@ -65,3 +65,31 @@ export async function publishAs(page: Page, slug: string) {
   await page.getByTestId("publish-button").click();
   await expect(page.getByTestId("published-box")).toContainText("¡Tu página está publicada!");
 }
+
+// ───────── Para los e2e del admin ─────────
+import { createHmac } from "node:crypto";
+import { execFileSync } from "node:child_process";
+import path from "node:path";
+
+/** Código TOTP de 6 dígitos (RFC 6238) para un secreto en base32: lo que mostraría la app de autenticación. */
+export function totpNow(secretB32: string, nowMs = Date.now()): string {
+  const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
+  let bits = 0, value = 0;
+  const bytes: number[] = [];
+  for (const ch of secretB32.toUpperCase()) {
+    value = (value << 5) | alphabet.indexOf(ch); bits += 5;
+    if (bits >= 8) { bytes.push((value >>> (bits - 8)) & 255); bits -= 8; }
+  }
+  const msg = Buffer.alloc(8);
+  msg.writeBigUInt64BE(BigInt(Math.floor(nowMs / 30_000)));
+  const h = createHmac("sha1", Buffer.from(bytes)).update(msg).digest();
+  const o = h[h.length - 1]! & 15;
+  const code = ((h[o]! & 0x7f) << 24) | (h[o + 1]! << 16) | (h[o + 2]! << 8) | h[o + 3]!;
+  return String(code % 1_000_000).padStart(6, "0");
+}
+
+/** Ejecuta SQL en la base del stack (así se nombra al primer admin: no se puede desde la web a propósito). */
+export function sql(query: string): string {
+  const root = path.resolve(__dirname, "../..");
+  return execFileSync("docker", ["compose", "exec", "-T", "db", "psql", "-U", "mishowo", "-d", "mishowo", "-tAc", query], { cwd: root, encoding: "utf8" }).trim();
+}

@@ -45,3 +45,15 @@ export function safeNext(next: string | null | undefined, fallback = "/editor"):
   if (!next || !next.startsWith("/") || next.startsWith("//") || next.includes("\\") || /[\u0000-\u001f]/.test(next)) return fallback;
   return next;
 }
+
+/** Sube un archivo (multipart) con la sesión. Nunca lanza: una caída de red vuelve como `error: "network"`. */
+export async function apiUpload<T = Record<string, unknown>>(path: string, file: File): Promise<ApiResult<T>> {
+  try {
+    const form = new FormData();
+    form.append("file", file);
+    const res = await fetch(`${API_URL}${path}`, { method: "POST", credentials: "include", body: form });
+    return { ok: res.ok, status: res.status, data: (await res.json().catch(() => ({}))) as T & { error?: string } };
+  } catch {
+    return { ok: false, status: 0, data: { error: "network" } as T & { error?: string } };
+  }
+}

@@ -31,5 +31,5 @@ Especificación completa: `PROMPT_MiShowo_ClaudeCode.md` (no copiarla acá). Pla
 - Frenar y preguntar: precios finales, datos de cobro, logo, credenciales (Cloudflare, SMTP), decisiones irreversibles.
 
 ## Estado actual
-- Fase: Épicas 1-5 completas (4 con partes [~]). Falta review independiente. Siguiente: Épica 6 (auth, guardado y fotos).
-- Próximo paso: Épica 6 tramo B (6.4): guardar el negocio en el servidor y migrar el borrador (plan: columnas client_id en categories/products/product_options, GET/PUT /me/business con control de versión), luego tramo C (fotos y videos). Auth ya hecha (D-010). e2e de cuentas leen los mails de Mailpit (:8025).
+- Fase: Épicas 1-5, 7, 8 (v1) y 9 completas; 6 sin fotos/videos; 10 completa. Falta: fotos (6.5/6.6), estadísticas/SEO/QR (11), cupones y turnos (12), admin v2 (13), deploy (14, fuera de alcance por ahora).
+- Próximo paso: fotos y videos (StorageProvider y sniff ya existen), luego Épica 11. Admin: nombrar al primer Owner con `npm run admin:promote -- email owner`; el 2FA exige ADMIN_SECRET_KEY.

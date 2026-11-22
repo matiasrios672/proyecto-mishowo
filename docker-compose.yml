@@ -40,6 +40,10 @@ services:
       AUTH_PER_MINUTE: "60"
       REPORTS_PER_MINUTE: "60"
       PUBLISH_PER_MINUTE: "60"
+      PAYMENTS_PER_MINUTE: "60"
+      ADMIN_2FA_PER_MINUTE: "60"
+      # Solo desarrollo: en producción, generar con: openssl rand -base64 32
+      ADMIN_SECRET_KEY: BQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQU=
       FRONTEND_INTERNAL_URL: http://frontend:3000
       REVALIDATE_SECRET: dev-revalidate-secret-0123456789
       UPLOADS_DIR: /app/uploads

@@ -1,5 +1,11 @@
 # PROGRESS — MiShowo (bitácora, lo más nuevo arriba)
 
+## 2026-11-22 — Épicas 7 y 8: interfaz de planes y administración
+- Frontend: /panel/plan (elegir plan, datos para transferir con copiar, Ya pagué + comprobante, historial), /planes (enlace corto), /admin con puerta de 2FA (QR para configurarlo), resumen con KPIs y gráfico, pagos (confirmar/rechazar/registrar manual), negocios (lista, ficha y acciones), usuarios, planes y datos de cobro, auditoría y equipo.
+- Bugs reales: Suspense en rutas dinámicas (rompía el build de Docker); mensaje de guardado que desaparecía al remontar el formulario.
+- e2e: recorrido completo pago → confirmación → plan activo → email → auditoría, 2FA con código incorrecto y sesión nueva, precio editado visible en la landing, ajustes de cobro, Soporte sin acceso a pagos.
+- Tests: backend 244; frontend 124 unitarios + 151 e2e.
+
 ## 2026-11-22 — Épicas 7 y 8 (backend): cobro manual, admin con 2FA, auditoría y vencimientos
 - Backend completo: /me/plan, /me/payments (+comprobante), /admin/* (2FA, dashboard, negocios, usuarios, pagos, planes, ajustes de cobro, administradores, auditoría), jobs de vencimiento y recordatorio, CLI admin:promote. Migración 0007.
 - Verificado con mutaciones: sin 2FA fallan 3 tests; sin trigger de auditoría falla el de inmutabilidad; sin lock de activación y sin la condición del pago pendiente fallan los de concurrencia.

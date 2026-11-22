@@ -8,6 +8,7 @@ import { logout, useUser } from "@/components/auth/authStore";
 
 const LINKS = [
   { href: "/panel/pedidos", label: "Pedidos" },
+  { href: "/panel/plan", label: "Plan" },
   { href: "/editor", label: "Mi página" },
 ];
 
