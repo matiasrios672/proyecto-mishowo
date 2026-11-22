@@ -5,26 +5,15 @@ import type { TemplateInput } from "@/lib/draft";
 import { API_URL } from "@/lib/api";
 import { formatPrice } from "@/lib/format";
 import { LiveDemo } from "./LiveDemo";
+import { HeroStage } from "./HeroStage";
+import { Underline } from "./Doodles";
+import { Glow } from "./Story";
 
 const SOL = "#F6B40E";
 const TINTA = "#0E1B2C";
 const wrap = "mx-auto w-full max-w-6xl px-5 sm:px-8";
 const ctaSol = "inline-flex items-center justify-center rounded-xl bg-[#F6B40E] px-7 py-4 text-base font-bold text-[#0E1B2C] transition-transform hover:bg-[#FFC21F] active:scale-95 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring";
 const ctaGhost = "inline-flex items-center justify-center rounded-xl border-2 border-[#0E1B2C] px-7 py-3.5 text-base font-bold text-[#0E1B2C] transition-transform hover:bg-[#0E1B2C] hover:text-white active:scale-95 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring";
-
-/** El sol: símbolo de la marca. Los rayos giran despacio (se quedan quietos con movimiento reducido). */
-export function Sun({ className = "", rays = 16 }: { className?: string; rays?: number }) {
-  return (
-    <svg viewBox="-100 -100 200 200" aria-hidden className={className}>
-      <g className="mk-sun-spin" style={{ transformOrigin: "center", transformBox: "fill-box" }}>
-        {Array.from({ length: rays }, (_, i) => (
-          <path key={i} d={i % 2 ? "M0 -62 L6 -96 L-6 -96Z" : "M0 -62 L4 -84 L-4 -84Z"} fill={SOL} transform={`rotate(${(i * 360) / rays})`} />
-        ))}
-      </g>
-      <circle r="52" fill={SOL} />
-    </svg>
-  );
-}
 
 /** Trae el primer rubro de la demo al atender la visita (no al compilar: el build de Docker no tiene backend). */
 async function DemoSlot() {
@@ -42,40 +31,38 @@ const DemoSkeleton = () => <div aria-hidden className="h-[640px] rounded-3xl bg-
 
 export function Hero() {
   return (
-    <section className="relative isolate overflow-hidden bg-[#EAF4FC]">
-      <Sun className="absolute -right-40 -top-32 -z-10 size-[30rem] opacity-90 sm:-right-44 sm:-top-28 sm:size-[40rem]" />
-      <div className={`${wrap} pb-8 pt-14 sm:pt-20`}>
-        <h1 className="mk-display site-rise text-[clamp(3.1rem,9vw,6.4rem)] font-extrabold leading-[0.95] tracking-tight text-[#0E1B2C]">
-          <span className="block">Tu negocio,</span>{" "}
-          <span className="block text-primary">en un link.</span>
-        </h1>
-        <p className="site-rise mt-6 max-w-[36ch] text-xl leading-snug text-[#0E1B2C]/80 sm:text-2xl" style={{ "--d": "120ms" } as React.CSSProperties}>
-          Armá la página de tu negocio desde el celular en minutos. Catálogo, pedidos por WhatsApp y un link listo para tu bio de Instagram.
-        </p>
-        <div className="site-rise mt-9 flex flex-wrap items-center gap-4" style={{ "--d": "240ms" } as React.CSSProperties}>
-          <Link href="/crear" className={ctaSol}>Creá tu página gratis</Link>
-          <a href="#probalo" className={ctaGhost}>Probalo ahora</a>
-          <p className="basis-full text-sm font-medium text-[#0E1B2C]/70 sm:basis-auto">Sin tarjeta. Sin instalar nada.</p>
+    <section className="relative isolate overflow-hidden bg-gradient-to-b from-[#DCEBF8] to-[#EAF4FC]">
+      <Glow />
+      <div aria-hidden className="mk-grid pointer-events-none absolute inset-0 -z-10" />
+      <div className={`${wrap} grid items-center gap-4 pb-10 pt-12 lg:grid-cols-[1.05fr_1fr] lg:gap-8 lg:pb-16 lg:pt-16`}>
+        <div>
+          <h1 className="mk-display site-rise text-[clamp(3rem,7.4vw,5.6rem)] font-extrabold leading-[0.92] tracking-tight text-[#0E1B2C]">
+            <span className="block">Tu negocio,</span>{" "}
+            <span className="relative block w-fit text-primary">en un link.<Underline className="absolute -bottom-2 left-0 h-3.5 w-full" /></span>
+          </h1>
+          <p className="site-rise mt-8 max-w-[34ch] text-xl leading-snug text-[#0E1B2C]/80 sm:text-2xl" style={{ "--d": "120ms" } as React.CSSProperties}>
+            Armá la página de tu negocio desde el celular. Tus clientes eligen y te piden por WhatsApp.
+          </p>
+          <div className="site-rise mt-9 flex flex-wrap items-center gap-4" style={{ "--d": "240ms" } as React.CSSProperties}>
+            <Link href="/crear" className={ctaSol}>Creá tu página gratis</Link>
+            <a href="#probalo" className={ctaGhost}>Probalo ahora</a>
+            <p className="basis-full text-sm font-medium text-[#0E1B2C]/70">Sin tarjeta. Sin instalar nada.</p>
+          </div>
         </div>
-      </div>
-      <div id="probalo" className={`${wrap} scroll-mt-20 pb-16 pt-10 sm:pb-24`}>
-        <Suspense fallback={<DemoSkeleton />}>
-          <DemoSlot />
-        </Suspense>
+        <HeroStage />
       </div>
     </section>
   );
 }
 
-export function VideoSection() {
+export function DemoSection() {
   return (
-    <section aria-labelledby="video-title" className={`${wrap} py-16 sm:py-24`}>
-      <h2 id="video-title" className="mk-display max-w-[20ch] text-4xl font-extrabold leading-tight tracking-tight sm:text-5xl">Mirá cómo se arma en 15 segundos</h2>
-      <div className="mt-8 overflow-hidden rounded-3xl bg-[#0E1B2C] shadow-[0_40px_80px_-30px_rgba(14,27,44,0.5)]">
-        <video controls preload="none" playsInline poster="/video/poster.jpg" className="aspect-video w-full" aria-label="Video: cómo armar tu página en MiShowo">
-          <source src="/video/mishowo-demo.mp4" type="video/mp4" />
-          Tu navegador no puede reproducir este video.
-        </video>
+    <section id="probalo" aria-labelledby="demo-title" className="scroll-mt-16 bg-[#EAF4FC]">
+      <div className={`${wrap} pb-16 pt-6 sm:pb-24`}>
+        <h2 id="demo-title" className="mk-display mb-8 max-w-[20ch] text-4xl font-extrabold leading-tight tracking-tight text-[#0E1B2C] sm:text-5xl">Probalo vos mismo, ahora</h2>
+        <Suspense fallback={<DemoSkeleton />}>
+          <DemoSlot />
+        </Suspense>
       </div>
     </section>
   );
@@ -299,8 +286,10 @@ export function Soon() {
 export function FinalCta() {
   return (
     <section aria-labelledby="final-title" className="relative isolate overflow-hidden bg-[#0E1B2C] text-white">
-      {/* El sol va a un costado: el texto blanco nunca queda sobre el amarillo. */}
-      <Sun className="absolute -bottom-44 -right-40 -z-10 size-[30rem] opacity-95 sm:-right-24 sm:size-[38rem]" />
+      <div aria-hidden className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
+        <div className="mk-blob absolute -right-20 -top-20 size-[30rem] rounded-full bg-[#74ACDF]/30 blur-3xl" />
+        <div className="mk-blob absolute -bottom-32 left-10 size-96 rounded-full bg-[#2F6FB0]/30 blur-3xl" style={{ animationDelay: "-7s" }} />
+      </div>
       <div className={`${wrap} py-24 sm:py-32`}>
         <h2 id="final-title" className="mk-display max-w-[12ch] text-5xl font-extrabold leading-[0.98] tracking-tight sm:text-7xl">Creá tu página gratis</h2>
         <p className="mt-5 max-w-[34ch] text-xl text-white/80">En unos minutos tenés tu link listo para compartir.</p>

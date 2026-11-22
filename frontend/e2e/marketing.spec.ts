@@ -12,20 +12,30 @@ test.describe("landing de MiShowo", () => {
       await expect(page.getByRole("heading", { level: 1 })).toContainText("Tu negocio, en un link.");
       expect(await noOverflow(page), `@${width}`).toBe(true);
     }
-    for (const name of ["Mirá cómo se arma en 15 segundos", "Páginas reales, de rubros como el tuyo", "Todo lo que necesitás para vender", "Cómo funciona", "Empezá gratis, crecé cuando lo necesites", "Preguntas frecuentes", "Próximamente"])
+    for (const name of ["Del celular a tus clientes, en tres pasos", "Páginas reales, de rubros como el tuyo", "Todo lo que necesitás para vender", "Empezá gratis, crecé cuando lo necesites", "Preguntas frecuentes", "Próximamente"])
       await expect(page.getByRole("heading", { name, exact: true })).toBeVisible();
   });
 
-  test("el video de Remotion está y apunta a archivos que existen", async ({ page, request }) => {
+  test("el hero ilustrado: celular que arma la página, dibujos y sin video", async ({ page }) => {
     await page.goto("/");
-    const video = page.locator("video");
-    await expect(video).toHaveAttribute("poster", "/video/poster.jpg");
-    const src = await video.locator("source").getAttribute("src");
-    expect(src).toBe("/video/mishowo-demo.mp4");
-    for (const url of ["/video/poster.jpg", "/video/mishowo-demo.mp4"]) {
-      const res = await request.get(url, { headers: { Range: "bytes=0-1023" } });
-      expect([200, 206], url).toContain(res.status());
-    }
+    await expect(page.locator("video")).toHaveCount(0);
+    await expect(page.getByRole("img", { name: /Demostración: un cursor agrega dos productos/ })).toBeVisible();
+    await expect(page.getByLabel("Rubros que usan MiShowo")).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Del celular a tus clientes, en tres pasos" })).toBeVisible();
+    for (const t of ["Cargás lo que vendés", "Compartís tu link", "Te piden por WhatsApp"]) await expect(page.getByRole("heading", { name: t })).toBeAttached();
+    await expect(page.getByRole("link", { name: "Creá tu página gratis" }).first()).toBeVisible();
+  });
+
+  test("con movimiento reducido todo queda visible y quieto", async ({ browser }) => {
+    const ctx = await browser.newContext({ reducedMotion: "reduce" });
+    const page = await ctx.newPage();
+    await page.goto("/");
+    await expect(page.getByRole("heading", { name: "Te piden por WhatsApp" })).toBeVisible();
+    expect(await page.locator(".mk-cursor").evaluate((e) => getComputedStyle(e).display)).toBe("none");
+    expect(await page.locator(".mk-notify").evaluate((e) => getComputedStyle(e).animationName)).toBe("none");
+    expect(await page.locator(".mk-notify").evaluate((e) => getComputedStyle(e).opacity)).toBe("1");
+    expect(await page.locator(".mk-blob").first().evaluate((e) => getComputedStyle(e).animationName)).toBe("none");
+    await ctx.close();
   });
 
   test("los planes salen de la base de datos con precio y límites", async ({ page }) => {
@@ -89,12 +99,6 @@ test.describe("landing de MiShowo", () => {
     await expect(page.locator('meta[name="description"]')).toHaveAttribute("content", /pedidos por WhatsApp/);
     await expect(page.locator('meta[property="og:image"]')).toHaveAttribute("content", /poster\.jpg/);
     await expect(page.locator('link[rel="canonical"]')).toHaveAttribute("href", /^https?:\/\/[^/]+\/?$/);
-  });
-
-  test("con movimiento reducido el sol no gira", async ({ page }) => {
-    await page.emulateMedia({ reducedMotion: "reduce" });
-    await page.goto("/");
-    expect(await page.evaluate(() => getComputedStyle(document.querySelector(".mk-sun-spin")!).animationName)).toBe("none");
   });
 
   test("la cabecera y el pie llevan a páginas que existen", async ({ page, request }) => {

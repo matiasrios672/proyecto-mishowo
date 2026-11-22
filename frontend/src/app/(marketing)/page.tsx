@@ -1,8 +1,9 @@
 import { Suspense } from "react";
 import type { Metadata } from "next";
 import {
-  Benefits, Examples, FAQ, FaqSection, FinalCta, Hero, Plans, PlansList, Soon, Steps, Testimonials, VideoSection,
+  Benefits, DemoSection, Examples, FAQ, FaqSection, FinalCta, Hero, Plans, PlansList, Soon, Testimonials,
 } from "@/components/marketing/sections";
+import { Compare, RubrosMarquee, Story, TrustStrip } from "@/components/marketing/Story";
 
 export const metadata: Metadata = {
   title: { absolute: "MiShowo: creá la página de tu negocio desde el celular" },
@@ -28,10 +29,13 @@ export default function Home() {
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }} />
       <Hero />
-      <VideoSection />
+      <TrustStrip />
+      <RubrosMarquee />
+      <DemoSection />
+      <Story />
+      <Compare />
       <Examples />
       <Benefits />
-      <Steps />
       <Plans
         fallback={
           <Suspense fallback={<p className="mt-10 text-muted-foreground">Cargando planes…</p>}>

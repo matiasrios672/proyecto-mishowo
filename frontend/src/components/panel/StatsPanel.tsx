@@ -53,7 +53,7 @@ export function StatsPanel() {
         <div role="group" aria-label="Período" className="flex gap-1">
           {RANGES.map((r) => (
             <button key={r} type="button" aria-pressed={days === r} onClick={() => setDays(r)}
-              className={`rounded-full px-3 py-1.5 text-sm ${days === r ? "bg-primary text-primary-foreground" : "hover:bg-muted"}`}>Últimos {r} días</button>
+              className={`rounded-full px-3 py-1.5 text-sm ${days === r ? "bg-[#2F6FB0] text-white" : "hover:bg-muted"}`}>Últimos {r} días</button>
           ))}
         </div>
       </div>
@@ -79,7 +79,7 @@ export function StatsPanel() {
         <div role="img" aria-label={`Visitas por día: ${data.series.filter((d) => d.visits > 0).map((d) => `${fmtDay(d.day)} ${d.visits}`).join(", ") || "sin visitas"}`}
           className="flex h-36 items-end gap-px">
           {data.series.map((d) => (
-            <div key={d.day} title={`${fmtDay(d.day)}: ${d.visits}`} className="flex-1 rounded-t-sm bg-primary" style={{ height: `${Math.max(2, (d.visits / max) * 100)}%`, opacity: d.visits ? 1 : 0.2 }} />
+            <div key={d.day} title={`${fmtDay(d.day)}: ${d.visits}`} className="flex-1 rounded-t-md bg-gradient-to-t from-[#2F6FB0] to-[#74ACDF]" style={{ height: `${Math.max(2, (d.visits / max) * 100)}%`, opacity: d.visits ? 1 : 0.2 }} />
           ))}
         </div>
         <div className="mt-1 flex justify-between text-xs text-muted-foreground"><span>{fmtDay(data.series[0]!.day)}</span><span>{fmtDay(data.series.at(-1)!.day)}</span></div>
@@ -93,7 +93,7 @@ export function StatsPanel() {
               {data.sources.map((s) => (
                 <li key={s.source} className="text-sm">
                   <div className="flex justify-between"><span>{SOURCE_LABEL[s.source] ?? s.source}</span><span className="tabular-nums">{s.visits}</span></div>
-                  <div className="mt-1 h-1.5 rounded-full bg-muted"><div className="h-full rounded-full bg-primary" style={{ width: `${(s.visits / maxSrc) * 100}%` }} /></div>
+                  <div className="mt-1 h-1.5 rounded-full bg-muted"><div className="h-full rounded-full bg-[#2F6FB0]" style={{ width: `${(s.visits / maxSrc) * 100}%` }} /></div>
                 </li>
               ))}
             </ul>
@@ -106,7 +106,7 @@ export function StatsPanel() {
               {data.topProducts.map((p) => (
                 <li key={p.id} className="text-sm">
                   <div className="flex justify-between gap-3"><span className="truncate">{p.name}</span><span className="tabular-nums">{p.views}</span></div>
-                  <div className="mt-1 h-1.5 rounded-full bg-muted"><div className="h-full rounded-full bg-primary" style={{ width: `${(p.views / maxTop) * 100}%` }} /></div>
+                  <div className="mt-1 h-1.5 rounded-full bg-muted"><div className="h-full rounded-full bg-[#2F6FB0]" style={{ width: `${(p.views / maxTop) * 100}%` }} /></div>
                 </li>
               ))}
             </ol>
