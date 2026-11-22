@@ -1,5 +1,12 @@
 # PROGRESS — MiShowo (bitácora, lo más nuevo arriba)
 
+## 2026-11-22 — Épica 10: landing de MiShowo, Remotion, contenido y legales
+- Landing con identidad propia, demo interactiva real, video Remotion, ejemplos, beneficios, pasos, planes desde la DB, testimonios de ejemplo, FAQ con JSON-LD, Próximamente. Blog (3), ayuda (6), legales, arrepentimiento + contacto con acuse por email (POST /public/contact, tabla contact_requests), sitemap y robots.
+- Rediseño de las páginas de clientes (D-013) cerrado con tests.
+- Bugs reales: dos h1 (demo dentro de la landing); desborde horizontal en celular (grilla sin minmax(0,1fr)); contraste del precio en la cinta (opacity); LCP 5 s por demo que dependía de JS + fetch.
+- Tests: backend 108; frontend 109 unitarios + 124 e2e.
+- Pendiente de 10.3: programa de referidos (necesita el admin, Épica 8).
+
 ## 2026-11-22 — Épica 6, tramo B: guardado en la cuenta (6.4)
 - Backend: GET/PUT /me/business (documento completo, reconciliación por client_id, versión + lock, validación con límites), migración 0004. Frontend: motor de sincronización con reintentos, migración del borrador al crear la cuenta, avisos de conflicto/sesión vencida/sin conexión, chooser cuando hay versión local y de cuenta distintas, cierre de sesión sin rastro.
 - Bugs reales hallados por los e2e: (1) CORS bloqueaba PUT desde el navegador (todo guardado fallaba como sin conexión); (2) elegir la versión de la cuenta abría igual el borrador viejo por el orden de las comprobaciones.

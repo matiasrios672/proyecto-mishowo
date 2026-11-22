@@ -38,6 +38,7 @@ services:
       SMTP_HOST: mailpit
       SMTP_PORT: "1025"
       AUTH_PER_MINUTE: "60"
+      REPORTS_PER_MINUTE: "60"
       UPLOADS_DIR: /app/uploads
     ports:
       - "4000:4000"

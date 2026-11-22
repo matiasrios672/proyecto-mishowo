@@ -11,6 +11,7 @@ import { orderRoutes } from "./routes/orders.js";
 import { reportRoutes } from "./routes/reports.js";
 import { authRoutes } from "./routes/auth.js";
 import { meRoutes } from "./routes/me.js";
+import { contactRoutes } from "./routes/contact.js";
 import { createSmtpMailer, type Mailer } from "./lib/mailer.js";
 
 export type HealthCheck = () => Promise<boolean>;
@@ -64,6 +65,7 @@ export function buildApp(config: Config, dbCheck: HealthCheck = async () => true
       reportRoutes(api, db, config.REPORTS_PER_MINUTE);
       // Contexto propio: el chequeo de origen de /auth no debe afectar a las rutas públicas (pedidos, denuncias).
       const mailer = deps.mailer ?? createSmtpMailer(config);
+      contactRoutes(api, db, mailer, config.REPORTS_PER_MINUTE);
       api.register(async (authScope) => authRoutes(authScope, db, config, mailer));
       api.register(async (meScope) => meRoutes(meScope, db, config));
     }

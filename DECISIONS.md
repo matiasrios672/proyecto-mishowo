@@ -75,3 +75,12 @@ Formato: ID · fecha · decisión · motivo · consecuencias. Las más nuevas ar
 - Movimiento: una entrada orquestada, la cinta, y respuestas a acciones (rebote del contador, hoja del pedido). Todo se apaga con `prefers-reduced-motion` (testeado). Sin fade-in por sección.
 - Detalle técnico: la utilidad `font-heading` de shadcn apunta a la fuente de texto; las páginas de negocio usan `.site-display` para la fuente de títulos del par elegido.
 - Espacio listo para fotos: `cover` en el sitio e `image` en cada producto (hoy null); sin foto se usa una pieza de color del tema con la inicial.
+
+## D-014 · 2026-11-22 · Landing de MiShowo, video con Remotion y contenido
+- Identidad propia de MiShowo (solo en el grupo de rutas `(marketing)`): celeste y sol de la bandera sobre tinta azul, Bricolage Grotesque + Figtree, el sol como símbolo. Los clientes mantienen sus 9 temas.
+- La portada ofrece una **demo interactiva con el componente real** de las páginas de clientes (`LiveDemo` + `SiteView`): lo que se ve es lo que se entrega, y "Usar este diseño" guarda el borrador y abre el editor con eso ya cargado.
+- Video: proyecto Remotion en `video/` (`npm run render` en esa carpeta); salida en `frontend/public/video/` (661 KB, 15 s, 1280x720) con poster. Si cambia el producto, se vuelve a renderizar.
+- Rendimiento: la demo viaja ya armada en el primer HTML (el servidor trae el primer rubro; el build de Docker no tiene backend, así que se pide al atender la visita con `connection()`), y las fuentes de los pares tipográficos no se precargan (solo se descarga la que se usa). Lighthouse mobile de la landing: rendimiento 77 -> 100 (LCP 5,0 s -> 1,2 s); computadora 100/100/100/100.
+- La demo dentro de la landing renderiza el título del negocio como `h2` (`preview`): la página tiene un solo `h1`.
+- Planes de la landing: salen de `/public/plans` (D-007). Testimonios: de ejemplo y marcados como tal hasta tener reales.
+- Contenido: blog (3 artículos), centro de ayuda (6), legales (términos, privacidad Ley 25.326, cancelación) y botón de arrepentimiento (10 días) con acuse por email. **Los textos legales son una base: el titular debe completar sus datos con `NEXT_PUBLIC_LEGAL_ENTITY` y hacerlos revisar por un abogado.** Soporte por WhatsApp: variable `NEXT_PUBLIC_SUPPORT_WHATSAPP` (si no está, no se muestra).

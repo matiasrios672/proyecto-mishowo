@@ -1,13 +1,13 @@
 import type { CSSProperties } from "react";
 import { Playfair_Display, Source_Sans_3, Poppins, Inter, Fraunces, Nunito_Sans, DM_Sans } from "next/font/google";
 
-const playfair = Playfair_Display({ subsets: ["latin"], display: "swap", variable: "--font-pair-clasica-h" });
-const sourceSans = Source_Sans_3({ subsets: ["latin"], display: "swap", variable: "--font-pair-clasica-b" });
-const poppins = Poppins({ subsets: ["latin"], display: "swap", weight: ["500", "600", "700"], variable: "--font-pair-moderna-h" });
-const inter = Inter({ subsets: ["latin"], display: "swap", variable: "--font-pair-moderna-b" });
-const fraunces = Fraunces({ subsets: ["latin"], display: "swap", variable: "--font-pair-calida-h" });
-const nunito = Nunito_Sans({ subsets: ["latin"], display: "swap", variable: "--font-pair-calida-b" });
-const dmSans = DM_Sans({ subsets: ["latin"], display: "swap", variable: "--font-pair-limpia-h" });
+const playfair = Playfair_Display({ subsets: ["latin"], display: "swap", preload: false, variable: "--font-pair-clasica-h" });
+const sourceSans = Source_Sans_3({ subsets: ["latin"], display: "swap", preload: false, variable: "--font-pair-clasica-b" });
+const poppins = Poppins({ subsets: ["latin"], display: "swap", preload: false, weight: ["500", "600", "700"], variable: "--font-pair-moderna-h" });
+const inter = Inter({ subsets: ["latin"], display: "swap", preload: false, variable: "--font-pair-moderna-b" });
+const fraunces = Fraunces({ subsets: ["latin"], display: "swap", preload: false, variable: "--font-pair-calida-h" });
+const nunito = Nunito_Sans({ subsets: ["latin"], display: "swap", preload: false, variable: "--font-pair-calida-b" });
+const dmSans = DM_Sans({ subsets: ["latin"], display: "swap", preload: false, variable: "--font-pair-limpia-h" });
 
 export type FontPairId = "clasica" | "moderna" | "calida" | "limpia";
 

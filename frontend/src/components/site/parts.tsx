@@ -180,6 +180,8 @@ function Ticket({ site, items }: { site: SiteModel; items: SiteProduct[] }) {
 export function Hero({ site, preview, items, whatsappHref }: { site: SiteModel; preview: boolean; items: SiteProduct[]; whatsappHref: string | null }) {
   const services = site.design.layout === "servicios";
   const long = site.name.length > 24;
+  // En una vista previa (demo de la landing, editor) el título no puede ser un segundo h1 de la página.
+  const Title = preview ? "h2" : "h1";
   const ig = site.instagram.replace(/^@/, "").trim();
   const showAddress = site.address.trim() !== "" && site.address.trim() !== site.deliveryZone.trim();
   const rise = (ms: number) => ({ "--d": `${ms}ms` }) as CSSProperties;
@@ -188,14 +190,14 @@ export function Hero({ site, preview, items, whatsappHref }: { site: SiteModel; 
       <div className={`${container} grid grid-cols-[minmax(0,1fr)] items-center gap-12 pb-14 pt-6 @4xl:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)] @4xl:gap-10 @4xl:pb-24 @4xl:pt-14`}>
         <div>
           {site.hours && <div className="site-rise mb-4" style={rise(0)}><OpenBadge hours={site.hours} /></div>}
-          <h1
+          <Title
             data-testid="site-name"
             className={`site-rise site-display font-bold leading-[0.98] tracking-tight [text-wrap:balance] ${long ? "text-[clamp(2.1rem,6.5cqw,3.9rem)]" : "text-[clamp(2.7rem,9cqw,5.6rem)]"}`}
             style={rise(80)}
           >
             {site.name || "Tu negocio"}
             {preview && site.exampleName && <Example />}
-          </h1>
+          </Title>
           {site.tagline && (
             <p className="site-rise mt-5 max-w-[34ch] text-xl leading-snug text-muted-foreground @4xl:text-2xl" style={rise(180)}>
               {site.tagline}
@@ -245,7 +247,7 @@ export function Ticker({ items }: { items: SiteProduct[] }) {
     <div className={`flex shrink-0 items-center gap-8 pr-8 ${dup ? "site-marquee-dup" : ""}`}>
       {loop.map((p, i) => (
         <span key={`${p.id}-${i}`} className="flex items-center gap-8 whitespace-nowrap">
-          <span>{p.name}<span className="ml-2 opacity-75 tabular-nums">{formatPrice(p.price)}</span></span>
+          <span>{p.name}<span className="ml-2 font-bold tabular-nums">{formatPrice(p.price)}</span></span>
           <span className="size-1.5 rounded-full bg-current opacity-50" />
         </span>
       ))}

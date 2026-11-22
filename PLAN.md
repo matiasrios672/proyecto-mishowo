@@ -89,10 +89,10 @@ Criterio general de aceptación por tarea: typecheck + lint + tests verdes; para
 - [ ] 9.2 Notificación por email al negocio y exportación CSV.
 
 ## Épica 10 — Landing, legales y "Próximamente"
-- [ ] 10.1 Landing: hero, demo interactiva, ejemplos por rubro navegables, planes, testimonios placeholder, FAQ, sección Próximamente.
-- [ ] 10.2 Centro de ayuda y blog (MDX) con 3 artículos semilla.
-- [ ] 10.3 Referidos, WhatsApp de soporte visible.
-- [ ] 10.4 Legales: términos, privacidad, cancelación, botón de arrepentimiento.
+- [x] 10.1 Landing: hero, demo interactiva, ejemplos por rubro navegables, planes, testimonios placeholder, FAQ, sección Próximamente.
+- [x] 10.2 Centro de ayuda y blog (MDX) con 3 artículos semilla.
+- [~] 10.3 Referidos, WhatsApp de soporte visible.
+- [x] 10.4 Legales: términos, privacidad, cancelación, botón de arrepentimiento.
 
 ## Épica 11 — Estadísticas, SEO y QR
 - [ ] 11.1 Analítica propia liviana (visitas, productos vistos, clics WhatsApp, origen, UTM).

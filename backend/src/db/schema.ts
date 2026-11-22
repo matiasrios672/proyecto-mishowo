@@ -213,3 +213,15 @@ export const authTokens = pgTable("auth_tokens", {
   usedAt: timestamp("used_at", { withTimezone: true }),
   createdAt: ts("created_at"),
 }, (t) => [uniqueIndex("auth_tokens_hash_idx").on(t.tokenHash), index("auth_tokens_email_idx").on(t.email, t.type)]);
+
+// ---- Pedidos de contacto: botón de arrepentimiento (Argentina) y consultas ----
+export const contactRequests = pgTable("contact_requests", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  kind: text("kind").notNull(), // arrepentimiento | contacto
+  name: text("name").notNull(),
+  email: text("email").notNull(),
+  reference: text("reference"), // email de la cuenta, link de la página o número de pago
+  message: text("message"),
+  status: text("status").notNull().default("nuevo"), // nuevo | resuelto
+  createdAt: ts("created_at"),
+}, (t) => [index("contact_requests_status_idx").on(t.status, t.createdAt)]);

@@ -167,3 +167,11 @@
 
 /* Fuente de títulos del par tipográfico del negocio. (La utilidad font-heading de shadcn apunta a la fuente de texto.) */
 .site-display { font-family: var(--font-heading); }
+
+/* ───────── Páginas de MiShowo (landing, legales, blog) ───────── */
+.mk-display { font-family: var(--font-mk-display), var(--font-sans), system-ui, sans-serif; }
+.mk-text { font-family: var(--font-mk-text), var(--font-sans), system-ui, sans-serif; }
+@keyframes mk-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: no-preference) {
+  .mk-sun-spin { animation: mk-spin 90s linear infinite; }
+}
