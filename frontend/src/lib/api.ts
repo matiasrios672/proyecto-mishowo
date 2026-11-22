@@ -7,6 +7,7 @@ export interface PublicProduct {
   id: string; categoryId: string | null; name: string; description: string;
   price: string | null; comparePrice: string | null; available: boolean;
   options: { id: string; label: string; price: string | null; soldOut: boolean }[];
+  image?: { src: string; srcSet: string | null } | null;
 }
 export interface PublicSite {
   status: "published" | "suspended";
@@ -19,6 +20,8 @@ export interface PublicSite {
   };
   categories?: { id: string; name: string }[];
   products?: PublicProduct[];
+  cover?: { src: string; srcSet: string | null } | null;
+  video?: string | null;
 }
 
 /** Datos públicos de un negocio. Cacheados por slug; se invalidan con la etiqueta `site:<slug>`. */

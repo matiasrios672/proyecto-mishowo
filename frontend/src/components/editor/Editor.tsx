@@ -159,7 +159,7 @@ export function Editor({ initial, sync }: { initial: Draft; sync?: SyncConfig })
           <div id="panel" role="tabpanel" aria-labelledby={`tab-${tab}`} ref={panelRef} className="min-h-0 flex-1 overflow-y-auto p-4 pb-28 lg:pb-8">
             {tab === "negocio" && <NegocioTab {...props} />}
             {tab === "textos" && <TextosTab {...props} />}
-            {tab === "fotos" && <FotosTab />}
+            {tab === "fotos" && <FotosTab {...props} />}
             {tab === "productos" && <ProductosTab {...props} />}
             {tab === "pedidos" && <PedidosTab {...props} />}
             {tab === "diseno" && <DisenoTab {...props} />}

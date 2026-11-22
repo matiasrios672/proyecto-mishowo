@@ -15,10 +15,13 @@ const schema = z.object({
   ADMIN_VERIFY_HOURS: z.coerce.number().positive().default(8),
   ADMIN_SESSION_HOURS: z.coerce.number().positive().default(12),
   ADMIN_2FA_PER_MINUTE: z.coerce.number().int().positive().default(6),
+  UPLOADS_PER_MINUTE: z.coerce.number().int().positive().default(60),
   PAYMENTS_PER_MINUTE: z.coerce.number().int().positive().default(10),
   PUBLISH_PER_MINUTE: z.coerce.number().int().positive().default(20),
   REPORTS_PER_MINUTE: z.coerce.number().int().positive().default(5),
   // Frontend público (para armar los links de los emails).
+  // URL pública de este backend (para armar los links absolutos a las fotos y videos).
+  API_PUBLIC_URL: z.string().default("http://localhost:4000"),
   APP_URL: z.string().default("http://localhost:3000"),
   // Para avisar al frontend que invalide el caché de una página (si falta el secreto, no se avisa).
   FRONTEND_INTERNAL_URL: z.string().default("http://localhost:3000"),

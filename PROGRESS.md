@@ -1,5 +1,11 @@
 # PROGRESS — MiShowo (bitácora, lo más nuevo arriba)
 
+## 2026-11-22 — Épica 6: fotos y videos
+- Backend: POST/GET/DELETE /me/media (sharp → WebP 400/800/1600 con srcset, orientación EXIF aplicada, **metadatos y GPS borrados**, límite de píxeles), videos MP4/MOV/WebM detectados por bytes (1 por negocio), límites por plan leídos de la tabla de planes (fotos por producto, MB), hasta 5 fotos de portada, deduplicación por hash (borrar una copia no rompe la otra), servicio público /uploads/media con caché inmutable, nosniff y Range (Safari); solo sirve nombres generados por MiShowo (los comprobantes de pago nunca salen por acá).
+- Frontend: pestaña Fotos (portada y por producto, errores claros), fotos en vidriera/grilla y miniaturas en mostrador/servicios, portada con srcset y video de portada.
+- Verificado por mutación: sin borrar metadatos, sin el filtro de archivos públicos y sin rechazar documentos fallan tests.
+- Tests: backend 260, frontend 124 unitarios + 155 e2e.
+
 ## 2026-11-22 — Épicas 7 y 8: interfaz de planes y administración
 - Frontend: /panel/plan (elegir plan, datos para transferir con copiar, Ya pagué + comprobante, historial), /planes (enlace corto), /admin con puerta de 2FA (QR para configurarlo), resumen con KPIs y gráfico, pagos (confirmar/rechazar/registrar manual), negocios (lista, ficha y acciones), usuarios, planes y datos de cobro, auditoría y equipo.
 - Bugs reales: Suspense en rutas dinámicas (rompía el build de Docker); mensaje de guardado que desaparecía al remontar el formulario.

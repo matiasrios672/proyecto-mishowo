@@ -14,6 +14,7 @@ import { authRoutes } from "./routes/auth.js";
 import { meRoutes } from "./routes/me.js";
 import { contactRoutes } from "./routes/contact.js";
 import { adminRoutes } from "./routes/admin.js";
+import { publicMediaRoutes } from "./routes/media.js";
 import { createSmtpMailer, type Mailer } from "./lib/mailer.js";
 import { createRevalidator, type SiteChanged } from "./lib/revalidate.js";
 import { DiskStorage, type StorageProvider } from "./storage/index.js";
@@ -35,6 +36,8 @@ export function originAllowed(origin: string | undefined, config: Pick<Config, "
 }
 
 export interface AppDeps { mailer?: Mailer; onSiteChanged?: SiteChanged; storage?: StorageProvider }
+
+let storageSingleton: StorageProvider | undefined;
 
 export function buildApp(config: Config, dbCheck: HealthCheck = async () => true, db?: Db, deps: AppDeps = {}) {
   const app = Fastify({ logger: config.NODE_ENV !== "test", trustProxy: config.NODE_ENV === "production" });
@@ -65,7 +68,8 @@ export function buildApp(config: Config, dbCheck: HealthCheck = async () => true
     templateRoutes(api);
 
     if (db) {
-      publicRoutes(api, db);
+      publicRoutes(api, db, config);
+      publicMediaRoutes(api, deps.storage ?? (storageSingleton ??= new DiskStorage(config.UPLOADS_DIR)));
       planRoutes(api, db);
       reportRoutes(api, db, config.REPORTS_PER_MINUTE);
       const mailer = deps.mailer ?? createSmtpMailer(config);

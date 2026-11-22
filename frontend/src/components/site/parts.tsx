@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element -- las fotos ya salen del backend en WebP con srcset propio */
 import type { CSSProperties } from "react";
 import type { SiteCategory, SiteModel, SiteProduct } from "@/lib/site";
 import { formatPrice, normalizeSearch, priceLabel } from "@/lib/format";
@@ -43,9 +44,9 @@ function Price({ p }: { p: SiteProduct }) {
 }
 
 /** Foto del producto o, sin foto, una pieza de color del tema con la inicial (cada nombre tiene su ángulo). */
-function Art({ name, image, className }: { name: string; image: string | null; className: string }) {
+function Art({ name, image, imageSet, className }: { name: string; image: string | null; imageSet?: string | null; className: string }) {
   if (image)
-    return <img src={image} alt={name} loading="lazy" decoding="async" className={`object-cover ${className}`} />;
+    return <img src={image} srcSet={imageSet ?? undefined} sizes="(min-width: 1024px) 24rem, 90vw" alt={name} loading="lazy" decoding="async" className={`object-cover ${className}`} />;
   return (
     <div
       aria-hidden
@@ -55,6 +56,12 @@ function Art({ name, image, className }: { name: string; image: string | null; c
       <span className="select-none site-display text-[clamp(3rem,16cqw,5.5rem)] leading-none text-primary/30">{name.trim().charAt(0).toUpperCase() || "·"}</span>
     </div>
   );
+}
+
+/** Miniatura para los layouts de texto (mostrador y servicios): la foto solo aparece si el negocio la subió. */
+function Thumb({ p, name, dim }: { p: SiteProduct; name: string; dim: boolean }) {
+  if (!p.image) return null;
+  return <img src={p.image} srcSet={p.imageSet ?? undefined} sizes="96px" alt={name} loading="lazy" decoding="async" className={`size-20 shrink-0 rounded-xl object-cover @xl:size-24 ${dim ? "opacity-50" : ""}`} />;
 }
 
 const Soldout = () => <span className="text-xs font-medium text-destructive">Agotado</span>;
@@ -72,7 +79,7 @@ function Card({ p, layout, preview, order, showQuantities }: { p: SiteProduct; l
   if (layout === "vidriera")
     return (
       <li data-search={search} className={dim}>
-        <Art name={name} image={p.image} className={`aspect-[16/10] w-full rounded-[1.25rem] @xl:aspect-[4/3]${artDim}`} />
+        <Art name={name} image={p.image} imageSet={p.imageSet} className={`aspect-[16/10] w-full rounded-[1.25rem] @xl:aspect-[4/3]${artDim}`} />
         <div className="pt-3.5">
           <div className="flex items-baseline justify-between gap-4">
             <h4 className="site-display text-lg font-semibold leading-snug">{name}{ex}</h4>
@@ -87,7 +94,7 @@ function Card({ p, layout, preview, order, showQuantities }: { p: SiteProduct; l
   if (layout === "grilla")
     return (
       <li data-search={search} className={dim}>
-        <Art name={name} image={p.image} className={`aspect-square w-full rounded-2xl${artDim}`} />
+        <Art name={name} image={p.image} imageSet={p.imageSet} className={`aspect-square w-full rounded-2xl${artDim}`} />
         <div className="pt-3">
           <h4 className="text-sm font-semibold leading-snug @2xl:text-base">{name}{ex}</h4>
           <div className="mt-0.5 text-sm"><Price p={p} /></div>
@@ -98,26 +105,32 @@ function Card({ p, layout, preview, order, showQuantities }: { p: SiteProduct; l
 
   if (layout === "servicios")
     return (
-      <li data-search={search} className={`border-l-4 border-primary py-1 pl-4 ${dim}`}>
-        <div className="flex items-baseline justify-between gap-4">
-          <h4 className="site-display text-lg font-semibold">{name}{ex}</h4>
-          <Price p={p} />
+      <li data-search={search} className={`flex gap-4 border-l-4 border-primary py-1 pl-4 ${dim}`}>
+        <Thumb p={p} name={name} dim={!p.available} />
+        <div className="min-w-0 flex-1">
+          <div className="flex items-baseline justify-between gap-4">
+            <h4 className="site-display text-lg font-semibold">{name}{ex}</h4>
+            <Price p={p} />
+          </div>
+          {p.description && <p className="mt-1 max-w-[56ch] text-sm leading-relaxed text-muted-foreground">{p.description}</p>}
+          {opts}{soldout}{add}
         </div>
-        {p.description && <p className="mt-1 max-w-[56ch] text-sm leading-relaxed text-muted-foreground">{p.description}</p>}
-        {opts}{soldout}{add}
       </li>
     );
 
   // mostrador: la carta de un bar, con puntos guía hasta el precio
   return (
-    <li data-search={search} className={`border-b border-border py-3.5 ${dim}`}>
-      <div className="flex items-baseline gap-2">
-        <h4 className="font-medium leading-snug">{name}{ex}</h4>
-        <Leader />
-        <Price p={p} />
+    <li data-search={search} className={`flex gap-3 border-b border-border py-3.5 ${dim}`}>
+      <div className="min-w-0 flex-1">
+        <div className="flex items-baseline gap-2">
+          <h4 className="font-medium leading-snug">{name}{ex}</h4>
+          <Leader />
+          <Price p={p} />
+        </div>
+        {p.description && <p className="mt-0.5 max-w-[56ch] text-sm text-muted-foreground">{p.description}</p>}
+        {opts}{soldout}{add}
       </div>
-      {p.description && <p className="mt-0.5 max-w-[56ch] text-sm text-muted-foreground">{p.description}</p>}
-      {opts}{soldout}{add}
+      <Thumb p={p} name={name} dim={!p.available} />
     </li>
   );
 }
@@ -230,8 +243,10 @@ export function Hero({ site, preview, items, whatsappHref }: { site: SiteModel; 
 
         {site.cover ? (
           <div className="relative">
-            <img src={site.cover} alt={`Portada de ${site.name}`} fetchPriority="high" className="aspect-[4/5] w-full rounded-[2rem] object-cover" />
+            <img src={site.cover} srcSet={site.coverSet ?? undefined} sizes="(min-width: 1024px) 32rem, 90vw" alt={`Portada de ${site.name}`} fetchPriority="high" className="aspect-[4/5] w-full rounded-[2rem] object-cover" />
           </div>
+        ) : site.video ? (
+          <video src={site.video} controls muted playsInline preload="metadata" aria-label={`Video de ${site.name}`} className="aspect-[4/5] w-full rounded-[2rem] bg-black object-cover" />
         ) : (
           items.length > 0 && <Ticket site={site} items={items} />
         )}

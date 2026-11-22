@@ -11,6 +11,7 @@ export interface SiteProduct {
   available: boolean; isExample: boolean; options: SiteOption[];
   /** URL de la foto principal (llega con la subida de fotos). */
   image: string | null;
+  imageSet?: string | null;
 }
 export interface SiteCategory { id: string; name: string; products: SiteProduct[] }
 export interface SiteDesign { layout: string; theme: string; fontPair: string; brandColor: string | null; buttonShape: string }
@@ -25,6 +26,9 @@ export interface SiteModel {
   exampleName: boolean; exampleTexts: boolean;
   /** URL de la foto de portada (llega con la subida de fotos). */
   cover: string | null;
+  coverSet?: string | null;
+  /** URL del video de portada (MP4/WebM), si el negocio subió uno. */
+  video?: string | null;
 }
 
 export function draftToSite(d: Draft): SiteModel {
@@ -59,7 +63,7 @@ export function publicToSite(site: PublicSite): SiteModel {
   const prods = site.products ?? [];
   const toProduct = (p: (typeof prods)[number]): SiteProduct => ({
     id: p.id, name: p.name, description: p.description, price: num(p.price), comparePrice: num(p.comparePrice),
-    available: p.available, isExample: false, image: null,
+    available: p.available, isExample: false, image: p.image?.src ?? null, imageSet: p.image?.srcSet ?? null,
     options: p.options.map((o) => ({ id: o.id, label: o.label, price: num(o.price), soldOut: o.soldOut })),
   });
   const categories: SiteCategory[] = cats.map((c) => ({ id: c.id, name: c.name, products: prods.filter((p) => p.categoryId === c.id).map(toProduct) }));
@@ -80,7 +84,7 @@ export function publicToSite(site: PublicSite): SiteModel {
     showQuantities: settings.showQuantities !== false, askEventDate: settings.askEventDate === true,
     whatsappGreeting: str(settings.whatsappGreeting, "Hola! Quiero hacer este pedido:"),
     hideBranding: b.planId === "pro",
-    exampleName: false, exampleTexts: false, cover: null,
+    exampleName: false, exampleTexts: false, cover: site.cover?.src ?? null, coverSet: site.cover?.srcSet ?? null, video: site.video ?? null,
   };
 }
 
