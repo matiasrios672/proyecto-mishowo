@@ -1,5 +1,12 @@
 # PROGRESS — MiShowo (bitácora, lo más nuevo arriba)
 
+## 2026-11-22 — Épica 4 (editor) casi completa
+- Editor real en /editor: 8 pestañas, vista previa en vivo (celular/compu/pantalla completa, botón flotante en móvil), autoguardado con indicador, deshacer/rehacer (botones y Ctrl+Z), checklist y score de calidad, carga masiva (CSV y pegar lista), variantes en 2 ejes, stock, precio tachado, drag & drop, horarios con Abierto/Cerrado, WhatsApp argentino validado, 4 layouts + recomendación, color de marca (incl. extracción del logo con canvas), comparar diseños.
+- SiteView es compartido entre vista previa y página pública (se ven idénticas).
+- Bugs reales encontrados verificando: (1) el build de Docker fallaba porque /crear pedía datos a la API al compilar -> ahora se piden al atender la visita; (2) desborde horizontal en celular por falta de min-w-0 en la grilla.
+- Parcial: mapa embebido (solo link), subida de fotos (Épica 6), cupones/turnos (Épica 12), SEO avanzado (Épica 11).
+- Tests: frontend 68 unitarios + 25 e2e; backend 28.
+
 ## 2026-11-22 — Épica 3 COMPLETA
 - 3.1 10 plantillas por rubro con contenido argentino (GET /public/templates). 3.2 /crear con selector y "Contame tu idea" (Próximamente). 3.3 borrador en localStorage + badges Ejemplo. 3.4 stub de IA sin llamadas externas. Además: GET /public/plans lee precios de la DB (D-007, los edita el dueño desde el admin); CORS acepta varios orígenes.
 - Tests: backend 28, frontend 22 unit + 8 e2e. Pendiente: review independiente de épicas 1-3.

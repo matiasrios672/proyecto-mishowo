@@ -39,19 +39,19 @@ Criterio general de aceptación por tarea: typecheck + lint + tests verdes; para
 - [x] 3.4 Stub `backend/src/lib/ai/` (interfaz provider vacía, sin llamadas).
 
 ## Épica 4 — Editor con preview en vivo
-- [ ] 4.1 Layout editor: formulario + preview (toggle celular/compu, pantalla completa); en móvil botón flotante "Ver cómo queda".
-- [ ] 4.2 Pestaña Negocio (datos, múltiples WhatsApp con rol, Instagram, zona de entrega texto).
-- [ ] 4.3 Horarios estructurados por día + "Abierto ahora / Cerrado".
-- [ ] 4.4 Ubicación con mapa embebido (OpenStreetMap).
-- [ ] 4.5 Pestaña Textos.
-- [ ] 4.6 Pestaña Fotos (portada, límites).
-- [ ] 4.7 Pestaña Productos: CRUD, categorías, orden drag & drop, duplicar, búsqueda.
-- [ ] 4.8 Variantes en 2 ejes (talle × color), precio tachado/oferta, stock numérico opcional.
-- [ ] 4.9 Carga masiva: CSV y "pegar lista".
-- [ ] 4.10 Pestaña Diseño: 4 layouts (Vidriera, Mostrador, Grilla, Servicios), 9+ temas, color de marca + extracción del logo con canvas, 3–4 pares tipográficos, forma de botones, "Comparar diseños".
-- [ ] 4.11 Autoguardado con indicador, deshacer/rehacer.
-- [ ] 4.12 Pestaña Pedidos/Turnos (config) y SEO y compartir (base).
-- [ ] 4.13 Checklist de publicación + score de calidad.
+- [x] 4.1 Layout editor: formulario + preview (toggle celular/compu, pantalla completa); en móvil botón flotante "Ver cómo queda".
+- [x] 4.2 Pestaña Negocio (datos, múltiples WhatsApp con rol, Instagram, zona de entrega texto).
+- [x] 4.3 Horarios estructurados por día + "Abierto ahora / Cerrado".
+- [~] 4.4 Ubicación con mapa embebido (OpenStreetMap). *Hecho: link al mapa. Falta: embed (requiere geocodificar la dirección).*
+- [x] 4.5 Pestaña Textos.
+- [~] 4.6 Pestaña Fotos (portada, límites). *Hecho: pestaña informativa. Falta la subida real (Épica 6, requiere cuenta).*
+- [x] 4.7 Pestaña Productos: CRUD, categorías, orden drag & drop, duplicar, búsqueda.
+- [x] 4.8 Variantes en 2 ejes (talle × color), precio tachado/oferta, stock numérico opcional.
+- [x] 4.9 Carga masiva: CSV y "pegar lista".
+- [x] 4.10 Pestaña Diseño: 4 layouts (Vidriera, Mostrador, Grilla, Servicios), 9+ temas, color de marca + extracción del logo con canvas, 3–4 pares tipográficos, forma de botones, "Comparar diseños".
+- [x] 4.11 Autoguardado con indicador, deshacer/rehacer.
+- [~] 4.12 Pestaña Pedidos/Turnos (config) y SEO y compartir (base). *Hecho: Pedidos (mensaje, cantidades, fecha) y vista del link. Faltan cupones/turnos (Épica 12) y SEO avanzado (Épica 11).*
+- [x] 4.13 Checklist de publicación + score de calidad.
 
 ## Épica 5 — Página pública, carrito y pedido por WhatsApp
 - [ ] 5.1 Render SSR de los 4 layouts con temas y tipografías.

@@ -2,8 +2,8 @@ import { Suspense } from "react";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { getSite } from "@/lib/api";
-import { themeStyle } from "@/lib/themes";
-import { FONT_PAIRS, fontPairStyle } from "@/lib/fonts";
+import { publicToSite } from "@/lib/site";
+import { SiteView } from "@/components/site/SiteView";
 
 type Props = { params: Promise<{ slug: string }> };
 
@@ -36,26 +36,9 @@ async function SiteContent({ params }: Props) {
     );
   }
 
-  const b = site.business!;
-  const pair = FONT_PAIRS.find((p) => p.id === b.design.fontPair) ?? FONT_PAIRS[1]!;
   return (
-    <div
-      className={`${pair.classes} min-h-screen bg-background text-foreground`}
-      style={{ ...themeStyle(b.design.theme, b.design.brandColor), ...fontPairStyle(b.design.fontPair) }}
-    >
-      <main className="mx-auto max-w-2xl px-4 py-8">
-        <h1 className="text-3xl font-bold" style={{ fontFamily: "var(--font-heading)" }}>{b.name}</h1>
-        <p className="mt-2 text-muted-foreground">{b.tagline ?? b.description}</p>
-        <ul className="mt-6 space-y-3">
-          {site.products!.map((p) => (
-            <li key={p.id} className="rounded-lg border bg-card p-3">
-              <p className="font-medium">{p.name}</p>
-              {p.price && <p className="text-sm text-muted-foreground">${Number(p.price).toLocaleString("es-AR")}</p>}
-              {!p.available && <p className="text-sm text-destructive">Agotado</p>}
-            </li>
-          ))}
-        </ul>
-      </main>
+    <div className="mx-auto min-h-screen max-w-2xl bg-background">
+      <SiteView site={publicToSite(site)} />
     </div>
   );
 }

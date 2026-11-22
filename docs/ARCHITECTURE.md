@@ -36,3 +36,10 @@ Navegador ──> frontend (Next.js :3000) ──HTTP──> backend (Fastify :4
 - Next 16: `proxy.ts` en vez de `middleware.ts`; `next/font` exige opciones literales.
 - Postgres: el pool de `pg` tiene handler de `error`; sin él, una caída de DB tumba el proceso.
 - Imágenes Docker: ~310 MB (frontend) y ~350 MB (backend) sin comprimir; la base `node:alpine` pesa ~240 MB.
+
+## Editor y página pública
+- `frontend/src/lib/draft.ts`: borrador en localStorage (con normalización de versiones viejas). `draftOps.ts`: operaciones inmutables. `history.ts`: deshacer/rehacer con agrupación de tipeo. `score.ts`: checklist y puntaje. `bulk.ts`, `hours.ts`, `whatsapp.ts`, `color.ts`, `recommend.ts`: lógica pura con tests.
+- `components/editor/`: `Editor.tsx` (layout), `useEditor.ts` (estado + autoguardado), `tabs/` (una por pestaña).
+- `components/site/SiteView.tsx` dibuja la página desde un `SiteModel` (`lib/site.ts`: `draftToSite` para la vista previa, `publicToSite` para la página pública).
+- "Abierto ahora" se calcula en el navegador (`OpenBadge`): la página pública se sirve cacheada.
+- El frontend no debe pedir datos a la API durante el build (Docker no tiene backend): usar `await connection()` o `use cache` solo donde corresponda.

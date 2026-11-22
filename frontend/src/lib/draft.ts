@@ -1,5 +1,6 @@
 // Borrador del negocio: vive en localStorage hasta que la persona crea su cuenta (Épica 6).
 // Todo el contenido que viene de una plantilla lleva isExample=true hasta que lo edita.
+import { defaultHours, type Hours } from "./hours";
 
 export interface DraftOption { id: string; label: string; price: number | null; soldOut: boolean }
 export interface DraftProduct {
@@ -14,6 +15,11 @@ export interface Draft {
   name: string; nameIsExample: boolean;
   tagline: string; description: string; textsAreExample: boolean;
   whatsapp: string; instagram: string; address: string; deliveryZone: string;
+  extraWhatsapps: { number: string; role: "ventas" | "soporte" }[];
+  hours: Hours;
+  announcement: string;
+  whatsappGreeting: string;
+  showQuantities: boolean;
   askEventDate: boolean;
   design: DraftDesign;
   categories: DraftCategory[];
@@ -38,6 +44,8 @@ export function createDraftFromTemplate(t: TemplateInput): Draft {
     name: t.businessName, nameIsExample: true,
     tagline: t.tagline, description: t.description, textsAreExample: true,
     whatsapp: "", instagram: "", address: "", deliveryZone: t.deliveryZone,
+    extraWhatsapps: [], hours: defaultHours(), announcement: "",
+    whatsappGreeting: "Hola! Quiero hacer este pedido:", showQuantities: true,
     askEventDate: t.eventDate,
     design: { layout: t.layout, theme: t.theme, fontPair: t.fontPair, brandColor: null, buttonShape: "redondeado" },
     categories: t.categories.map((c) => ({
@@ -62,8 +70,20 @@ export function loadDraft(store: Store | null = defaultStore()): Draft | null {
     const raw = store?.getItem(DRAFT_KEY);
     if (!raw) return null;
     const d = JSON.parse(raw) as Draft;
-    return d && d.version === 1 && Array.isArray(d.categories) ? d : null;
+    return d && d.version === 1 && Array.isArray(d.categories) ? normalizeDraft(d) : null;
   } catch { return null; }
+}
+
+/** Completa campos que no existían cuando se guardó el borrador (compatibilidad hacia atrás). */
+export function normalizeDraft(d: Draft): Draft {
+  return {
+    ...d,
+    extraWhatsapps: d.extraWhatsapps ?? [],
+    hours: Array.isArray(d.hours) && d.hours.length === 7 ? d.hours : defaultHours(),
+    announcement: d.announcement ?? "",
+    whatsappGreeting: d.whatsappGreeting ?? "Hola! Quiero hacer este pedido:",
+    showQuantities: d.showQuantities ?? true,
+  };
 }
 
 export function saveDraft(draft: Draft, store: Store | null = defaultStore()): boolean {

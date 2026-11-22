@@ -31,5 +31,5 @@ Especificación completa: `PROMPT_MiShowo_ClaudeCode.md` (no copiarla acá). Pla
 - Frenar y preguntar: precios finales, datos de cobro, logo, credenciales (Cloudflare, SMTP), decisiones irreversibles.
 
 ## Estado actual
-- Fase: Épicas 1-3 completas (falta review independiente). Siguiente: Épica 4 (editor).
-- Próximo paso: Épica 4, tarea 4.1 (layout del editor: formulario + preview). El editor actual (frontend/src/components/editor/EditorShell.tsx) es provisorio y solo lee el borrador de localStorage. Precios: siempre desde la DB (D-007).
+- Fase: Épicas 1-3 completas, 4 casi (ver [~] en PLAN.md). Falta review independiente. Siguiente: Épica 5 (página pública, carrito y pedido).
+- Próximo paso: Épica 5. Reutilizar frontend/src/components/site/SiteView.tsx (ya renderiza los 4 layouts) y sumarle carrito, drawer "Tu pedido", mensaje de WhatsApp (lib/whatsapp.ts ya arma el link) y POST /public/orders en el backend. Regla: el frontend nunca pide datos a la API durante el build (Docker no tiene backend).

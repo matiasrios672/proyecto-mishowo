@@ -1,4 +1,5 @@
 import { cacheLife, cacheTag } from "next/cache";
+import { connection } from "next/server";
 
 const API_URL = process.env.API_URL ?? process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
 
@@ -33,11 +34,12 @@ export async function getSite(slug: string): Promise<PublicSite | null> {
 
 export interface TemplateSummary { id: string; name: string; blurb: string; mode: "productos" | "servicios"; layout: string; theme: string }
 
-/** Rubros disponibles para el onboarding. */
+/**
+ * Rubros disponibles para el onboarding. Se piden al atender cada visita (no al compilar):
+ * el build de Docker no tiene backend al que consultar. La API ya responde con Cache-Control.
+ */
 export async function getTemplates(): Promise<TemplateSummary[]> {
-  "use cache";
-  cacheLife("minutes");
-  cacheTag("templates");
+  await connection();
   const res = await fetch(`${API_URL}/public/templates`);
   if (!res.ok) throw new Error(`API respondió ${res.status}`);
   return (await res.json()) as TemplateSummary[];
