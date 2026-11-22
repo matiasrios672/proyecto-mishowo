@@ -10,7 +10,7 @@ Especificación completa: `PROMPT_MiShowo_ClaudeCode.md` (no copiarla acá). Pla
 
 ## Comandos (se completan en Épica 1)
 - Dev: `docker compose up`
-- Backend: `cd backend && npm run dev | test | lint | typecheck | db:migrate | db:seed | build`
+- Backend: `cd backend && npm run dev | test | lint | typecheck | db:generate | db:migrate | build` (Postgres: `docker compose up -d db`)
 - Frontend: `cd frontend && npm run dev | test | lint | typecheck | build`
 - E2E: `cd frontend && npx playwright test`
 
@@ -32,4 +32,4 @@ Especificación completa: `PROMPT_MiShowo_ClaudeCode.md` (no copiarla acá). Pla
 
 ## Estado actual
 - Fase: Épica 1 en curso, desarrollo local.
-- Próximo paso: 1.3 (ORM + migraciones), luego 1.4 frontend base y design system.
+- Próximo paso: 1.4 frontend base (Tailwind, shadcn/ui, fuentes), luego 1.5 design system.

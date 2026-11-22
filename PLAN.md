@@ -16,7 +16,7 @@ Criterio general de aceptación por tarea: typecheck + lint + tests verdes; para
 ## Épica 1 — Setup, Docker y design system
 - [x] 1.1 Crear estructura `backend/` y `frontend/`, `.gitignore`, `git init`, `.editorconfig`. *AC: ambas carpetas con package.json y TS compilando.*
 - [x] 1.2 Backend base: Fastify, config por env (Zod), `GET /api/health` (app + DB), logger. *AC: health responde 200 con DB arriba, 503 sin DB.*
-- [ ] 1.3 Drizzle + conexión Postgres + migraciones automáticas al iniciar. *AC: migración inicial corre en contenedor limpio.*
+- [x] 1.3 Drizzle + conexión Postgres + migraciones automáticas al iniciar. *AC: migración inicial corre en contenedor limpio.*
 - [ ] 1.4 Frontend base: Next.js standalone, Tailwind, shadcn/ui, fuentes. *AC: página de inicio renderiza en dev y build.*
 - [ ] 1.5 Design system: tokens, tipografía, 9+ temas de color, componentes base, wordmark `MiShowo` en un solo componente. *AC: página `/_design` con todos los componentes, AA de contraste.*
 - [ ] 1.6 `Dockerfile` backend y frontend (multi-stage, no root, HEALTHCHECK, <300 MB), `.dockerignore`. *AC: ambas imágenes buildean y arrancan.*

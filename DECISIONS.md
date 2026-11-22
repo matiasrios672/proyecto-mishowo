@@ -24,3 +24,6 @@ Formato: ID · fecha · decisión · motivo · consecuencias. Las más nuevas ar
 
 ## D-001 · 2026-11-22 · Nombre de la especificación
 - El archivo se llama `PROMPT_MiShowo_ClaudeCode.md` (no `PROMPT.md`). `CLAUDE.md` apunta a ese nombre.
+
+## D-004 · 2026-11-22 · ORM: Drizzle; backend se queda en Node/TypeScript
+- Elegido por menor consumo de RAM y consultas siempre parametrizadas. Se evaluó Prisma (más veterano, más pesado) y Laravel/PHP (sin ventaja de escala; sumaba un segundo lenguaje y más RAM). Decisión confirmada por el dueño.
