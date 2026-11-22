@@ -17,11 +17,11 @@ Criterio general de aceptación por tarea: typecheck + lint + tests verdes; para
 - [x] 1.1 Crear estructura `backend/` y `frontend/`, `.gitignore`, `git init`, `.editorconfig`. *AC: ambas carpetas con package.json y TS compilando.*
 - [x] 1.2 Backend base: Fastify, config por env (Zod), `GET /api/health` (app + DB), logger. *AC: health responde 200 con DB arriba, 503 sin DB.*
 - [x] 1.3 Drizzle + conexión Postgres + migraciones automáticas al iniciar. *AC: migración inicial corre en contenedor limpio.*
-- [ ] 1.4 Frontend base: Next.js standalone, Tailwind, shadcn/ui, fuentes. *AC: página de inicio renderiza en dev y build.*
-- [ ] 1.5 Design system: tokens, tipografía, 9+ temas de color, componentes base, wordmark `MiShowo` en un solo componente. *AC: página `/_design` con todos los componentes, AA de contraste.*
+- [x] 1.4 Frontend base: Next.js standalone, Tailwind, shadcn/ui, fuentes. *AC: página de inicio renderiza en dev y build.*
+- [x] 1.5 Design system: tokens, tipografía, 9+ temas de color, componentes base, wordmark `MiShowo` en un solo componente. *AC: página `/_design` con todos los componentes, AA de contraste.*
 - [ ] 1.6 `Dockerfile` backend y frontend (multi-stage, no root, HEALTHCHECK, <300 MB), `.dockerignore`. *AC: ambas imágenes buildean y arrancan.*
 - [ ] 1.7 `docker-compose.yml` dev (frontend + backend + Postgres + Mailpit) y `.env.example`. *AC: `docker compose up` deja todo sano.*
-- [ ] 1.8 Vitest en ambos, Playwright en frontend, ESLint/Prettier, scripts npm. *AC: un test de ejemplo pasa en cada uno.*
+- [x] 1.8 Vitest en ambos, Playwright en frontend, ESLint/Prettier, scripts npm. *AC: un test de ejemplo pasa en cada uno.*
 - [ ] 1.9 `docs/ARCHITECTURE.md` inicial y CLAUDE.md con comandos reales. *AC: comandos documentados funcionan.*
 - [ ] 1.10 GitHub Actions opcional (lint, typecheck, test, build de imágenes).
 

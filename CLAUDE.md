@@ -11,7 +11,7 @@ Especificación completa: `PROMPT_MiShowo_ClaudeCode.md` (no copiarla acá). Pla
 ## Comandos (se completan en Épica 1)
 - Dev: `docker compose up`
 - Backend: `cd backend && npm run dev | test | lint | typecheck | db:generate | db:migrate | build` (Postgres: `docker compose up -d db`)
-- Frontend: `cd frontend && npm run dev | test | lint | typecheck | build`
+- Frontend: `cd frontend && npm run dev | test | e2e | lint | typecheck | build`. Next 16: usar `proxy.ts` (no middleware); leer `node_modules/next/dist/docs/` ante dudas.
 - E2E: `cd frontend && npx playwright test`
 
 ## Mapa del repo
@@ -32,4 +32,4 @@ Especificación completa: `PROMPT_MiShowo_ClaudeCode.md` (no copiarla acá). Pla
 
 ## Estado actual
 - Fase: Épica 1 en curso, desarrollo local.
-- Próximo paso: 1.4 frontend base (Tailwind, shadcn/ui, fuentes), luego 1.5 design system.
+- Próximo paso: 1.6 Dockerfiles, 1.7 compose completo y .env.example, 1.9 ARCHITECTURE.md. Luego Épica 2.
