@@ -1,14 +1,18 @@
 "use client";
 
-import { useId, useState } from "react";
+import { useId, useState, useSyncExternalStore } from "react";
 import { normalizeSearch } from "@/lib/format";
 
 /**
  * Buscador del catálogo. La página se renderiza en el servidor, así que en vez de re-renderizar
  * todo en el cliente se muestran/ocultan los productos ya dibujados (`data-search`). Poco JS.
  */
+const noSubscribe = () => () => {};
+
 export function CatalogSearch({ rootId }: { rootId: string }) {
   const id = useId();
+  // false en el HTML del servidor y true cuando React ya enganchó los eventos: lo escrito antes de eso se perdería.
+  const hydrated = useSyncExternalStore(noSubscribe, () => true, () => false);
   const [visible, setVisible] = useState<number | null>(null);
 
   function filter(value: string) {
@@ -30,7 +34,7 @@ export function CatalogSearch({ rootId }: { rootId: string }) {
   return (
     <div className="pb-2">
       <label htmlFor={id} className="sr-only">Buscar en el catálogo</label>
-      <input id={id} type="search" placeholder="Buscar productos…" onChange={(e) => filter(e.target.value)}
+      <input id={id} type="search" placeholder="Buscar productos…" data-hydrated={hydrated ? "true" : "false"} onChange={(e) => filter(e.target.value)}
         className="w-full rounded-full border border-input bg-card px-4 py-2 text-sm text-foreground placeholder:text-muted-foreground" />
       <p role="status" aria-live="polite" className="mt-1 text-xs text-muted-foreground">
         {visible === 0 ? "No encontramos productos con esa búsqueda." : ""}

@@ -110,6 +110,7 @@ export function Editor({ initial, sync }: { initial: Draft; sync?: SyncConfig })
         )}
         {user && (
           <span className="flex items-center gap-1 text-xs text-muted-foreground" data-testid="account">
+            <Link href="/panel/pedidos" className="rounded-md px-2 py-1 font-medium text-foreground hover:bg-muted">Pedidos</Link>
             <span className="max-w-40 truncate">{user.email}</span>
             <Button variant="ghost" size="sm" onClick={() => void signOut()}>Salir</Button>
           </span>

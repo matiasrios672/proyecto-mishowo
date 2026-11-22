@@ -1,5 +1,11 @@
 # PROGRESS — MiShowo (bitácora, lo más nuevo arriba)
 
+## 2026-11-22 — Épica 9: panel de pedidos
+- Backend: GET /me/orders (filtro, paginación por cursor), /summary, /orders.csv, /:id y PATCH /:id/status (transiciones, reposición de stock, lock). Aviso por email al dueño. Migración 0006 (order_items.option_id).
+- Frontend: /panel/pedidos (filtros con contadores, actualización cada 30 s, acciones por estado, cancelación con confirmación, WhatsApp al cliente, CSV, estados vacíos), PanelShell con guardia de sesión.
+- Bugs reales: CORS sin PATCH; búsqueda perdida antes de hidratar (flaky bajo carga).
+- Tests: backend 152; frontend 124 unitarios + 145 e2e (3 corridas seguidas sin fallos).
+
 ## 2026-11-22 — Épica 7 (parte 1): publicar y límites del plan
 - Backend: GET /me/slug, POST /me/business/publish y /unpublish (requisitos, link único y reservado, límite del plan, suspendido), límite del plan también al guardar, aviso de cambio al frontend. API pública oculta productos de ejemplo.
 - Frontend: pestaña Publicar real (link con chequeo en vivo, errores explicados, copiar, cambiar link, despublicar), /api/revalidate seguro, proxy con 404 reales.

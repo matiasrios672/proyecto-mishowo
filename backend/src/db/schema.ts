@@ -138,6 +138,7 @@ export const orderItems = pgTable("order_items", {
   businessId: uuid("business_id").notNull().references(() => businesses.id, { onDelete: "cascade" }),
   orderId: uuid("order_id").notNull().references(() => orders.id, { onDelete: "cascade" }),
   productId: uuid("product_id").references(() => products.id, { onDelete: "set null" }),
+  optionId: uuid("option_id").references(() => productOptions.id, { onDelete: "set null" }), // para reponer el stock al cancelar
   name: text("name").notNull(),
   optionLabel: text("option_label"),
   unitPrice: numeric("unit_price", { precision: 12, scale: 2 }).notNull().default("0"),

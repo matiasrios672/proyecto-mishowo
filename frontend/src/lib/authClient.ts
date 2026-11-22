@@ -7,7 +7,7 @@ export interface ApiResult<T> { ok: boolean; status: number; data: T & { error?:
 /** Llamada a la API con la cookie de sesión. Nunca lanza: una caída de red vuelve como `error: "network"`. */
 export async function api<T = Record<string, unknown>>(
   path: string,
-  init: { method?: "GET" | "POST" | "PUT" | "DELETE"; body?: unknown; keepalive?: boolean } = {},
+  init: { method?: "GET" | "POST" | "PUT" | "PATCH" | "DELETE"; body?: unknown; keepalive?: boolean } = {},
 ): Promise<ApiResult<T>> {
   try {
     const res = await fetch(`${API_URL}${path}`, {

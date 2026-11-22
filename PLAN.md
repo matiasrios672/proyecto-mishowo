@@ -85,8 +85,8 @@ Criterio general de aceptación por tarea: typecheck + lint + tests verdes; para
 - [ ] 8.7 Bandeja de pagos: confirmar/rechazar, registrar pago manual, vencimientos, recordatorios, regalar días, reporte CSV.
 
 ## Épica 9 — Panel de pedidos del negocio
-- [ ] 9.1 Lista y detalle de pedidos con estados (nuevo, confirmado, listo, entregado, cancelado).
-- [ ] 9.2 Notificación por email al negocio y exportación CSV.
+- [x] 9.1 Lista y detalle de pedidos con estados (nuevo, confirmado, listo, entregado, cancelado).
+- [x] 9.2 Notificación por email al negocio y exportación CSV.
 
 ## Épica 10 — Landing, legales y "Próximamente"
 - [x] 10.1 Landing: hero, demo interactiva, ejemplos por rubro navegables, planes, testimonios placeholder, FAQ, sección Próximamente.

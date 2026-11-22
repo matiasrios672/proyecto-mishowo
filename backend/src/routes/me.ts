@@ -9,6 +9,7 @@ import { loadContent, saveContent } from "../business/sync.js";
 import { missingForPublish, productLimit, realProducts } from "../business/publish.js";
 import { requireUser, strictOriginOk } from "../auth/session.js";
 import { checkSlug } from "../lib/slug.js";
+import { orderPanelRoutes } from "./orders-panel.js";
 import type { SiteChanged } from "../lib/revalidate.js";
 
 const putBody = z.object({
@@ -27,6 +28,8 @@ export function meRoutes(app: FastifyInstance, db: Db, config: Config, notify: S
   app.addHook("onRequest", async (req, reply) => {
     if (!strictOriginOk(config, req)) return reply.code(403).send({ error: "bad_origin" });
   });
+
+  orderPanelRoutes(app, db);
 
   const ownBusiness = async (userId: string) =>
     (await db.select().from(s.businesses).where(and(eq(s.businesses.ownerId, userId), isNull(s.businesses.deletedAt))))[0] ?? null;

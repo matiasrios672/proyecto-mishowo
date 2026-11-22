@@ -18,3 +18,15 @@ export const buttonRadius = (shape: string | undefined) =>
 /** Minúsculas y sin tildes, para búsquedas ("Jamón" encuentra "jamon"). */
 export const normalizeSearch = (s: string): string =>
   s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").trim();
+
+/** "hace 5 min", "hace 2 h", "ayer"... para listas de pedidos. */
+export function timeAgo(from: string | number | Date, now: number = Date.now()): string {
+  const sec = Math.round((new Date(from).getTime() - now) / 1000);
+  const rtf = new Intl.RelativeTimeFormat("es-AR", { numeric: "auto" });
+  const abs = Math.abs(sec);
+  if (abs < 45) return "recién";
+  if (abs < 3600) return rtf.format(Math.round(sec / 60), "minute");
+  if (abs < 86400) return rtf.format(Math.round(sec / 3600), "hour");
+  if (abs < 86400 * 30) return rtf.format(Math.round(sec / 86400), "day");
+  return new Date(from).toLocaleDateString("es-AR");
+}

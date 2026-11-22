@@ -2,6 +2,8 @@ import type { FastifyInstance } from "fastify";
 import { and, eq, inArray, isNull, sql } from "drizzle-orm";
 import { z } from "zod";
 import type { Db } from "../db/tenant.js";
+import type { Mailer } from "../lib/mailer.js";
+import { notifyOwner } from "../orders/notify.js";
 import * as s from "../db/schema.js";
 
 const line = z.object({
@@ -33,7 +35,7 @@ const fromCents = (c: number) => (c / 100).toFixed(2);
  * Registra un pedido. Los precios, la disponibilidad y el stock se calculan SIEMPRE acá,
  * desde la base: del navegador solo se aceptan ids y cantidades.
  */
-export function orderRoutes(app: FastifyInstance, db: Db, perMinute = 20) {
+export function orderRoutes(app: FastifyInstance, db: Db, perMinute = 20, mailer?: Mailer, appUrl = "") {
   app.post("/public/orders", { config: { rateLimit: { max: perMinute, timeWindow: "1 minute" } } }, async (req, reply) => {
     const parsed = body.safeParse(req.body);
     if (!parsed.success) return reply.code(400).send({ error: "invalid_request" });
@@ -59,7 +61,7 @@ export function orderRoutes(app: FastifyInstance, db: Db, perMinute = 20) {
           .where(and(eq(s.productOptions.businessId, biz.id), inArray(s.productOptions.productId, productIds)));
         const pById = new Map(products.map((p) => [p.id, p]));
 
-        const lines: { productId: string; name: string; optionLabel: string | null; unitCents: number; quantity: number }[] = [];
+        const lines: { productId: string; optionId: string | null; name: string; optionLabel: string | null; unitCents: number; quantity: number }[] = [];
         const wantProduct = new Map<string, number>();
         const wantOption = new Map<string, number>();
 
@@ -75,7 +77,7 @@ export function orderRoutes(app: FastifyInstance, db: Db, perMinute = 20) {
             throw new OrderError(422, "invalid_option", { productId: p.id });
           }
           const unit = opt && opt.price !== null ? opt.price : p.price;
-          lines.push({ productId: p.id, name: p.name, optionLabel: opt?.label ?? null, unitCents: toCents(unit), quantity: it.quantity });
+          lines.push({ productId: p.id, optionId: opt?.id ?? null, name: p.name, optionLabel: opt?.label ?? null, unitCents: toCents(unit), quantity: it.quantity });
           if (opt && opt.stock !== null) wantOption.set(opt.id, (wantOption.get(opt.id) ?? 0) + it.quantity);
           else if (p.stock !== null) wantProduct.set(p.id, (wantProduct.get(p.id) ?? 0) + it.quantity);
         }
@@ -102,17 +104,20 @@ export function orderRoutes(app: FastifyInstance, db: Db, perMinute = 20) {
           notes: input.notes || null, eventDate: input.eventDate ?? null, source: input.source ?? null,
         }).returning();
         await tx.insert(s.orderItems).values(lines.map((l) => ({
-          businessId: biz.id, orderId: order!.id, productId: l.productId, name: l.name,
+          businessId: biz.id, orderId: order!.id, productId: l.productId, optionId: l.optionId, name: l.name,
           optionLabel: l.optionLabel, unitPrice: fromCents(l.unitCents), quantity: l.quantity,
         })));
 
         return {
+          ownerId: biz.ownerId, businessName: biz.name,
           number, total: Number(fromCents(totalCents)),
           items: lines.map((l) => ({ name: l.name, optionLabel: l.optionLabel, unitPrice: l.unitCents / 100, quantity: l.quantity })),
           eventDate: input.eventDate ?? null, customerName: input.customerName || null, notes: input.notes || null,
         };
       });
-      return reply.code(201).send(result);
+      const { ownerId, businessName, ...publicResult } = result;
+      if (mailer) void notifyOwner(db, mailer, ownerId, businessName, publicResult, appUrl, (e) => app.log.error({ err: e }, "no se pudo avisar del pedido"));
+      return reply.code(201).send(publicResult);
     } catch (e) {
       if (e instanceof OrderError) return reply.code(e.status).send({ error: e.code, ...e.extra });
       throw e;

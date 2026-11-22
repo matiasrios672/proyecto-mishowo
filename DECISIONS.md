@@ -90,3 +90,11 @@ Formato: ID · fecha · decisión · motivo · consecuencias. Las más nuevas ar
 - Límites del plan: se leen de la tabla `plans` (D-007) al guardar y al publicar; solo cuentan los productos propios. Rate limit configurable en publicar.
 - Actualización instantánea: el backend avisa a `POST /api/revalidate` del frontend (secreto compartido `REVALIDATE_SECRET`, comparación en tiempo constante) y este llama `revalidateTag('site:<slug>', { expire: 0 })`. Si el aviso falla, la página se actualiza sola al vencer el caché.
 - **404 reales:** el `proxy.ts` consulta si el negocio existe (`siteExists`, caché de 15 s en memoria con tope de 2000 entradas, que el aviso de revalidación limpia) y responde 404 para negocios inexistentes o despublicados. Resuelve D-005 (antes respondía 200 con un "no encontrado" dentro). Un error del backend no bloquea a nadie ni se cachea.
+
+## D-016 · 2026-11-22 · Panel de pedidos del negocio
+- Estados: nuevo → confirmado → listo → entregado; se puede cancelar hasta antes de entregar; entregado y cancelado son finales (reglas en `backend/src/orders/status.ts`, testeadas). El cambio de estado y la creación de pedidos comparten el lock por negocio.
+- Cancelar repone el stock que el pedido descontó (en la opción si controla stock, si no en el producto), una sola vez aunque lleguen dos cancelaciones a la vez (verificado por mutación). Para eso `order_items` guarda `option_id`.
+- CSV para Excel en español: separador `;`, BOM UTF-8 y coma decimal; **toda celda que empiece con `= + - @` se neutraliza** para que un cliente no pueda inyectar fórmulas. Máx. 5000 pedidos.
+- Aviso por email al dueño en cada pedido (best effort: si el mail falla el pedido igual queda). La respuesta pública del pedido no expone datos del dueño.
+- CORS: faltaba `PATCH` (mismo problema que `PUT`): los tests de backend no pasan por el navegador y no lo veían; ahora hay tests de preflight para ambos.
+- Hidratación: el buscador del catálogo expone `data-hydrated`; lo escrito antes de hidratar se perdía y volvía flaky el e2e bajo carga.

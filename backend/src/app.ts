@@ -39,8 +39,8 @@ export function buildApp(config: Config, dbCheck: HealthCheck = async () => true
   app.register(cors, {
     origin: (origin, cb) => cb(null, originAllowed(origin, config)),
     credentials: true,
-    // El plugin permite solo GET, HEAD y POST por defecto: sin esto el navegador bloquea el guardado (PUT).
-    methods: ["GET", "HEAD", "POST", "PUT", "DELETE", "OPTIONS"],
+    // El plugin permite solo GET, HEAD y POST por defecto: sin esto el navegador bloquea el guardado (PUT) y el cambio de estado (PATCH).
+    methods: ["GET", "HEAD", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
   });
   app.register(cookie);
   app.register(rateLimit, { global: false });
@@ -62,11 +62,11 @@ export function buildApp(config: Config, dbCheck: HealthCheck = async () => true
     if (db) {
       publicRoutes(api, db);
       planRoutes(api, db);
-      orderRoutes(api, db, config.ORDERS_PER_MINUTE);
       reportRoutes(api, db, config.REPORTS_PER_MINUTE);
-      // Contexto propio: el chequeo de origen de /auth no debe afectar a las rutas públicas (pedidos, denuncias).
       const mailer = deps.mailer ?? createSmtpMailer(config);
+      orderRoutes(api, db, config.ORDERS_PER_MINUTE, mailer, config.APP_URL);
       contactRoutes(api, db, mailer, config.REPORTS_PER_MINUTE);
+      // Contextos propios: el chequeo de origen de /auth y /me no debe afectar a las rutas públicas (pedidos, denuncias).
       api.register(async (authScope) => authRoutes(authScope, db, config, mailer));
       api.register(async (meScope) => meRoutes(meScope, db, config, deps.onSiteChanged ?? createRevalidator(config, (m) => app.log.warn(m))));
     }

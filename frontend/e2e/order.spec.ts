@@ -97,6 +97,7 @@ test.describe('buscador y denuncias', () => {
   test('el buscador filtra sin tildes, oculta secciones vacías y avisa si no hay resultados', async ({ page }) => {
     await page.goto(SITE);
     const search = page.getByRole('searchbox', { name: 'Buscar en el catálogo' });
+    await expect(search).toHaveAttribute('data-hydrated', 'true'); // esperar a que la página esté lista: escribir antes se perdería
     const items = page.locator('#catalog li[data-search]:visible');
     const total = await items.count();
     expect(total).toBeGreaterThan(8);
