@@ -1,5 +1,12 @@
 # PROGRESS — MiShowo (bitácora, lo más nuevo arriba)
 
+## 2026-11-22 — Épica 6, tramo A: cuentas y sesiones (6.1-6.3)
+- Backend: /auth/register, login, logout, me, verify, resend-verification, forgot, reset, magic, magic/consume. argon2id, sesiones hasheadas, tokens de un solo uso hasheados, anti-enumeración, CSRF por Origin, rate limit. Mailer SMTP (Mailpit en dev) con emails en voseo.
+- Frontend: /registro, /ingresar (contraseña o enlace), /recuperar, /restablecer, /verificar, /enlace; estado de sesión; editor con "Guardar mi página", cuenta/Salir y aviso de email sin confirmar.
+- Verificado con mutaciones: sin chequeo de vencimiento de sesión y sin consumo único de token los tests fallan.
+- Tests: backend 73, frontend 82 unitarios + 51 e2e (incluye leer los emails reales desde Mailpit).
+- Falta de la épica: 6.4 guardar el negocio en el servidor + migrar el borrador, 6.5/6.6 fotos y videos.
+
 ## 2026-11-22 — Épica 5 COMPLETA (página pública, carrito y pedido)
 - Backend: POST /public/orders (precios y stock recalculados en el servidor, numeración correlativa con lock por negocio, rate limit), POST /public/reports + tabla reports, CORS para subdominios de negocios (ROOT_DOMAIN).
 - Frontend: carrito por negocio (persiste, funciona sin localStorage), selector de opciones, panel "Tu pedido" con nombre/notas/fecha de evento, mensaje de WhatsApp armado con los datos del servidor, plan B sin conexión, buscador del catálogo (sin tildes), botón Denunciar.

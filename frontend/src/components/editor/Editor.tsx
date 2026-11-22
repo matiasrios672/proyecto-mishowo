@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Wordmark } from "@/components/brand/Wordmark";
 import { SiteView } from "@/components/site/SiteView";
@@ -8,6 +9,8 @@ import { draftToSite } from "@/lib/site";
 import { quality, type EditorTab } from "@/lib/score";
 import type { Draft } from "@/lib/draft";
 import { saveLabel, useEditor } from "./useEditor";
+import { logout, useUser } from "@/components/auth/authStore";
+import { api } from "@/lib/authClient";
 import { NegocioTab } from "./tabs/NegocioTab";
 import { TextosTab } from "./tabs/TextosTab";
 import { FotosTab } from "./tabs/FotosTab";
@@ -38,6 +41,8 @@ export function Editor({ initial }: { initial: Draft }) {
   const [mobileView, setMobileView] = useState<"editar" | "ver">("editar");
   const [fullscreen, setFullscreen] = useState(false);
   const panelRef = useRef<HTMLDivElement>(null);
+  const user = useUser();
+  const [resend, setResend] = useState<"idle" | "sending" | "sent" | "error">("idle");
   const q = quality(draft);
   const site = draftToSite(draft);
 
@@ -83,10 +88,30 @@ export function Editor({ initial }: { initial: Draft }) {
           <Button variant="ghost" size="sm" onClick={undo} disabled={!canUndo} aria-label="Deshacer">↶ Deshacer</Button>
           <Button variant="ghost" size="sm" onClick={redo} disabled={!canRedo} aria-label="Rehacer">↷ Rehacer</Button>
         </div>
+        {user === null && (
+          <Button size="sm" render={<Link href="/registro?next=/editor" />}>Guardar mi página</Button>
+        )}
+        {user && (
+          <span className="flex items-center gap-1 text-xs text-muted-foreground" data-testid="account">
+            <span className="max-w-40 truncate">{user.email}</span>
+            <Button variant="ghost" size="sm" onClick={() => void logout()}>Salir</Button>
+          </span>
+        )}
         <button type="button" onClick={() => goTab("publicar")} className="rounded-full border px-3 py-1 text-xs font-medium" aria-label={`Calidad de tu página: ${q.score} por ciento. Ver pendientes`}>
           {q.score}% listo
         </button>
       </header>
+
+      {user && !user.emailVerified && (
+        <div role="status" className="flex flex-wrap items-center gap-2 border-b bg-muted px-4 py-2 text-sm" data-testid="verify-banner">
+          <span>Confirmá tu email para poder publicar. Te mandamos un enlace a <strong>{user.email}</strong>.</span>
+          <Button variant="outline" size="sm" disabled={resend === "sending" || resend === "sent"}
+            onClick={async () => { setResend("sending"); const r = await api("/auth/resend-verification", { body: {} }); setResend(r.ok ? "sent" : "error"); }}>
+            {resend === "sent" ? "Enviado ✓" : resend === "sending" ? "Enviando…" : "Reenviar el email"}
+          </Button>
+          {resend === "error" && <span className="text-destructive">No pudimos enviarlo, probá de nuevo.</span>}
+        </div>
+      )}
 
       <div className="grid min-h-0 flex-1 lg:grid-cols-[minmax(0,30rem)_1fr]">
         <div className={`flex min-h-0 min-w-0 flex-col ${mobileView === "ver" ? "hidden lg:flex" : "flex"}`}>

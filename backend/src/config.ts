@@ -9,6 +9,17 @@ const schema = z.object({
   ROOT_DOMAIN: z.string().default("localhost"),
   // Pedidos por minuto por IP en el endpoint público de pedidos.
   REPORTS_PER_MINUTE: z.coerce.number().int().positive().default(5),
+  // Frontend público (para armar los links de los emails).
+  APP_URL: z.string().default("http://localhost:3000"),
+  SMTP_HOST: z.string().default("localhost"),
+  SMTP_PORT: z.coerce.number().default(1025),
+  SMTP_USER: z.string().optional(),
+  SMTP_PASS: z.string().optional(),
+  SMTP_SECURE: z.enum(["true", "false"]).default("false"),
+  MAIL_FROM: z.string().default("MiShowo <no-reply@mishowo.com>"),
+  SESSION_DAYS: z.coerce.number().int().positive().default(30),
+  // Intentos por minuto y por IP en cada ruta de /auth.
+  AUTH_PER_MINUTE: z.coerce.number().int().positive().default(10),
   ORDERS_PER_MINUTE: z.coerce.number().int().positive().default(20),
   COOKIE_DOMAIN: z.string().optional(),
   UPLOADS_DIR: z.string().default("./uploads"),

@@ -195,3 +195,16 @@ export const reports = pgTable("reports", {
   status: text("status").notNull().default("nuevo"), // nuevo | revisado | accion_tomada
   createdAt: ts("created_at"),
 }, (t) => [index("reports_status_idx").on(t.status, t.createdAt)]);
+
+// ---- Tokens de un solo uso: verificar email, restablecer contraseña, enlace mágico ----
+// Solo se guarda el hash: si se filtra la base, los enlaces no sirven.
+export const authTokens = pgTable("auth_tokens", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: uuid("user_id").references(() => users.id, { onDelete: "cascade" }),
+  email: text("email").notNull(),
+  type: text("type").notNull(), // verify | reset | magic
+  tokenHash: text("token_hash").notNull(),
+  expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+  usedAt: timestamp("used_at", { withTimezone: true }),
+  createdAt: ts("created_at"),
+}, (t) => [uniqueIndex("auth_tokens_hash_idx").on(t.tokenHash), index("auth_tokens_email_idx").on(t.email, t.type)]);

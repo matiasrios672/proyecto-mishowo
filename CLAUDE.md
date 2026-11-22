@@ -32,4 +32,4 @@ Especificación completa: `PROMPT_MiShowo_ClaudeCode.md` (no copiarla acá). Pla
 
 ## Estado actual
 - Fase: Épicas 1-5 completas (4 con partes [~]). Falta review independiente. Siguiente: Épica 6 (auth, guardado y fotos).
-- Próximo paso: Épica 6, tarea 6.1 (registro/login con email+contraseña, argon2, verificación). Al crear cuenta hay que migrar el borrador (frontend/src/lib/draft.ts) al backend y crear el negocio. Los pedidos ya existen (tabla orders); el panel es la Épica 9. e2e de pedidos necesita el stack: `docker compose up -d` + `SEED_DEMO=1 npm run db:seed` (backend).
+- Próximo paso: Épica 6 tramo B (6.4): guardar el negocio en el servidor y migrar el borrador (plan: columnas client_id en categories/products/product_options, GET/PUT /me/business con control de versión), luego tramo C (fotos y videos). Auth ya hecha (D-010). e2e de cuentas leen los mails de Mailpit (:8025).

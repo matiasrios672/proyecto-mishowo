@@ -9,6 +9,8 @@ import { planRoutes } from "./routes/plans.js";
 import { templateRoutes } from "./routes/templates.js";
 import { orderRoutes } from "./routes/orders.js";
 import { reportRoutes } from "./routes/reports.js";
+import { authRoutes } from "./routes/auth.js";
+import { createSmtpMailer, type Mailer } from "./lib/mailer.js";
 
 export type HealthCheck = () => Promise<boolean>;
 
@@ -26,7 +28,9 @@ export function originAllowed(origin: string | undefined, config: Pick<Config, "
   }
 }
 
-export function buildApp(config: Config, dbCheck: HealthCheck = async () => true, db?: Db) {
+export interface AppDeps { mailer?: Mailer }
+
+export function buildApp(config: Config, dbCheck: HealthCheck = async () => true, db?: Db, deps: AppDeps = {}) {
   const app = Fastify({ logger: config.NODE_ENV !== "test", trustProxy: config.NODE_ENV === "production" });
 
   app.register(cors, {
@@ -55,6 +59,9 @@ export function buildApp(config: Config, dbCheck: HealthCheck = async () => true
       planRoutes(api, db);
       orderRoutes(api, db, config.ORDERS_PER_MINUTE);
       reportRoutes(api, db, config.REPORTS_PER_MINUTE);
+      // Contexto propio: el chequeo de origen de /auth no debe afectar a las rutas públicas (pedidos, denuncias).
+      const mailer = deps.mailer ?? createSmtpMailer(config);
+      api.register(async (authScope) => authRoutes(authScope, db, config, mailer));
     }
   });
 

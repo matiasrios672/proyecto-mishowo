@@ -48,3 +48,12 @@ Formato: ID · fecha · decisión · motivo · consecuencias. Las más nuevas ar
 ## D-009 · 2026-11-22 · Metadata bloqueante para todos los clientes (`htmlLimitedBots: /.*/`)
 - Next 16 manda la metadata en streaming a navegadores y bloqueante solo a una lista de bots (que no incluye WhatsApp, Facebook ni Instagram). Los links de los negocios se comparten justo ahí, así que se sirve bloqueante a todos.
 - Medido con Lighthouse mobile sobre la página pública (build de producción en Docker, máquina local): rendimiento 98, accesibilidad 100, buenas prácticas 100, SEO 100. Es una medición de laboratorio; falta repetirla en el VPS real.
+
+## D-010 · 2026-11-22 · Cuentas y sesiones
+- Contraseñas con argon2id (`@node-rs/argon2`: binarios precompilados, sin compilar en Alpine). Sesión: token aleatorio de 256 bits en cookie `httpOnly` + `SameSite=Lax` (+ `Secure` y `Domain=.mishowo.com` en producción); en la DB solo su hash. Los tokens de email (verificar, restablecer, enlace mágico) también se guardan hasheados, son de un solo uso (consumo atómico) y el nuevo anula al anterior.
+- Anti-enumeración: login, "olvidé mi contraseña" y enlace mágico responden igual exista o no la cuenta (login verifica contra un hash de relleno para igualar tiempos). **Excepción consciente:** el registro sí avisa "ya hay una cuenta con ese email" (409), porque es mucho mejor experiencia y el riesgo es bajo; se limita con rate limit.
+- CSRF: las rutas de `/auth` solo aceptan POST con `Origin` en la lista explícita `FRONTEND_ORIGIN` (no los subdominios de negocios, que sí pueden llamar a `/public/*`). Las rutas de `/auth` viven en su propio contexto de Fastify para no afectar a las públicas.
+- Los enlaces de los emails se consumen con POST desde la página, nunca con GET, y el enlace mágico exige un clic: así los escáneres de links de los clientes de correo no los gastan.
+- Restablecer la contraseña cierra todas las sesiones. Entrar por enlace mágico crea la cuenta (ya verificada) si no existía.
+- Rate limit por IP en cada ruta de `/auth` (`AUTH_PER_MINUTE`, 10 por defecto). El email de verificación es obligatorio solo para publicar, no para editar.
+- Next 16 con `cacheComponents` deja montadas (ocultas) las pantallas anteriores: en los e2e hay que filtrar por `:visible`.

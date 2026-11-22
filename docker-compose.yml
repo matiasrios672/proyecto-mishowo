@@ -34,6 +34,10 @@ services:
       NODE_ENV: production
       DATABASE_URL: postgres://mishowo:mishowo@db:5432/mishowo
       FRONTEND_ORIGIN: http://localhost:3000,http://localhost:3100
+      APP_URL: http://localhost:3000
+      SMTP_HOST: mailpit
+      SMTP_PORT: "1025"
+      AUTH_PER_MINUTE: "60"
       UPLOADS_DIR: /app/uploads
     ports:
       - "4000:4000"
