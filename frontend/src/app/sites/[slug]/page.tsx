@@ -4,6 +4,8 @@ import type { Metadata } from "next";
 import { getSite } from "@/lib/api";
 import { publicToSite } from "@/lib/site";
 import { SiteView } from "@/components/site/SiteView";
+import { localBusinessJsonLd, safeJsonLd, seoDescription } from "@/lib/seo";
+import { siteUrl } from "@/lib/siteUrl";
 
 type Props = { params: Promise<{ slug: string }> };
 
@@ -11,7 +13,16 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
   const site = await getSite(slug);
   if (!site?.business) return { title: "Página no disponible", robots: { index: false } };
-  return { title: { absolute: site.business.name }, description: site.business.description };
+  const model = publicToSite(site);
+  const url = siteUrl(slug);
+  const description = seoDescription(model);
+  const image = model.cover ?? model.categories.flatMap((c) => c.products).find((p) => p.image)?.image ?? null;
+  return {
+    title: { absolute: model.name }, description,
+    alternates: { canonical: `${url}/` },
+    openGraph: { type: "website", locale: "es_AR", url: `${url}/`, siteName: model.name, title: model.name, description, ...(image ? { images: [{ url: image }] } : {}) },
+    twitter: { card: image ? "summary_large_image" : "summary", title: model.name, description, ...(image ? { images: [image] } : {}) },
+  };
 }
 
 export default function SitePage({ params }: Props) {
@@ -36,7 +47,12 @@ async function SiteContent({ params }: Props) {
     );
   }
 
+  const model = publicToSite(site);
+  const image = model.cover ?? model.categories.flatMap((c) => c.products).find((p) => p.image)?.image ?? null;
   return (
-    <SiteView site={publicToSite(site)} orderable={{ slug }} />
+    <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd(localBusinessJsonLd(model, `${siteUrl(slug)}/`, image)) }} />
+      <SiteView site={model} orderable={{ slug }} />
+    </>
   );
 }

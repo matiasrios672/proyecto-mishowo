@@ -8,6 +8,7 @@ import { CartDrawer } from "./cart/CartDrawer";
 import { CatalogSearch } from "./CatalogSearch";
 import { ReportButton } from "./ReportButton";
 import { SiteNav } from "./SiteNav";
+import { SiteTracker } from "./SiteTracker";
 import { Catalog, CtaBand, Hero, HowTo, InfoSection, Ticker, slugify, type Orderable } from "./parts";
 
 export type { Orderable };
@@ -47,6 +48,7 @@ export function SiteView({ site, preview = false, orderable }: { site: SiteModel
         <div className="bg-primary px-4 py-2 text-center text-sm text-primary-foreground" data-testid="announcement">{site.announcement}</div>
       )}
 
+      {orderable && !preview && <SiteTracker slug={orderable.slug} />}
       <SiteNav
         name={site.name}
         links={cats.map((c) => ({ id: `sec-${slugify(c.name)}`, label: c.name }))}

@@ -238,3 +238,15 @@ export const appSettings = pgTable("app_settings", {
   value: jsonb("value").notNull().default({}),
   updatedAt: ts("updated_at"),
 });
+
+// ---- Estadísticas propias (sin cookies ni IP guardada: el visitante es un hash que cambia cada día) ----
+export const siteEvents = pgTable("site_events", {
+  id: serial("id").primaryKey(),
+  businessId: uuid("business_id").notNull().references(() => businesses.id, { onDelete: "cascade" }),
+  day: date("day").notNull(),
+  type: text("type").notNull(), // visit | product_view | whatsapp_click
+  productId: uuid("product_id").references(() => products.id, { onDelete: "cascade" }),
+  source: text("source"), // utm_source, o el dominio de origen, o "directo"
+  visitor: text("visitor").notNull(),
+  createdAt: ts("created_at"),
+}, (t) => [index("site_events_biz_day_idx").on(t.businessId, t.day, t.type)]);

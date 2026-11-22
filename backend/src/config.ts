@@ -15,6 +15,7 @@ const schema = z.object({
   ADMIN_VERIFY_HOURS: z.coerce.number().positive().default(8),
   ADMIN_SESSION_HOURS: z.coerce.number().positive().default(12),
   ADMIN_2FA_PER_MINUTE: z.coerce.number().int().positive().default(6),
+  EVENTS_PER_MINUTE: z.coerce.number().int().positive().default(120),
   UPLOADS_PER_MINUTE: z.coerce.number().int().positive().default(60),
   PAYMENTS_PER_MINUTE: z.coerce.number().int().positive().default(10),
   PUBLISH_PER_MINUTE: z.coerce.number().int().positive().default(20),

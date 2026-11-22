@@ -123,6 +123,10 @@ const BENEFITS = [
   { t: "Talles, colores y stock", d: "Variantes por talle y color, precios por opción, precio tachado para ofertas y stock numérico: cuando se acaba, aparece como agotado solo." },
   { t: "Abierto ahora, siempre al día", d: "Cargás tus horarios por día y tu página muestra si estás abierto o cerrado, y cuándo volvés a abrir." },
   { t: "Cargá todo en un minuto", d: "Pegá una lista de productos con sus precios o subí un archivo CSV. Sin cargar de a uno." },
+  { t: "Fotos que cargan rápido", d: "Subís tus fotos desde el celular y las achicamos solas para que se vean nítidas sin gastar los datos de tus clientes. También podés sumar un video." },
+  { t: "Sabé cuánta gente te mira", d: "Mirá cuántas personas entran, qué productos miran más y cuántas tocan WhatsApp, y de dónde vienen: Instagram, tu QR o un link directo. Sin cookies." },
+  { t: "Tu código QR para imprimir", d: "Bajá tu QR en un clic y pegalo en tu local o en los paquetes: quien lo escanea entra directo a tu página, y vos ves cuántos llegaron así." },
+  { t: "Aparecé en Google", d: "Tu página sale con título, descripción, fotos y datos del negocio listos para buscadores y para cuando la compartan en redes." },
 ];
 
 export function Benefits() {

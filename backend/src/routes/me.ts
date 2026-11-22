@@ -12,6 +12,7 @@ import { checkSlug } from "../lib/slug.js";
 import { orderPanelRoutes } from "./orders-panel.js";
 import { billingRoutes } from "./billing.js";
 import { mediaRoutes } from "./media.js";
+import { statsRoutes } from "./stats.js";
 import type { StorageProvider } from "../storage/index.js";
 import type { Mailer } from "../lib/mailer.js";
 import type { SiteChanged } from "../lib/revalidate.js";
@@ -36,6 +37,7 @@ export function meRoutes(app: FastifyInstance, db: Db, config: Config, notify: S
   orderPanelRoutes(app, db);
   billingRoutes(app, db, storage, mailer, config.PAYMENTS_PER_MINUTE);
   mediaRoutes(app, db, config, storage, notify, config.UPLOADS_PER_MINUTE);
+  statsRoutes(app, db);
 
   const ownBusiness = async (userId: string) =>
     (await db.select().from(s.businesses).where(and(eq(s.businesses.ownerId, userId), isNull(s.businesses.deletedAt))))[0] ?? null;

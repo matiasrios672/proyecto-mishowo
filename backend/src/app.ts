@@ -13,6 +13,7 @@ import { reportRoutes } from "./routes/reports.js";
 import { authRoutes } from "./routes/auth.js";
 import { meRoutes } from "./routes/me.js";
 import { contactRoutes } from "./routes/contact.js";
+import { publicStatsRoutes } from "./routes/stats.js";
 import { adminRoutes } from "./routes/admin.js";
 import { publicMediaRoutes } from "./routes/media.js";
 import { createSmtpMailer, type Mailer } from "./lib/mailer.js";
@@ -75,6 +76,7 @@ export function buildApp(config: Config, dbCheck: HealthCheck = async () => true
       const mailer = deps.mailer ?? createSmtpMailer(config);
       orderRoutes(api, db, config.ORDERS_PER_MINUTE, mailer, config.APP_URL);
       contactRoutes(api, db, mailer, config.REPORTS_PER_MINUTE);
+      publicStatsRoutes(api, db, config.EVENTS_PER_MINUTE);
       // Contextos propios: el chequeo de origen de /auth y /me no debe afectar a las rutas públicas (pedidos, denuncias).
       api.register(async (authScope) => authRoutes(authScope, db, config, mailer));
       const notify = deps.onSiteChanged ?? createRevalidator(config, (m) => app.log.warn(m));

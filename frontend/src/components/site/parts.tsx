@@ -78,7 +78,7 @@ function Card({ p, layout, preview, order, showQuantities }: { p: SiteProduct; l
 
   if (layout === "vidriera")
     return (
-      <li data-search={search} className={dim}>
+      <li data-search={search} data-product-id={p.id} className={dim}>
         <Art name={name} image={p.image} imageSet={p.imageSet} className={`aspect-[16/10] w-full rounded-[1.25rem] @xl:aspect-[4/3]${artDim}`} />
         <div className="pt-3.5">
           <div className="flex items-baseline justify-between gap-4">
@@ -93,7 +93,7 @@ function Card({ p, layout, preview, order, showQuantities }: { p: SiteProduct; l
 
   if (layout === "grilla")
     return (
-      <li data-search={search} className={dim}>
+      <li data-search={search} data-product-id={p.id} className={dim}>
         <Art name={name} image={p.image} imageSet={p.imageSet} className={`aspect-square w-full rounded-2xl${artDim}`} />
         <div className="pt-3">
           <h4 className="text-sm font-semibold leading-snug @2xl:text-base">{name}{ex}</h4>
@@ -105,7 +105,7 @@ function Card({ p, layout, preview, order, showQuantities }: { p: SiteProduct; l
 
   if (layout === "servicios")
     return (
-      <li data-search={search} className={`flex gap-4 border-l-4 border-primary py-1 pl-4 ${dim}`}>
+      <li data-search={search} data-product-id={p.id} className={`flex gap-4 border-l-4 border-primary py-1 pl-4 ${dim}`}>
         <Thumb p={p} name={name} dim={!p.available} />
         <div className="min-w-0 flex-1">
           <div className="flex items-baseline justify-between gap-4">
@@ -120,7 +120,7 @@ function Card({ p, layout, preview, order, showQuantities }: { p: SiteProduct; l
 
   // mostrador: la carta de un bar, con puntos guía hasta el precio
   return (
-    <li data-search={search} className={`flex gap-3 border-b border-border py-3.5 ${dim}`}>
+    <li data-search={search} data-product-id={p.id} className={`flex gap-3 border-b border-border py-3.5 ${dim}`}>
       <div className="min-w-0 flex-1">
         <div className="flex items-baseline gap-2">
           <h4 className="font-medium leading-snug">{name}{ex}</h4>

@@ -1,5 +1,13 @@
 # PROGRESS — MiShowo (bitácora, lo más nuevo arriba)
 
+## 2026-11-22 — Épica 11 (parcial): estadísticas, QR y SEO por negocio
+- Analítica propia sin cookies ni IP guardada (visitante = hash diario): visitas únicas por día, vistas de producto, clics a WhatsApp, origen (utm_source/QR, Instagram, Google…). Filtra robots, valida que el producto sea del negocio, límite por IP. Panel /panel/estadisticas (7/30/90 días).
+- QR /panel/qr (PNG + imprimir/PDF) con utm_source=qr.
+- SEO por negocio: title/description/canonical/OpenGraph/Twitter, JSON-LD LocalBusiness con catálogo (escapado contra inyección de </script>), robots.txt y sitemap.xml propios por subdominio (antes el proxy los salteaba), 404 real si no existe.
+- Bugs reales: route handlers prerenderizados sin backend en el build de Docker; el escape de JSON-LD era un no-op (< evaluado como <) — lo atrapó un test.
+- Falta de la Épica 11: reseñas, píxel/GA opcional, imagen OG generada para negocios sin fotos.
+- Tests: backend 273, frontend 132 unitarios + 158 e2e.
+
 ## 2026-11-22 — Épica 6: fotos y videos
 - Backend: POST/GET/DELETE /me/media (sharp → WebP 400/800/1600 con srcset, orientación EXIF aplicada, **metadatos y GPS borrados**, límite de píxeles), videos MP4/MOV/WebM detectados por bytes (1 por negocio), límites por plan leídos de la tabla de planes (fotos por producto, MB), hasta 5 fotos de portada, deduplicación por hash (borrar una copia no rompe la otra), servicio público /uploads/media con caché inmutable, nosniff y Range (Safari); solo sirve nombres generados por MiShowo (los comprobantes de pago nunca salen por acá).
 - Frontend: pestaña Fotos (portada y por producto, errores claros), fotos en vidriera/grilla y miniaturas en mostrador/servicios, portada con srcset y video de portada.
