@@ -8,6 +8,13 @@
       "when": 1795363844734,
       "tag": "0000_real_sabretooth",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1795364679045,
+      "tag": "0001_strange_doctor_spectrum",
+      "breakpoints": true
     }
   ]
 }

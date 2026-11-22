@@ -1,0 +1,46 @@
+import type { FastifyInstance } from "fastify";
+import { and, asc, eq, isNull } from "drizzle-orm";
+import { z } from "zod";
+import type { Db } from "../db/tenant.js";
+import * as s from "../db/schema.js";
+
+const slugParam = z.object({ slug: z.string().min(2).max(30).regex(/^[a-z0-9-]+$/) });
+
+export function publicRoutes(app: FastifyInstance, db: Db) {
+  // Datos públicos de un negocio por slug. Solo expone lo necesario para renderizar la página.
+  app.get("/public/sites/:slug", async (req, reply) => {
+    const parsed = slugParam.safeParse(req.params);
+    if (!parsed.success) return reply.code(404).send({ error: "not_found" });
+
+    const [biz] = await db.select().from(s.businesses)
+      .where(and(eq(s.businesses.slug, parsed.data.slug), isNull(s.businesses.deletedAt)));
+    if (!biz || biz.status === "draft") return reply.code(404).send({ error: "not_found" });
+    if (biz.status === "suspended") return reply.code(200).send({ status: "suspended", name: biz.name });
+
+    const [cats, prods, opts] = await Promise.all([
+      db.select().from(s.categories).where(eq(s.categories.businessId, biz.id)).orderBy(asc(s.categories.position)),
+      db.select().from(s.products).where(eq(s.products.businessId, biz.id)).orderBy(asc(s.products.position)),
+      db.select().from(s.productOptions).where(eq(s.productOptions.businessId, biz.id)).orderBy(asc(s.productOptions.position)),
+    ]);
+
+    reply.header("Cache-Control", "public, max-age=30, stale-while-revalidate=120");
+    return {
+      status: "published",
+      business: {
+        slug: biz.slug, name: biz.name, industry: biz.industry, description: biz.description,
+        tagline: biz.tagline, whatsapp: biz.whatsapp, instagram: biz.instagram, address: biz.address,
+        deliveryZone: biz.deliveryZone, hours: biz.hours, design: biz.design, settings: biz.settings,
+        planId: biz.planId,
+      },
+      categories: cats.map((c) => ({ id: c.id, name: c.name })),
+      products: prods.map((p) => ({
+        id: p.id, categoryId: p.categoryId, name: p.name, description: p.description,
+        price: p.price, comparePrice: p.comparePrice,
+        available: p.available && (p.stock === null || p.stock > 0),
+        options: opts.filter((o) => o.productId === p.id).map((o) => ({
+          id: o.id, label: o.label, price: o.price, soldOut: o.soldOut || (o.stock !== null && o.stock <= 0),
+        })),
+      })),
+    };
+  });
+}

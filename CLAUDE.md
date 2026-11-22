@@ -31,5 +31,5 @@ Especificación completa: `PROMPT_MiShowo_ClaudeCode.md` (no copiarla acá). Pla
 - Frenar y preguntar: precios finales, datos de cobro, logo, credenciales (Cloudflare, SMTP), decisiones irreversibles.
 
 ## Estado actual
-- Fase: Épica 1 completa (falta review). Siguiente: Épica 2.
-- Próximo paso: Épica 2, tarea 2.1 (esquema multi-tenant en backend/src/db/schema.ts).
+- Fase: Épicas 1 y 2 completas (falta review independiente). Siguiente: Épica 3.
+- Próximo paso: Épica 3, tarea 3.1 (contenido de ejemplo por rubro). Demo local: `SEED_DEMO=1 npm run db:seed` y abrir http://lupe-empanadas.localhost:3000

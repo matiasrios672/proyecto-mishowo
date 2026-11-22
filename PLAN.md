@@ -26,11 +26,11 @@ Criterio general de aceptación por tarea: typecheck + lint + tests verdes; para
 - [x] 1.10 GitHub Actions opcional (lint, typecheck, test, build de imágenes).
 
 ## Épica 2 — Modelo de datos multi-tenant
-- [ ] 2.1 Esquema: users, sessions, businesses (slug único), memberships, categories, products, product_options, media, orders, order_items, plans, subscriptions, payments, audit_log, jobs.
-- [ ] 2.2 Helper de acceso por tenant (todas las queries filtran por `business_id`) + tests de aislamiento. *AC: test que prueba que A no lee datos de B.*
-- [ ] 2.3 Slugs: validación, reservados, unicidad. *AC: `admin`, `www`, `api` rechazados.*
-- [ ] 2.4 Seed de rubros, planes (`config/plans.ts` como defaults) y datos demo.
-- [ ] 2.5 Resolución de tenant por `Host`: endpoint público `GET /public/sites/:slug` + middleware Next.js. *AC: `demo.localhost` muestra el negocio demo.*
+- [x] 2.1 Esquema: users, sessions, businesses (slug único), memberships, categories, products, product_options, media, orders, order_items, plans, subscriptions, payments, audit_log, jobs.
+- [x] 2.2 Helper de acceso por tenant (todas las queries filtran por `business_id`) + tests de aislamiento. *AC: test que prueba que A no lee datos de B.*
+- [x] 2.3 Slugs: validación, reservados, unicidad. *AC: `admin`, `www`, `api` rechazados.*
+- [x] 2.4 Seed de rubros, planes (`config/plans.ts` como defaults) y datos demo.
+- [x] 2.5 Resolución de tenant por `Host`: endpoint público `GET /public/sites/:slug` + middleware Next.js. *AC: `demo.localhost` muestra el negocio demo.*
 
 ## Épica 3 — Onboarding por rubro
 - [ ] 3.1 Contenido de ejemplo realista (rotisería, ropa, muebles/deco, eventos/alquileres, gimnasio, oficios, belleza, salud, otro rubro productos/servicios), sin lorem ipsum.

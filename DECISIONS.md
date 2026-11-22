@@ -27,3 +27,10 @@ Formato: ID · fecha · decisión · motivo · consecuencias. Las más nuevas ar
 
 ## D-004 · 2026-11-22 · ORM: Drizzle; backend se queda en Node/TypeScript
 - Elegido por menor consumo de RAM y consultas siempre parametrizadas. Se evaluó Prisma (más veterano, más pesado) y Laravel/PHP (sin ventaja de escala; sumaba un segundo lenguaje y más RAM). Decisión confirmada por el dueño.
+
+## D-005 · 2026-11-22 · Subdominio inexistente responde 200 (con noindex)
+- Con `cacheComponents`, leer `params` obliga a usar `<Suspense>`, y el status HTTP ya se envió cuando corre `notFound()`. Un negocio inexistente muestra la página 404 pero con status 200.
+- Mitigación: `robots: noindex` en esos casos. A revisar en la Épica 11 (SEO) si hay forma de devolver 404 real (p. ej. validar el slug en `proxy.ts` contra una lista cacheada).
+
+## D-006 · 2026-11-22 · Imágenes Docker >300 MB
+- Frontend ~308 MB y backend ~354 MB sin comprimir. La base `node:alpine` ya pesa ~240 MB. No se persigue el objetivo de 300 MB.

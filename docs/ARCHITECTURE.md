@@ -18,7 +18,9 @@ Navegador ──> frontend (Next.js :3000) ──HTTP──> backend (Fastify :4
 - Todas las queries del backend filtran por `business_id`; hay tests de aislamiento (Épica 2).
 
 ## Datos (estado actual)
-- Tabla `jobs` (cola en Postgres, sin Redis). El resto del esquema llega en la Épica 2.
+- Esquema en `backend/src/db/schema.ts`: users, sessions, businesses (slug único, design/settings en jsonb), memberships, categories, products, product_options, media, orders, order_items, plans, subscriptions, payments, audit_log, jobs.
+- Toda tabla de un negocio lleva `business_id`. El acceso va por `tenantScope(db, businessId)` (`backend/src/db/tenant.ts`); nunca queries sueltas sobre esas tablas.
+- Endpoint público: `GET /public/sites/:slug` (solo publicados; suspendidos devuelven aviso; draft/borrados 404).
 - ORM: Drizzle. Migraciones en `backend/drizzle/`, se aplican solas al iniciar el backend (`npm run db:migrate` también).
 - Generar migración nueva: editar `backend/src/db/schema.ts` y correr `npm run db:generate`.
 
