@@ -54,12 +54,12 @@ Criterio general de aceptación por tarea: typecheck + lint + tests verdes; para
 - [x] 4.13 Checklist de publicación + score de calidad.
 
 ## Épica 5 — Página pública, carrito y pedido por WhatsApp
-- [ ] 5.1 Render SSR de los 4 layouts con temas y tipografías.
-- [ ] 5.2 Cinta de aviso, menú de anclas, buscador/filtros de catálogo.
-- [ ] 5.3 Carrito (drawer "Tu pedido"), variantes, cantidades, fecha de evento opcional.
-- [ ] 5.4 Mensaje de WhatsApp armado con total + `POST /public/orders` que registra el pedido. *AC: abre wa.me con texto correcto y el pedido queda en DB.*
-- [ ] 5.5 Footer con badge "Hecho con MiShowo" según plan, botón Denunciar, página "temporalmente no disponible".
-- [ ] 5.6 Performance: Lighthouse mobile ≥ 90.
+- [x] 5.1 Render SSR de los 4 layouts con temas y tipografías.
+- [x] 5.2 Cinta de aviso, menú de anclas, buscador/filtros de catálogo.
+- [x] 5.3 Carrito (drawer "Tu pedido"), variantes, cantidades, fecha de evento opcional.
+- [x] 5.4 Mensaje de WhatsApp armado con total + `POST /public/orders` que registra el pedido. *AC: abre wa.me con texto correcto y el pedido queda en DB.*
+- [x] 5.5 Footer con badge "Hecho con MiShowo" según plan, botón Denunciar, página "temporalmente no disponible".
+- [x] 5.6 Performance: Lighthouse mobile ≥ 90.
 
 ## Épica 6 — Auth, guardado y fotos
 - [ ] 6.1 Registro/login email+contraseña (argon2), verificación de email, reset.

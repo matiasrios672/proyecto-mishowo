@@ -38,7 +38,7 @@ async function SiteContent({ params }: Props) {
 
   return (
     <div className="mx-auto min-h-screen max-w-2xl bg-background">
-      <SiteView site={publicToSite(site)} />
+      <SiteView site={publicToSite(site)} orderable={{ slug }} />
     </div>
   );
 }

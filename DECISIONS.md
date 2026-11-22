@@ -39,3 +39,12 @@ Formato: ID · fecha · decisión · motivo · consecuencias. Las más nuevas ar
 - Pedido del dueño. La tabla `plans` es la fuente de verdad; `backend/src/config/plans.ts` solo da valores iniciales del seed (que no pisa ediciones).
 - Landing, pantalla de planes y límites del backend leen de la DB (`GET /public/plans`). Nada de precios hardcodeados en el frontend.
 - El editor de planes del admin se construye en la Épica 13 (13.1); hasta entonces se editan en la tabla `plans`.
+
+## D-008 · 2026-11-22 · El servidor es la fuente de verdad de precios y stock en los pedidos
+- `POST /public/orders` solo acepta ids y cantidades. Precio, disponibilidad y stock se calculan en el backend desde la DB; el total que ve el cliente en el mensaje de WhatsApp es el que devolvió el servidor.
+- El stock se descuenta al registrar el pedido (transacción con lock por negocio + `UPDATE ... WHERE stock >= cantidad`). Al cancelar un pedido hay que reponerlo (Épica 9, tarea 9.1).
+- Sin conexión, el cliente puede enviar el pedido igual por WhatsApp; en ese caso NO queda registrado en el panel (se avisa en pantalla).
+
+## D-009 · 2026-11-22 · Metadata bloqueante para todos los clientes (`htmlLimitedBots: /.*/`)
+- Next 16 manda la metadata en streaming a navegadores y bloqueante solo a una lista de bots (que no incluye WhatsApp, Facebook ni Instagram). Los links de los negocios se comparten justo ahí, así que se sirve bloqueante a todos.
+- Medido con Lighthouse mobile sobre la página pública (build de producción en Docker, máquina local): rendimiento 98, accesibilidad 100, buenas prácticas 100, SEO 100. Es una medición de laboratorio; falta repetirla en el VPS real.

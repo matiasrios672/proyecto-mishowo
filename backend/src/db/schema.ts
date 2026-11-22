@@ -185,3 +185,13 @@ export const auditLog = pgTable("audit_log", {
   ip: text("ip"),
   createdAt: ts("created_at"),
 }, (t) => [index("audit_entity_idx").on(t.entity, t.entityId)]);
+
+// ---- Denuncias de páginas públicas (la cola de revisión se arma en el admin, Épica 13) ----
+export const reports = pgTable("reports", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  businessId: uuid("business_id").notNull().references(() => businesses.id, { onDelete: "cascade" }),
+  reason: text("reason").notNull(), // contenido_ilegal | estafa | ofensivo | otro
+  detail: text("detail"),
+  status: text("status").notNull().default("nuevo"), // nuevo | revisado | accion_tomada
+  createdAt: ts("created_at"),
+}, (t) => [index("reports_status_idx").on(t.status, t.createdAt)]);

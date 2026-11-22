@@ -13,6 +13,9 @@ describe("temas de color", () => {
       expect(contrast(t.primaryFg, t.primary)).toBeGreaterThanOrEqual(4.5);
       expect(contrast(t.mutedFg, t.bg)).toBeGreaterThanOrEqual(4.5);
       expect(contrast(t.mutedFg, t.muted)).toBeGreaterThanOrEqual(4.5);
+      expect(contrast(t.danger, t.bg)).toBeGreaterThanOrEqual(4.5);
+      expect(contrast(t.danger, t.card)).toBeGreaterThanOrEqual(4.5);
+      expect(contrast(t.danger, t.muted)).toBeGreaterThanOrEqual(4.5);
     });
   }
 

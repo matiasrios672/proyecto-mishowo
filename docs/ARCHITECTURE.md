@@ -43,3 +43,10 @@ Navegador ──> frontend (Next.js :3000) ──HTTP──> backend (Fastify :4
 - `components/site/SiteView.tsx` dibuja la página desde un `SiteModel` (`lib/site.ts`: `draftToSite` para la vista previa, `publicToSite` para la página pública).
 - "Abierto ahora" se calcula en el navegador (`OpenBadge`): la página pública se sirve cacheada.
 - El frontend no debe pedir datos a la API durante el build (Docker no tiene backend): usar `await connection()` o `use cache` solo donde corresponda.
+
+## Pedidos (Épica 5)
+- Flujo: cliente arma carrito (`lib/cart.ts`, `components/site/cart/`) -> `POST /public/orders` (ids y cantidades) -> el backend recalcula todo y responde con ítems y total -> el cliente abre `wa.me` con el mensaje armado (`lib/orderMessage.ts`) con esos datos.
+- `backend/src/routes/orders.ts`: transacción, `pg_advisory_xact_lock` por negocio (numeración), descuento de stock condicional. Rate limit por IP (`ORDERS_PER_MINUTE`).
+- Denuncias: `POST /public/reports` -> tabla `reports` (cola de revisión en el admin, Épica 13).
+- CORS: `FRONTEND_ORIGIN` (lista) + cualquier subdominio de `ROOT_DOMAIN`.
+- Metadata bloqueante para todos (`htmlLimitedBots` en next.config.ts) para que WhatsApp/Instagram muestren la vista previa.

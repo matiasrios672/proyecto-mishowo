@@ -17,9 +17,11 @@ export interface Theme {
   muted: string;
   mutedFg: string;
   border: string;
+  /** Color de error/agotado legible sobre el fondo y la tarjeta del tema. */
+  danger: string;
 }
 
-export const THEMES: Theme[] = [
+const RAW: Omit<Theme, "danger">[] = [
   { id: "blanco", name: "Blanco", suggestedFor: "Cualquier rubro", dark: false,
     bg: "#FFFFFF", fg: "#171717", card: "#FFFFFF", primary: "#171717", primaryFg: "#FFFFFF",
     muted: "#F4F4F5", mutedFg: "#52525B", border: "#E4E4E7" },
@@ -48,6 +50,8 @@ export const THEMES: Theme[] = [
     bg: "#1A1A1A", fg: "#F2F2F2", card: "#242424", primary: "#F5C542", primaryFg: "#1A1A1A",
     muted: "#2E2E2E", mutedFg: "#B5B5B5", border: "#3A3A3A" },
 ];
+
+export const THEMES: Theme[] = RAW.map((t) => ({ ...t, danger: t.dark ? "#FF8A80" : "#B42318" }));
 
 export const DEFAULT_THEME: ThemeId = "blanco";
 
@@ -100,6 +104,7 @@ export function themeStyle(id: string | null | undefined, brandColor?: string | 
     "--muted-foreground": t.mutedFg,
     "--accent": t.muted,
     "--accent-foreground": t.fg,
+    "--destructive": t.danger,
     "--border": t.border,
     "--input": t.border,
     "--ring": primary,

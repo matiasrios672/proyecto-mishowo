@@ -31,5 +31,5 @@ Especificación completa: `PROMPT_MiShowo_ClaudeCode.md` (no copiarla acá). Pla
 - Frenar y preguntar: precios finales, datos de cobro, logo, credenciales (Cloudflare, SMTP), decisiones irreversibles.
 
 ## Estado actual
-- Fase: Épicas 1-3 completas, 4 casi (ver [~] en PLAN.md). Falta review independiente. Siguiente: Épica 5 (página pública, carrito y pedido).
-- Próximo paso: Épica 5. Reutilizar frontend/src/components/site/SiteView.tsx (ya renderiza los 4 layouts) y sumarle carrito, drawer "Tu pedido", mensaje de WhatsApp (lib/whatsapp.ts ya arma el link) y POST /public/orders en el backend. Regla: el frontend nunca pide datos a la API durante el build (Docker no tiene backend).
+- Fase: Épicas 1-5 completas (4 con partes [~]). Falta review independiente. Siguiente: Épica 6 (auth, guardado y fotos).
+- Próximo paso: Épica 6, tarea 6.1 (registro/login con email+contraseña, argon2, verificación). Al crear cuenta hay que migrar el borrador (frontend/src/lib/draft.ts) al backend y crear el negocio. Los pedidos ya existen (tabla orders); el panel es la Épica 9. e2e de pedidos necesita el stack: `docker compose up -d` + `SEED_DEMO=1 npm run db:seed` (backend).

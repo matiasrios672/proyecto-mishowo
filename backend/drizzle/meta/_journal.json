@@ -15,6 +15,13 @@
       "when": 1795364679045,
       "tag": "0001_strange_doctor_spectrum",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1795367190114,
+      "tag": "0002_curly_moonstone",
+      "breakpoints": true
     }
   ]
 }

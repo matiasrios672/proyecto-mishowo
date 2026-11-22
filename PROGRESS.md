@@ -1,5 +1,14 @@
 # PROGRESS — MiShowo (bitácora, lo más nuevo arriba)
 
+## 2026-11-22 — Épica 5 COMPLETA (página pública, carrito y pedido)
+- Backend: POST /public/orders (precios y stock recalculados en el servidor, numeración correlativa con lock por negocio, rate limit), POST /public/reports + tabla reports, CORS para subdominios de negocios (ROOT_DOMAIN).
+- Frontend: carrito por negocio (persiste, funciona sin localStorage), selector de opciones, panel "Tu pedido" con nombre/notas/fecha de evento, mensaje de WhatsApp armado con los datos del servidor, plan B sin conexión, buscador del catálogo (sin tildes), botón Denunciar.
+- Verificado en la base: pedidos con total correcto (2 x 1.700 + 19.200 = 22.600) y numeración 1, 2.
+- Mutación: sin el lock de numeración el test de pedidos simultáneos falla; el de stock sigue protegido por el UPDATE condicional (doble defensa).
+- Bugs reales: contraste AA roto en productos agotados (opacity global; ahora color de tema + token danger por tema); metadata en streaming no llegaba a WhatsApp/Instagram (D-009).
+- Lighthouse mobile: 98 / 100 / 100 / 100. Tests: backend 46, frontend 77 unitarios + 37 e2e.
+- Pendiente: review independiente (épicas 1-5).
+
 ## 2026-11-22 — Épica 4 (editor) casi completa
 - Editor real en /editor: 8 pestañas, vista previa en vivo (celular/compu/pantalla completa, botón flotante en móvil), autoguardado con indicador, deshacer/rehacer (botones y Ctrl+Z), checklist y score de calidad, carga masiva (CSV y pegar lista), variantes en 2 ejes, stock, precio tachado, drag & drop, horarios con Abierto/Cerrado, WhatsApp argentino validado, 4 layouts + recomendación, color de marca (incl. extracción del logo con canvas), comparar diseños.
 - SiteView es compartido entre vista previa y página pública (se ven idénticas).

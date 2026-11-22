@@ -2,11 +2,17 @@ import type { CSSProperties } from "react";
 import type { SiteModel, SiteProduct } from "@/lib/site";
 import { themeStyle } from "@/lib/themes";
 import { FONT_PAIRS, fontPairStyle } from "@/lib/fonts";
-import { buttonRadius, formatPrice, priceLabel } from "@/lib/format";
+import { buttonRadius, formatPrice, normalizeSearch, priceLabel } from "@/lib/format";
 import { summarizeHours } from "@/lib/hours";
 import { whatsappLink } from "@/lib/whatsapp";
 import { discountPercent } from "@/lib/draftOps";
 import { OpenBadge } from "./OpenBadge";
+import { AddToCart } from "./cart/AddToCart";
+import { CartDrawer } from "./cart/CartDrawer";
+import { CatalogSearch } from "./CatalogSearch";
+import { ReportButton } from "./ReportButton";
+
+export interface Orderable { slug: string }
 
 const slugify = (s: string) => s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
 
@@ -39,18 +45,22 @@ function Soldout() {
   return <span className="text-xs font-medium text-destructive">Agotado</span>;
 }
 
-function Card({ p, layout, preview }: { p: SiteProduct; layout: string; preview: boolean }) {
+function Card({ p, layout, preview, order, showQuantities }: { p: SiteProduct; layout: string; preview: boolean; order?: Orderable; showQuantities: boolean }) {
   const ex = preview && p.isExample ? <Example /> : null;
   const opts = p.options.length > 0 && (
     <p className="mt-0.5 text-xs text-muted-foreground">{p.options.map((o) => o.label).join(" · ")}</p>
   );
   const name = p.name || "Producto sin nombre";
-  const dim = p.available ? "" : "opacity-60";
+  // Agotado: se atenúa el texto con el color secundario del tema (contraste AA) y la imagen; nunca con opacity global.
+  const dim = p.available ? "" : "text-muted-foreground";
+  const thumbDim = p.available ? "" : " opacity-50";
+  const search = normalizeSearch(`${name} ${p.description}`);
+  const add = order ? <AddToCart slug={order.slug} product={p} showQuantities={showQuantities} /> : null;
 
   if (layout === "vidriera")
     return (
-      <li className={`overflow-hidden rounded-2xl border bg-card ${dim}`}>
-        <Thumb name={name} className="h-40 w-full" />
+      <li data-search={search} className={`overflow-hidden rounded-2xl border bg-card ${dim}`}>
+        <Thumb name={name} className={`h-40 w-full${thumbDim}`} />
         <div className="p-4">
           <div className="flex items-start justify-between gap-3">
             <h3 className="font-semibold leading-snug" style={{ fontFamily: "var(--font-heading)" }}>{name}{ex}</h3>
@@ -59,25 +69,27 @@ function Card({ p, layout, preview }: { p: SiteProduct; layout: string; preview:
           {p.description && <p className="mt-1 text-sm text-muted-foreground">{p.description}</p>}
           {opts}
           {!p.available && <div className="mt-2"><Soldout /></div>}
+          {add}
         </div>
       </li>
     );
 
   if (layout === "grilla")
     return (
-      <li className={`overflow-hidden rounded-xl border bg-card ${dim}`}>
-        <Thumb name={name} className="aspect-square w-full" />
+      <li data-search={search} className={`overflow-hidden rounded-xl border bg-card ${dim}`}>
+        <Thumb name={name} className={`aspect-square w-full${thumbDim}`} />
         <div className="p-3">
           <h3 className="text-sm font-semibold leading-snug">{name}{ex}</h3>
           <div className="mt-1 text-sm"><Price p={p} /></div>
           {!p.available && <Soldout />}
+          {add}
         </div>
       </li>
     );
 
   if (layout === "servicios")
     return (
-      <li className={`rounded-xl border bg-card p-4 ${dim}`}>
+      <li data-search={search} className={`rounded-xl border bg-card p-4 ${dim}`}>
         <div className="flex items-start justify-between gap-3">
           <h3 className="font-semibold" style={{ fontFamily: "var(--font-heading)" }}>{name}{ex}</h3>
           <Price p={p} />
@@ -85,24 +97,26 @@ function Card({ p, layout, preview }: { p: SiteProduct; layout: string; preview:
         {p.description && <p className="mt-1 text-sm text-muted-foreground">{p.description}</p>}
         {opts}
         {!p.available && <div className="mt-2"><Soldout /></div>}
+        {add}
       </li>
     );
 
   // mostrador
   return (
-    <li className={`flex items-center justify-between gap-3 border-b py-3 ${dim}`}>
+    <li data-search={search} className={`flex items-center justify-between gap-3 border-b py-3 ${dim}`}>
       <div className="min-w-0">
         <h3 className="font-medium leading-snug">{name}{ex}</h3>
         {p.description && <p className="text-sm text-muted-foreground">{p.description}</p>}
         {opts}
         {!p.available && <Soldout />}
+        {add}
       </div>
       <Price p={p} />
     </li>
   );
 }
 
-export function SiteView({ site, preview = false }: { site: SiteModel; preview?: boolean }) {
+export function SiteView({ site, preview = false, orderable }: { site: SiteModel; preview?: boolean; orderable?: Orderable }) {
   const d = site.design;
   const pair = FONT_PAIRS.find((p) => p.id === d.fontPair) ?? FONT_PAIRS[1]!;
   const style = {
@@ -112,6 +126,7 @@ export function SiteView({ site, preview = false }: { site: SiteModel; preview?:
   } as CSSProperties;
   const layout = d.layout;
   const cats = site.categories.filter((c) => c.products.length > 0);
+  const totalProducts = cats.reduce((n, c) => n + c.products.length, 0);
   const wa = site.whatsapp ? whatsappLink(site.whatsapp, "Hola! Quería consultarles algo.") : null;
   const ig = site.instagram.replace(/^@/, "").trim();
   const listClass =
@@ -142,13 +157,15 @@ export function SiteView({ site, preview = false }: { site: SiteModel; preview?:
         </nav>
       )}
 
-      <main className="px-4 pb-6">
+      {totalProducts > 8 && <CatalogSearch rootId="catalog" />}
+
+      <main id="catalog" className="px-4 pb-6">
         {cats.length === 0 && <p className="py-10 text-center text-muted-foreground">Todavía no hay productos cargados.</p>}
         {cats.map((c) => (
-          <section key={c.id} id={`sec-${slugify(c.name)}`} className="pt-5">
+          <section key={c.id} id={`sec-${slugify(c.name)}`} data-section className="pt-5">
             <h2 className="mb-3 text-lg font-semibold" style={{ fontFamily: "var(--font-heading)" }}>{c.name}</h2>
             <ul className={listClass}>
-              {c.products.map((p) => <Card key={p.id} p={p} layout={layout} preview={preview} />)}
+              {c.products.map((p) => <Card key={p.id} p={p} layout={layout} preview={preview} order={orderable} showQuantities={site.showQuantities} />)}
             </ul>
           </section>
         ))}
@@ -168,14 +185,20 @@ export function SiteView({ site, preview = false }: { site: SiteModel; preview?:
         </section>
       )}
 
-      <footer className="space-y-3 border-t px-4 py-6 text-center">
+      <footer className={`space-y-3 border-t px-4 py-6 text-center ${orderable ? "pb-24" : ""}`}>
         {wa ? (
           <a href={wa} target="_blank" rel="noopener noreferrer" className={btn} style={{ borderRadius: "var(--btn-radius)" }}>Consultar por WhatsApp</a>
         ) : (
           <span className={`${btn} opacity-50`} style={{ borderRadius: "var(--btn-radius)" }}>Consultar por WhatsApp</span>
         )}
         {!site.hideBranding && <p className="text-xs text-muted-foreground">Hecho con <strong>MiShowo</strong></p>}
+        {orderable && <ReportButton slug={orderable.slug} />}
       </footer>
+
+      {orderable && (
+        <CartDrawer slug={orderable.slug} businessName={site.name} whatsapp={site.whatsapp} greeting={site.whatsappGreeting}
+          showQuantities={site.showQuantities} askEventDate={site.askEventDate} />
+      )}
     </div>
   );
 }

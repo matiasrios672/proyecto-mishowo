@@ -14,3 +14,7 @@ export function priceLabel(base: number | null, options: { price: number | null 
 
 export const buttonRadius = (shape: string | undefined) =>
   shape === "pildora" ? "9999px" : shape === "recto" ? "2px" : "0.5rem";
+
+/** Minúsculas y sin tildes, para búsquedas ("Jamón" encuentra "jamon"). */
+export const normalizeSearch = (s: string): string =>
+  s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").trim();
