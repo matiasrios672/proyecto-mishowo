@@ -10,6 +10,7 @@ import { templateRoutes } from "./routes/templates.js";
 import { orderRoutes } from "./routes/orders.js";
 import { reportRoutes } from "./routes/reports.js";
 import { authRoutes } from "./routes/auth.js";
+import { meRoutes } from "./routes/me.js";
 import { createSmtpMailer, type Mailer } from "./lib/mailer.js";
 
 export type HealthCheck = () => Promise<boolean>;
@@ -36,6 +37,8 @@ export function buildApp(config: Config, dbCheck: HealthCheck = async () => true
   app.register(cors, {
     origin: (origin, cb) => cb(null, originAllowed(origin, config)),
     credentials: true,
+    // El plugin permite solo GET, HEAD y POST por defecto: sin esto el navegador bloquea el guardado (PUT).
+    methods: ["GET", "HEAD", "POST", "PUT", "DELETE", "OPTIONS"],
   });
   app.register(cookie);
   app.register(rateLimit, { global: false });
@@ -62,6 +65,7 @@ export function buildApp(config: Config, dbCheck: HealthCheck = async () => true
       // Contexto propio: el chequeo de origen de /auth no debe afectar a las rutas públicas (pedidos, denuncias).
       const mailer = deps.mailer ?? createSmtpMailer(config);
       api.register(async (authScope) => authRoutes(authScope, db, config, mailer));
+      api.register(async (meScope) => meRoutes(meScope, db, config));
     }
   });
 

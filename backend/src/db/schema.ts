@@ -57,6 +57,8 @@ export const businesses = pgTable("businesses", {
   planExpiresAt: timestamp("plan_expires_at", { withTimezone: true }),
   publishedAt: timestamp("published_at", { withTimezone: true }),
   deletedAt: timestamp("deleted_at", { withTimezone: true }),
+  // Sube en cada guardado del editor: detecta ediciones simultáneas desde dos dispositivos.
+  contentVersion: integer("content_version").notNull().default(0),
   createdAt: ts("created_at"),
 }, (t) => [uniqueIndex("businesses_slug_idx").on(t.slug), index("businesses_owner_idx").on(t.ownerId)]);
 
@@ -71,14 +73,16 @@ export const memberships = pgTable("memberships", {
 export const categories = pgTable("categories", {
   id: uuid("id").primaryKey().defaultRandom(),
   businessId: uuid("business_id").notNull().references(() => businesses.id, { onDelete: "cascade" }),
+  clientId: text("client_id"), // id que le puso el editor; permite sincronizar sin perder la identidad de cada fila
   name: text("name").notNull(),
   position: integer("position").notNull().default(0),
-}, (t) => [index("categories_biz_idx").on(t.businessId)]);
+}, (t) => [index("categories_biz_idx").on(t.businessId), uniqueIndex("categories_biz_client_idx").on(t.businessId, t.clientId)]);
 
 export const products = pgTable("products", {
   id: uuid("id").primaryKey().defaultRandom(),
   businessId: uuid("business_id").notNull().references(() => businesses.id, { onDelete: "cascade" }),
   categoryId: uuid("category_id").references(() => categories.id, { onDelete: "set null" }),
+  clientId: text("client_id"),
   name: text("name").notNull(),
   description: text("description").notNull().default(""),
   price: numeric("price", { precision: 12, scale: 2 }),
@@ -88,12 +92,13 @@ export const products = pgTable("products", {
   position: integer("position").notNull().default(0),
   isExample: boolean("is_example").notNull().default(false),
   createdAt: ts("created_at"),
-}, (t) => [index("products_biz_idx").on(t.businessId)]);
+}, (t) => [index("products_biz_idx").on(t.businessId), uniqueIndex("products_biz_client_idx").on(t.businessId, t.clientId)]);
 
 export const productOptions = pgTable("product_options", {
   id: uuid("id").primaryKey().defaultRandom(),
   businessId: uuid("business_id").notNull().references(() => businesses.id, { onDelete: "cascade" }),
   productId: uuid("product_id").notNull().references(() => products.id, { onDelete: "cascade" }),
+  clientId: text("client_id"),
   label: text("label").notNull(), // "Docena", "M / Rojo"
   axis1: text("axis1"),
   axis2: text("axis2"),
@@ -101,7 +106,7 @@ export const productOptions = pgTable("product_options", {
   stock: integer("stock"),
   soldOut: boolean("sold_out").notNull().default(false),
   position: integer("position").notNull().default(0),
-}, (t) => [index("product_options_biz_idx").on(t.businessId, t.productId)]);
+}, (t) => [index("product_options_biz_idx").on(t.businessId, t.productId), uniqueIndex("product_options_biz_client_idx").on(t.businessId, t.clientId)]);
 
 export const media = pgTable("media", {
   id: uuid("id").primaryKey().defaultRandom(),

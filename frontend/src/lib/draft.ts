@@ -100,3 +100,20 @@ export function clearDraft(store: Store | null = defaultStore()) {
 export function countExamples(d: Draft): number {
   return d.categories.flatMap((c) => c.products).filter((p) => p.isExample).length;
 }
+
+/** Lo que se guarda en el servidor: el borrador sin los campos propios del almacenamiento local. */
+export type DraftContent = Omit<Draft, "version" | "updatedAt">;
+
+export function draftToContent(d: Draft): DraftContent {
+  const c: Partial<Draft> = { ...d };
+  delete c.version;
+  delete c.updatedAt;
+  return c as DraftContent;
+}
+
+export function contentToDraft(c: DraftContent): Draft {
+  return normalizeDraft({ ...c, version: 1, updatedAt: Date.now() });
+}
+
+/** ¿Tienen el mismo contenido? (ignora la fecha de última modificación). */
+export const sameContent = (a: Draft, b: Draft) => JSON.stringify(draftToContent(a)) === JSON.stringify(draftToContent(b));

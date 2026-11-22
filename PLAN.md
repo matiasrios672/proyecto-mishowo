@@ -65,7 +65,7 @@ Criterio general de aceptación por tarea: typecheck + lint + tests verdes; para
 - [x] 6.1 Registro/login email+contraseña (argon2), verificación de email, reset.
 - [x] 6.2 Magic link por SMTP (Mailpit en dev).
 - [x] 6.3 Sesiones con cookie httpOnly, CORS, CSRF, rate limiting.
-- [ ] 6.4 Migración del borrador local al crear cuenta.
+- [x] 6.4 Migración del borrador local al crear cuenta.
 - [ ] 6.5 `StorageProvider` (disco) + upload validado (tipo real, tamaño por plan) + sharp a WebP multi-tamaño, nombres con hash.
 - [ ] 6.6 Video MP4/MOV/WebM con límite por plan.
 

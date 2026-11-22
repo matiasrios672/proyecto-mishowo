@@ -1,5 +1,12 @@
 # PROGRESS — MiShowo (bitácora, lo más nuevo arriba)
 
+## 2026-11-22 — Épica 6, tramo B: guardado en la cuenta (6.4)
+- Backend: GET/PUT /me/business (documento completo, reconciliación por client_id, versión + lock, validación con límites), migración 0004. Frontend: motor de sincronización con reintentos, migración del borrador al crear la cuenta, avisos de conflicto/sesión vencida/sin conexión, chooser cuando hay versión local y de cuenta distintas, cierre de sesión sin rastro.
+- Bugs reales hallados por los e2e: (1) CORS bloqueaba PUT desde el navegador (todo guardado fallaba como sin conexión); (2) elegir la versión de la cuenta abría igual el borrador viejo por el orden de las comprobaciones.
+- Mutaciones: sin chequeo de versión fallan 4 tests; sin lock por usuario fallan 2.
+- Tests: backend 104, frontend 97 unitarios + 65 e2e.
+- Pedido del dueño en curso: rediseñar las páginas públicas de los clientes (animaciones, marketing, compu y celular) antes del tramo C (fotos).
+
 ## 2026-11-22 — Épica 6, tramo A: cuentas y sesiones (6.1-6.3)
 - Backend: /auth/register, login, logout, me, verify, resend-verification, forgot, reset, magic, magic/consume. argon2id, sesiones hasheadas, tokens de un solo uso hasheados, anti-enumeración, CSRF por Origin, rate limit. Mailer SMTP (Mailpit en dev) con emails en voseo.
 - Frontend: /registro, /ingresar (contraseña o enlace), /recuperar, /restablecer, /verificar, /enlace; estado de sesión; editor con "Guardar mi página", cuenta/Salir y aviso de email sin confirmar.

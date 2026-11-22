@@ -57,3 +57,10 @@ Formato: ID · fecha · decisión · motivo · consecuencias. Las más nuevas ar
 - Restablecer la contraseña cierra todas las sesiones. Entrar por enlace mágico crea la cuenta (ya verificada) si no existía.
 - Rate limit por IP en cada ruta de `/auth` (`AUTH_PER_MINUTE`, 10 por defecto). El email de verificación es obligatorio solo para publicar, no para editar.
 - Next 16 con `cacheComponents` deja montadas (ocultas) las pantallas anteriores: en los e2e hay que filtrar por `:visible`.
+
+## D-011 · 2026-11-22 · Guardado del negocio en el servidor
+- El editor sigue siendo dueño de un documento completo (el "borrador"). Con sesión se sincroniza entero con `PUT /me/business` y el servidor lo reconcilia contra las tablas por `client_id` (cada fila conserva su uuid, así los pedidos viejos siguen apuntando al producto y al borrarlo conservan nombre y precio).
+- Concurrencia: `content_version` + lock por usuario. Un guardado con versión vieja devuelve 409 y el editor pregunta qué versión conservar; nunca se pisa en silencio. Al abrir un dispositivo con borrador local distinto del guardado en la cuenta también se pregunta.
+- Sin conexión: se sigue editando, se guarda local, y el motor (`lib/syncEngine.ts`, sin React y con tests de reloj simulado) reintenta con espera creciente (5 s a 60 s) sin perder el último cambio.
+- Cerrar sesión sube lo pendiente, borra el borrador y la marca de sincronización del navegador y frena cualquier guardado local posterior (privacidad en compus compartidas).
+- CORS: el plugin solo permite GET/HEAD/POST por defecto; hubo que habilitar PUT/DELETE (con test de preflight). Un bug que ni los tests de backend ni `curl` podían ver.

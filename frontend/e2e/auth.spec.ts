@@ -65,7 +65,7 @@ test.describe("cuentas", () => {
     await startDraft(page);
     await register(page, email);
     await page.getByRole("button", { name: "Salir" }).click();
-    await expect(page.getByRole("link", { name: "Guardar mi página" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: /Todavía no elegiste un rubro/ })).toBeVisible(); // sin sesión y sin borrador: no queda nada de la cuenta
 
     await page.goto("/registro");
     await page.getByLabel(/^Email/).fill(email);
@@ -100,7 +100,7 @@ test.describe("cuentas", () => {
     await expect(page.getByTestId("account")).toContainText(email);
     await page.getByRole("button", { name: "Salir" }).click();
     await page.reload(); // y el cierre es real, no solo visual
-    await expect(page.getByRole("link", { name: "Guardar mi página" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: /Todavía no elegiste un rubro/ })).toBeVisible();
   });
 
   test("recuperar la contraseña con el enlace del mail", async ({ page }, info) => {

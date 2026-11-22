@@ -52,3 +52,27 @@ describe("borrador", () => {
     expect(loadDraft(null)).toBeNull();
   });
 });
+
+import { contentToDraft, draftToContent, sameContent } from "./draft";
+
+describe("borrador <-> documento del servidor", () => {
+  it("ida y vuelta sin perder nada y sin campos de almacenamiento local", () => {
+    const d = createDraftFromTemplate(tpl);
+    const content = draftToContent(d);
+    expect(content).not.toHaveProperty("version");
+    expect(content).not.toHaveProperty("updatedAt");
+    const back = contentToDraft(content);
+    expect(back.version).toBe(1);
+    expect(sameContent(d, back)).toBe(true);
+  });
+  it("detecta diferencias de contenido e ignora la fecha", () => {
+    const d = createDraftFromTemplate(tpl);
+    expect(sameContent(d, { ...d, updatedAt: d.updatedAt + 999 })).toBe(true);
+    expect(sameContent(d, { ...d, name: "Otro" })).toBe(false);
+  });
+  it("completa campos faltantes de un documento viejo", () => {
+    const content = draftToContent(createDraftFromTemplate(tpl)) as Partial<ReturnType<typeof draftToContent>>;
+    delete content.hours;
+    expect(contentToDraft(content as ReturnType<typeof draftToContent>).hours).toHaveLength(7);
+  });
+});
