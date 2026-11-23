@@ -1,6 +1,6 @@
 # DEPLOY — MiShowo en Coolify
 
-> Para un VPS de prueba con dominio temporal y sin HTTPS: ver `DEPLOY-VPS.md`.
+> Para un VPS de prueba con dominio temporal y sin HTTPS: ver `DEPLOY-VPS.md`. Versión provisoria ya desplegada en Coolify con sslip.io: `docker-compose.coolify.yml` (ver PROGRESS.md).
 
 Arquitectura: Coolify (Traefik) → `frontend` (Next standalone, :3000) y `backend` (Fastify, :4000) + Postgres + volumen de uploads.
 Sin Nginx, PM2, systemd ni Redis. Referencia: `docker-compose.prod.yml` y `.env.production.example`.

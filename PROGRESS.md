@@ -1,5 +1,13 @@
 # PROGRESS — MiShowo (bitácora, lo más nuevo arriba)
 
+## 2026-11-23 (7) — Subido a GitHub y desplegado en Coolify con dominio provisorio
+- **GitHub:** github.com/matiasrios672/proyecto-mishowo (público), rama main.
+- **Coolify** (coolify.bitenv.site, proyecto MiShowo > production, recurso Docker Compose con docker-compose.coolify.yml): servicios db, mailpit, backend y frontend. Secretos generados por Coolify (SERVICE_PASSWORD_* y SERVICE_BASE64_ADMINKEY). Variables a mano: ROOT_DOMAIN y API_HOST.
+- **Dominio provisorio (sslip.io, sin HTTPS, COOKIE_SECURE=false):** web http://mishowo.201.32.129.244.sslip.io, API http://api-mishowo.201.32.129.244.sslip.io, bandeja de mails http://mail-mishowo.201.32.129.244.sslip.io (usuario admin y clave SERVICE_PASSWORD_MAILPIT, visible en Coolify > Environment Variables), negocios en http://<slug>.mishowo.201.32.129.244.sslip.io.
+- Detalles que costaron: Coolify no acepta comodines en el campo de dominios (el comodín de los negocios va por una etiqueta de Traefik) y escapa las variables en las etiquetas (el dominio va escrito a mano en esa línea); la API tiene que estar fuera de *.ROOT_DOMAIN para que el comodín no la tape; Chrome autocompletó un email en el campo Comment de las variables (se reemplazó por un texto neutro).
+- Planes sembrados con node dist/seed.js desde la Terminal de Coolify (precios placeholder: editarlos en /admin/planes).
+- Pendiente: primer Owner (registrarse y correr node dist/admin-cli.js <email> owner), datos de cobro reales, SMTP real y dominio definitivo con HTTPS.
+
 ## 2026-11-23 (6) — Permisos del equipo por área (D-022)
 - **Backend:** 12 áreas x 3 niveles (sin acceso / ver / gestionar), plantillas Soporte y Admin con los permisos de los roles de antes, columna users.permissions (migración 0015), guardia requirePerm en todas las rutas del admin, /admin/me devuelve los permisos efectivos, PUT /admin/admins/:id/permissions (solo Owner, auditado, rige de inmediato), alta e invitación con permisos opcionales. Cambiar el plan de un negocio pide también permiso de planes; sin ver pagos no hay ingresos en el resumen ni pagos en la ficha.
 - **Pantalla de Equipo:** lista con el resumen de cada persona, botón Permisos con matriz accesible (radios por área, descripción del nivel elegido, plantilla y aviso de permisos a medida), alta de persona nueva o de cuenta existente con la matriz. El menú y los botones del admin siguen los permisos (Soporte/Admin/a medida).
