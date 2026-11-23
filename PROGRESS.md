@@ -1,5 +1,11 @@
 # PROGRESS — MiShowo (bitácora, lo más nuevo arriba)
 
+## 2026-11-23 (9) — Mudanza a mishowo.bitenv.site (preparada, falta el DNS comodín y el redeploy)
+- docker-compose.coolify.yml: web y API por HTTPS (Let's Encrypt de Coolify), negocios por HTTP (un certificado comodín exige validar por DNS), cookie Secure activa, etiqueta de Traefik de los negocios con el dominio nuevo y prioridad baja (api. y mail. ganan).
+- Coolify: dominios https://mishowo.bitenv.site (3000), https://api.mishowo.bitenv.site (4000) y https://mail.mishowo.bitenv.site (8025); variables ROOT_DOMAIN=mishowo.bitenv.site y API_HOST=api.mishowo.bitenv.site. Quedan como "Changes pending": nada cambia en lo que corre hasta redeployar.
+- DNS (DonWeb): resuelve mishowo.bitenv.site -> 201.32.129.244. Falta un registro A comodín *.mishowo -> 201.32.129.244 (cubre api., mail. y cada negocio).
+- Mientras tanto sigue funcionando el provisorio sslip.io.
+
 ## 2026-11-23 (8) — 2FA en Coolify, home con planes y vitrina de rubros
 - **2FA:** la clave que genera Coolify (SERVICE_BASE64_*) no decodificaba a 32 bytes y /admin/2fa/setup daba 500. Ahora ADMIN_SECRET_KEY acepta un secreto largo (32+ caracteres) y deriva la clave AES-256 con SHA-256; una clave base64 de 32 bytes se usa igual que antes. Un secreto corto sigue rechazado. Tests nuevos.
 - **Home:** sin el cartelito «Plan gratis para siempre · sin tarjeta» del hero; los planes (desde la base) vuelven a la home; la demo «Probalo vos mismo» pasó a /probar (link en el pie); en su lugar, la vitrina de rubros: seis pestañas (Ropa, Comidas y bares, Eventos, Muebles y deco, Belleza y salud, Oficios y servicios), un rubro grande a la vez con el celular de su ejemplo, y los tres pasos arriba. Pestañas accesibles (flechas, Inicio y Fin).
