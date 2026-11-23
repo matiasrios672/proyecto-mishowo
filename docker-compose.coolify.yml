@@ -75,7 +75,8 @@ services:
       # Coolify no acepta comodines en su campo de dominios: cada negocio (slug.ROOT_DOMAIN) se enruta con esta regla propia.
       # Solo coincide con subdominios de ROOT_DOMAIN: api-..., mail-... y el dominio raíz siguen por sus rutas normales.
       - traefik.enable=true
-      - traefik.http.routers.mishowo-tenants.rule=HostRegexp(`^[a-z0-9-]+\.${ROOT_DOMAIN}$$`)
+      # Coolify escapa $ y no expande variables en las etiquetas: el dominio va escrito acá (si cambia ROOT_DOMAIN, cambiarlo también en esta línea).
+      - traefik.http.routers.mishowo-tenants.rule=HostRegexp(`^[a-z0-9-]+\.mishowo\.201\.32\.129\.244\.sslip\.io`)
       - traefik.http.routers.mishowo-tenants.entryPoints=http
       - traefik.http.routers.mishowo-tenants.service=mishowo-tenants
       - traefik.http.services.mishowo-tenants.loadbalancer.server.port=3000
