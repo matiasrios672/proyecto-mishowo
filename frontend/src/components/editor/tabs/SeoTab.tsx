@@ -2,8 +2,9 @@
 
 import { Section } from "@/components/ui/fields";
 import type { TabProps } from "./types";
+import { MedicionSection } from "./MedicionSection";
 
-export function SeoTab({ draft }: TabProps) {
+export function SeoTab({ draft, update, account }: TabProps) {
   const title = draft.name.trim() || "Tu negocio";
   const desc = (draft.tagline || draft.description).trim();
   return (
@@ -18,6 +19,7 @@ export function SeoTab({ draft }: TabProps) {
           Usamos el nombre y la bajada de tu página. Cuando la publiques, además vas a poder descargar el QR para el mostrador y las bolsas.
         </p>
       </Section>
+      <MedicionSection draft={draft} update={update} account={account} />
     </div>
   );
 }

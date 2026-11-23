@@ -40,6 +40,8 @@ const schema = z.object({
   APPOINTMENTS_PER_MINUTE: z.coerce.number().int().positive().default(10),
   ORDERS_PER_MINUTE: z.coerce.number().int().positive().default(20),
   COOKIE_DOMAIN: z.string().optional(),
+  // Cookie de sesión "Secure": auto = solo en producción. false únicamente para probar por HTTP (sin certificado).
+  COOKIE_SECURE: z.enum(["auto", "true", "false"]).default("auto"),
   UPLOADS_DIR: z.string().default("./uploads"),
 });
 

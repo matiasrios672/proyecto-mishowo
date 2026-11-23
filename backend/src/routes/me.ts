@@ -16,6 +16,8 @@ import { mediaRoutes } from "./media.js";
 import { statsRoutes } from "./stats.js";
 import { couponPanelRoutes } from "./coupons.js";
 import { appointmentPanelRoutes } from "./appointments.js";
+import { reviewPanelRoutes } from "./reviews.js";
+import { referralPanelRoutes } from "./referrals.js";
 import type { StorageProvider } from "../storage/index.js";
 import type { Mailer } from "../lib/mailer.js";
 import type { SiteChanged } from "../lib/revalidate.js";
@@ -42,7 +44,9 @@ export function meRoutes(app: FastifyInstance, db: Db, config: Config, notify: S
   mediaRoutes(app, db, config, storage, notify, config.UPLOADS_PER_MINUTE);
   statsRoutes(app, db);
   couponPanelRoutes(app, db);
-  appointmentPanelRoutes(app, db);
+  appointmentPanelRoutes(app, db, mailer);
+  reviewPanelRoutes(app, db);
+  referralPanelRoutes(app, db, config);
 
   const ownBusiness = async (userId: string) =>
     (await db.select().from(s.businesses).where(and(eq(s.businesses.ownerId, userId), isNull(s.businesses.deletedAt))))[0] ?? null;

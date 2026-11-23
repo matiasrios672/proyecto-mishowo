@@ -31,5 +31,5 @@ Especificación completa: `PROMPT_MiShowo_ClaudeCode.md` (no copiarla acá). Pla
 - Frenar y preguntar: precios finales, datos de cobro, logo, credenciales (Cloudflare, SMTP), decisiones irreversibles.
 
 ## Estado actual
-- Fase: Épicas 1-13 completas salvo detalles (ver PLAN.md: reseñas/píxeles, referidos, embudo de onboarding, edición de rubros/temas desde el admin). Falta: deploy (14, fuera de alcance por ahora).
+- Fase: Épicas 1-13 completas salvo detalles (ver PLAN.md: reseñas/píxeles, referidos, embudo de onboarding, edición de rubros/temas desde el admin). Deploy preparado: VPS de prueba (DEPLOY-VPS.md, ./scripts/vps-up.sh) y producción con Coolify (DEPLOY.md); falta ejecutarlo en Coolify (14.4) con datos reales. Cuotas sin interés: informativas (D-021).
 - Próximo paso: revisión independiente (/code-review), cargar datos reales de cobro y revisión legal, luego deploy. Panel del cliente por módulos en `/panel/*` (editor único en `(workspace)/layout`); primer Owner: `npm run admin:promote -- email owner` (2FA exige ADMIN_SECRET_KEY); fotos exigen API_PUBLIC_URL.

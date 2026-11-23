@@ -21,7 +21,7 @@ function inline(text: string, key: string): ReactNode[] {
       const href = safeHref(link[2]!);
       if (!href) return link[1];
       const external = href.startsWith("https://");
-      return <a key={k} href={href} className="font-medium underline underline-offset-4 hover:text-primary" {...(external ? { target: "_blank", rel: "noopener noreferrer" } : {})}>{link[1]}</a>;
+      return <a key={k} href={href} className="font-medium  hover:text-primary" {...(external ? { target: "_blank", rel: "noopener noreferrer" } : {})}>{link[1]}</a>;
     }
     return part;
   });

@@ -4,6 +4,7 @@ import type { Draft } from "./draft";
 import type { PublicSite } from "./api";
 import { isAvailable } from "./draftOps";
 import { defaultHours, type Hours } from "./hours";
+import { normalizeInstallments, type Installments } from "./installments";
 
 export interface SiteOption { id: string; label: string; price: number | null; soldOut: boolean }
 export interface SiteProduct {
@@ -24,7 +25,13 @@ export interface SiteModel {
   showQuantities: boolean; askEventDate: boolean; whatsappGreeting: string;
   /** false = sin carrito ni pedidos: solo catálogo y consultas por WhatsApp. */
   ordersEnabled: boolean;
+  /** Cuotas sin interés que ofrece el negocio (informativo; sin esto no se muestra nada). */
+  installments?: Installments;
   hideBranding: boolean;
+  /** IDs de medición (solo llegan si el plan incluye el módulo). */
+  pixels?: { meta: string; ga: string };
+  /** El plan incluye reseñas de clientes. */
+  reviews?: boolean;
   exampleName: boolean; exampleTexts: boolean;
   /** URL de la foto de portada (llega con la subida de fotos). */
   cover: string | null;
@@ -51,6 +58,7 @@ export function draftToSite(d: Draft): SiteModel {
       })),
     })),
     showQuantities: d.showQuantities, ordersEnabled: d.ordersEnabled, askEventDate: d.askEventDate, whatsappGreeting: d.whatsappGreeting,
+    installments: d.installments,
     hideBranding: false,
     exampleName: d.nameIsExample, exampleTexts: d.textsAreExample, cover: null,
   };
@@ -86,9 +94,11 @@ export function publicToSite(site: PublicSite): SiteModel {
       brandColor: typeof design.brandColor === "string" ? design.brandColor : null, buttonShape: str(design.buttonShape, "redondeado"),
     },
     categories,
-    showQuantities: settings.showQuantities !== false, ordersEnabled: settings.ordersEnabled !== false, askEventDate: settings.askEventDate === true,
+    showQuantities: settings.showQuantities !== false, ordersEnabled: settings.ordersEnabled !== false, installments: normalizeInstallments(settings.installments), askEventDate: settings.askEventDate === true,
     whatsappGreeting: str(settings.whatsappGreeting, "Hola! Quiero hacer este pedido:"),
-    hideBranding: b.planId === "pro",
+    hideBranding: site.modules ? site.modules.remove_branding === true : b.planId === "pro",
+    reviews: site.modules?.reviews !== false,
+    ...(site.modules?.pixels === true ? { pixels: { meta: str(settings.metaPixelId), ga: str(settings.gaId) } } : {}),
     exampleName: false, exampleTexts: false, cover: site.cover?.src ?? null, coverSet: site.cover?.srcSet ?? null, logo: site.logo?.src ?? null, logoSet: site.logo?.srcSet ?? null, video: site.video ?? null,
   };
 }

@@ -1,9 +1,8 @@
 import { test, expect, type Page } from "@playwright/test";
+import { signUp, uniq } from "./helpers";
 
 async function openEditor(page: Page) {
-  await page.goto("/crear");
-  await page.getByRole("button", { name: /Rotisería y comidas/ }).click();
-  await page.waitForURL("**/editor");
+  await signUp(page, `${uniq("ed", "e")}@test.com`); // para diseñar hace falta cuenta: se crea en /crear
   await expect(page.getByTestId("header-name")).toContainText("Rotisería Doña Marta");
 }
 
@@ -42,7 +41,7 @@ test.describe("editor", () => {
     await expect(page.getByText("Los pedidos llegan a +54 9 11 5555-0000")).toBeVisible();
 
     await tab(page, "Publicar");
-    await expect(page.getByRole("button", { name: "Publicar mi página" })).toBeDisabled();
+    await expect(page.getByTestId("publish-button")).toBeVisible(); // con cuenta se puede intentar publicar; si falta algo, lo explica
     const before = await page.getByTestId("score-text").innerText();
     await page.getByRole("button", { name: "Completar" }).first().click(); // lleva a la pestaña del primer pendiente
     await expect(page.getByRole("tab", { name: /Negocio|Productos/, selected: true })).toBeVisible();
@@ -88,7 +87,7 @@ test.describe("editor", () => {
     expect(primary.toUpperCase()).toBe("#1B6390");
     await page.getByRole("button", { name: /Comparar diseños/ }).click();
     await expect(page.getByTestId("compare").getByRole("button")).toHaveCount(4);
-    await page.getByRole("button", { name: "Elegir Mostrador" }).click();
+    await page.getByRole("button", { name: "Elegir Carta" }).click();
     await expect(preview(page)).toHaveAttribute("data-site-layout", "mostrador");
   });
 

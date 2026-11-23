@@ -10,6 +10,19 @@ const CHUNK = 300;
 const chunks = <T,>(arr: T[], n = CHUNK) => Array.from({ length: Math.ceil(arr.length / n) }, (_, i) => arr.slice(i * n, (i + 1) * n));
 const num = (v: number | null) => (v === null ? null : String(v));
 
+/** Cuotas guardadas en `settings` (tolerante: si falta o está mal formado, apagadas). */
+function readInstallments(raw: unknown): Content["installments"] {
+  const r = (raw && typeof raw === "object" ? raw : {}) as Record<string, unknown>;
+  const count = Number(r.count);
+  const min = Number(r.minAmount);
+  return {
+    enabled: r.enabled === true,
+    count: Number.isInteger(count) && count >= 2 && count <= 24 ? count : 3,
+    note: typeof r.note === "string" ? r.note.slice(0, 80) : "",
+    minAmount: Number.isInteger(min) && min > 0 && min <= 100_000_000 ? min : 0,
+  };
+}
+
 export type SaveResult =
   | { status: "ok"; version: number; created: boolean; published: string | null }
   | { status: "conflict"; version: number }
@@ -28,7 +41,7 @@ export function businessColumns(c: Content) {
     hours: c.hours,
     design: c.design,
     settings: {
-      announcement: c.announcement, whatsappGreeting: c.whatsappGreeting, showQuantities: c.showQuantities, ordersEnabled: c.ordersEnabled,
+      announcement: c.announcement, whatsappGreeting: c.whatsappGreeting, metaPixelId: c.metaPixelId, gaId: c.gaId, showQuantities: c.showQuantities, ordersEnabled: c.ordersEnabled, installments: c.installments,
       askEventDate: c.askEventDate, extraWhatsapps: c.extraWhatsapps, nameIsExample: c.nameIsExample, textsAreExample: c.textsAreExample,
     },
   };
@@ -164,8 +177,11 @@ export async function loadContent(db: Db, userId: string) {
     hours: hours as Content["hours"],
     announcement: typeof settings.announcement === "string" ? settings.announcement : "",
     whatsappGreeting: typeof settings.whatsappGreeting === "string" ? settings.whatsappGreeting : "Hola! Quiero hacer este pedido:",
+    metaPixelId: typeof settings.metaPixelId === "string" ? settings.metaPixelId : "",
+    gaId: typeof settings.gaId === "string" ? settings.gaId : "",
     showQuantities: settings.showQuantities !== false,
     ordersEnabled: settings.ordersEnabled !== false,
+    installments: readInstallments(settings.installments),
     askEventDate: settings.askEventDate === true,
     design: {
       layout: (design.layout as Content["design"]["layout"]) ?? "vidriera",

@@ -45,14 +45,6 @@ test("subo una foto de producto y de portada: se ven en la página pública y se
   await expect.poll(async () => (await page.request.get(src!)).status()).toBe(404);
 });
 
-test("sin cuenta, la pestaña Fotos explica que hace falta una", async ({ page }) => {
-  await page.goto("/crear");
-  await page.getByRole("button", { name: /Rotisería y comidas/ }).click();
-  await page.waitForURL("**/editor");
-  await page.getByRole("tab", { name: "Fotos", exact: true }).click();
-  await expect(page.getByText("Para subir fotos necesitás una cuenta.")).toBeVisible();
-});
-
 test("la vista previa del editor muestra el logo y la foto de cada producto apenas se suben", async ({ page }, info) => {
   test.setTimeout(120_000);
   await signUp(page, `${uniq("prev", info.project.name)}@test.com`);

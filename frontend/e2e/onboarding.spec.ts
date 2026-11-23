@@ -2,6 +2,13 @@ import { test, expect } from "@playwright/test";
 
 test("elegir un rubro crea el borrador y abre el editor con contenido de ejemplo", async ({ page }, info) => {
   await page.goto("/crear");
+  // Primero la cuenta (para guardar el avance y poder escribirle a quien no termina); recién después el rubro.
+  await expect(page.getByTestId("crear-account")).toBeVisible();
+  await expect(page.getByTestId("crear-steps").getByRole("listitem")).toHaveCount(3);
+  await page.getByLabel(/^Tu nombre/).fill("Lupe Gómez");
+  await page.getByLabel(/^Email/).fill(`onb-${info.project.name}-${Date.now()}@test.com`);
+  await page.getByLabel(/^Contraseña/).fill("claveSegura123");
+  await page.getByRole("button", { name: "Crear mi cuenta" }).click();
   await expect(page.getByRole("heading", { name: "¿De qué es tu negocio?" })).toBeVisible();
   await expect(page.getByText("Próximamente")).toBeVisible();
   await page.screenshot({ path: `test-results/crear-${info.project.name}.png`, fullPage: true });
@@ -17,7 +24,16 @@ test("elegir un rubro crea el borrador y abre el editor con contenido de ejemplo
   await expect(page.getByTestId("header-name")).toContainText("Rotisería Doña Marta");
 });
 
-test("sin borrador el editor invita a elegir rubro", async ({ page }) => {
+test("sin cuenta no se puede diseñar: el editor manda a crearla", async ({ page }) => {
   await page.goto("/editor");
-  await expect(page.getByRole("heading", { name: /Todavía no elegiste un rubro/ })).toBeVisible();
+  await page.waitForURL("**/crear");
+  await expect(page.getByTestId("crear-account")).toBeVisible();
+});
+
+test("el nombre es obligatorio para crear la cuenta y un email repetido se explica", async ({ page }) => {
+  await page.goto("/crear");
+  await page.getByLabel(/^Email/).fill("sinnombre@test.com");
+  await page.getByLabel(/^Contraseña/).fill("claveSegura123");
+  await page.getByRole("button", { name: "Crear mi cuenta" }).click();
+  await expect(page.locator("p[role=alert]:visible")).toContainText("Contanos tu nombre");
 });

@@ -33,7 +33,7 @@ export function ReportButton({ slug }: { slug: string }) {
 
   return (
     <>
-      <button type="button" onClick={() => { setOpen(true); setState("idle"); }} className="text-xs text-muted-foreground underline">
+      <button type="button" onClick={() => { setOpen(true); setState("idle"); }} className="text-xs text-muted-foreground ">
         Denunciar esta página
       </button>
       {open && (

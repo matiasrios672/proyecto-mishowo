@@ -114,7 +114,7 @@ export function FotosTab({ draft, update, account, onMedia }: TabProps) {
           <span className="flex-1">Detectamos este color en tu logo. ¿Lo usamos como color de tu marca?</span>
           <button type="button" className="rounded-lg bg-primary px-3 py-1.5 font-medium text-primary-foreground"
             onClick={() => { update((d) => ({ ...d, design: { ...d.design, brandColor: suggested } })); setSuggested(null); }}>Usar este color</button>
-          <button type="button" className="underline" onClick={() => setSuggested(null)}>No, gracias</button>
+          <button type="button" className="" onClick={() => setSuggested(null)}>No, gracias</button>
         </div>
       )}
       <Gallery title="Portada" hint="Hasta 5 fotos y 1 video (JPG, PNG, WebP, MP4, MOV o WebM). Se muestra arriba de todo en tu página."

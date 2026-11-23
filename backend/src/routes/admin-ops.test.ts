@@ -253,6 +253,20 @@ describe("dashboard y ficha de solo lectura", () => {
     const a = (await env.call("GET", "/admin/dashboard", adm.cookie)).json().alerts;
     expect(a).toMatchObject({ pendingPayments: 2, stalePayments: 1, newReports: 1 });
   });
+  it("Soporte no ve ingresos, pagos ni planes en el resumen; Admin sí", async () => {
+    const sup = await env.admin("s2@test.com", "support");
+    const adm = await env.admin("a2@test.com", "admin");
+    const { biz: b } = await biz();
+    await conn.db.insert(s.payments).values({ businessId: b.id, planId: "gratis", amount: "100", months: 1 });
+    const forSupport = (await env.call("GET", "/admin/dashboard", sup.cookie)).json();
+    expect(forSupport.finance).toBe(false);
+    expect(forSupport.alerts).toMatchObject({ pendingPayments: 0, stalePayments: 0, expiring7d: 0 });
+    expect(forSupport.kpis).toMatchObject({ mrr: 0, paidActive: 0, conversion: 0 });
+    expect(forSupport.byPlan).toEqual([]);
+    const forAdmin = (await env.call("GET", "/admin/dashboard", adm.cookie)).json();
+    expect(forAdmin.finance).toBe(true);
+    expect(forAdmin.alerts.pendingPayments).toBe(1);
+  });
   it("la ficha muestra un resumen de la configuración sin credenciales ni sesiones (no existe 'entrar como')", async () => {
     const sup = await env.admin("s@test.com", "support");
     const { biz: b } = await biz();

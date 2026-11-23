@@ -16,6 +16,66 @@ interface Stats { totals: { visits: number; whatsappClicks: number; orders: numb
 
 const greeting = () => { const h = new Date().getHours(); return h < 6 ? "¡Buenas noches" : h < 13 ? "¡Buen día" : h < 20 ? "¡Buenas tardes" : "¡Buenas noches"; };
 
+/** El link del negocio a mano: copiarlo o mandarlo por WhatsApp. Sin publicar, lleva a Publicar. */
+function LinkCard({ slug, published }: { slug: string; published: boolean }) {
+  const [copied, setCopied] = useState(false);
+  const url = siteUrl(slug);
+  const shown = url.replace(/^https?:\/\//, "");
+  async function copy() {
+    try { await navigator.clipboard.writeText(url); setCopied(true); setTimeout(() => setCopied(false), 2000); } catch { /* sin permiso del portapapeles: el link está a la vista para copiarlo a mano */ }
+  }
+  if (!published)
+    return (
+      <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border-2 border-dashed border-[#2F6FB0]/40 bg-[#F4F9FE] p-4" data-testid="home-link">
+        <p className="text-sm"><strong>Tu link todavía no está activo.</strong> Publicá tu página para compartirlo en Instagram y WhatsApp.</p>
+        <Link href="/panel/pagina?tab=publicar" className="inline-flex min-h-11 items-center rounded-xl bg-[#2F6FB0] px-5 font-bold text-white">Publicar</Link>
+      </div>
+    );
+  return (
+    <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-[#D6E4F2] bg-gradient-to-br from-[#EAF4FC] to-white p-4" data-testid="home-link">
+      <div className="min-w-0 flex-1">
+        <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Tu link</p>
+        <p className="truncate text-lg font-extrabold text-[#2F6FB0]">{shown}</p>
+      </div>
+      <button type="button" onClick={() => void copy()} className="inline-flex min-h-11 items-center rounded-xl bg-[#2F6FB0] px-5 font-bold text-white hover:bg-[#245a92] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring">{copied ? "¡Copiado!" : "Copiar link"}</button>
+      <a href={`https://wa.me/?text=${encodeURIComponent(`Mirá mi catálogo: ${url}`)}`} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-11 items-center rounded-xl border border-[#2F6FB0]/40 px-5 font-bold text-[#2F6FB0] hover:bg-white">Mandar por WhatsApp</a>
+    </div>
+  );
+}
+
+interface Referral { code: string; link: string; invited: number; withPage: number; published: number; paid: number }
+
+/** Invitar a otras personas: el link propio y cuántas se sumaron. */
+function ReferralCard() {
+  const [r, setR] = useState<Referral | null>(null);
+  const [copied, setCopied] = useState(false);
+  useEffect(() => {
+    let alive = true;
+    api<Referral>("/me/referral").then((x) => { if (alive && x.ok) setR(x.data); });
+    return () => { alive = false; };
+  }, []);
+  if (!r) return null;
+  async function copy() {
+    try { await navigator.clipboard.writeText(r!.link); setCopied(true); setTimeout(() => setCopied(false), 2000); } catch { /* el link está a la vista para copiarlo a mano */ }
+  }
+  return (
+    <div className="border-y border-[#E1EAF3] py-4" data-testid="home-referral">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="min-w-0">
+          <p className="font-bold">Invitá a otros emprendedores</p>
+          <p className="text-sm text-muted-foreground">Compartí tu link: cuando alguien crea su página desde ahí, lo vas a ver acá.</p>
+          <p className="mt-1 truncate text-sm font-semibold text-[#2F6FB0]">{r.link.replace(/^https?:\/\//, "")}</p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <button type="button" onClick={() => void copy()} className="inline-flex min-h-10 items-center border border-[#2F6FB0]/40 px-4 text-sm font-bold text-[#2F6FB0] hover:bg-[#F4F9FE]">{copied ? "¡Copiado!" : "Copiar link"}</button>
+          <a href={`https://wa.me/?text=${encodeURIComponent(`Armé la página de mi negocio con MiShowo, es gratis: ${r.link}`)}`} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-10 items-center border border-[#2F6FB0]/40 px-4 text-sm font-bold text-[#2F6FB0] hover:bg-[#F4F9FE]">Mandar por WhatsApp</a>
+        </div>
+      </div>
+      {r.invited > 0 && <p className="mt-3 text-sm"><strong>{r.invited}</strong> {r.invited === 1 ? "persona se sumó" : "personas se sumaron"} · {r.published} {r.published === 1 ? "publicó" : "publicaron"} su página</p>}
+    </div>
+  );
+}
+
 /** Inicio del panel: cómo viene el negocio esta semana y qué falta para tener la página lista. */
 export function HomePanel() {
   const user = useUser();
@@ -63,11 +123,14 @@ export function HomePanel() {
         {published && <a href={siteUrl(biz.business.slug)} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-[#D6E4F2] px-4 font-semibold hover:bg-[#EAF4FC]"><IconStore className="size-5 text-[#2F6FB0]" />Ver mi página</a>}
       </div>
 
-      <dl className="grid grid-cols-2 gap-x-6 gap-y-4 sm:grid-cols-3" data-testid="home-stats">
-        {tiles.map(([label, value]) => <div key={label} className="border-t pt-2"><dt className="text-xs text-muted-foreground">{label}</dt><dd className="text-3xl font-bold tabular-nums">{value}</dd></div>)}
+      <LinkCard slug={biz.business.slug} published={published} />
+      <ReferralCard />
+
+      <dl className="grid grid-cols-2 border-y border-[#E1EAF3] py-4 sm:grid-cols-3 sm:divide-x sm:divide-[#E1EAF3]" data-testid="home-stats">
+        {tiles.map(([label, value]) => <div key={label} className="px-4 py-1 first:pl-0"><dt className="text-xs font-medium text-muted-foreground">{label}</dt><dd className="mt-1 text-3xl font-extrabold tabular-nums text-[#0E1B2C]">{value}</dd></div>)}
       </dl>
 
-      <div className="rounded-2xl border border-[#D6E4F2] bg-[#F4F9FE] p-5" data-testid="home-checklist">
+      <div className="border-b border-[#E1EAF3] pb-6" data-testid="home-checklist">
         <div className="flex items-center justify-between gap-3">
           <h2 className="font-bold">{pending.length === 0 ? "Tu página está completa" : "Para dejar tu página lista"}</h2>
           <span className="rounded-full bg-white px-3 py-1 text-sm font-bold text-[#2F6FB0]">{q.score}%</span>
@@ -81,7 +144,7 @@ export function HomePanel() {
           <ul className="mt-4 space-y-2">
             {pending.slice(0, 5).map((i) => (
               <li key={i.id}>
-                <Link href={`${MODULE_ROUTE[moduleOf(i.tab)]}?tab=${i.tab}`} className="flex min-h-11 items-center justify-between gap-3 rounded-xl bg-white px-4 text-[15px] font-medium hover:bg-[#EAF4FC] focus-visible:outline-2 focus-visible:outline-ring">
+                <Link href={`${MODULE_ROUTE[moduleOf(i.tab)]}?tab=${i.tab}`} className="flex min-h-11 items-center justify-between gap-3 border border-[#E1EAF3] px-4 text-[15px] font-medium hover:bg-[#F4F9FE] focus-visible:outline-2 focus-visible:outline-ring">
                   <span>{i.label}{i.required && <span className="ml-2 rounded-full bg-[#EAF4FC] px-2 py-0.5 text-xs font-bold text-[#2F6FB0]">Necesario para publicar</span>}</span>
                   <IconArrowRight className="size-4 shrink-0 text-[#2F6FB0]" />
                 </Link>

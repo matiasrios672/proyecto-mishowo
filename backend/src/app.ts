@@ -10,6 +10,7 @@ import { planRoutes } from "./routes/plans.js";
 import { templateRoutes } from "./routes/templates.js";
 import { orderRoutes } from "./routes/orders.js";
 import { reportRoutes } from "./routes/reports.js";
+import { publicReviewRoutes } from "./routes/reviews.js";
 import { authRoutes } from "./routes/auth.js";
 import { meRoutes } from "./routes/me.js";
 import { contactRoutes } from "./routes/contact.js";
@@ -18,6 +19,10 @@ import { publicCouponRoutes } from "./routes/coupons.js";
 import { publicAppointmentRoutes } from "./routes/appointments.js";
 import { adminModerationRoutes } from "./routes/admin-moderation.js";
 import { adminSystemRoutes, publicSiteConfigRoutes } from "./routes/admin-system.js";
+import { adminMailRoutes, publicMailRoutes } from "./routes/admin-mail.js";
+import { adminLeadRoutes } from "./routes/admin-leads.js";
+import { adminReferralRoutes } from "./routes/referrals.js";
+import { adminIndustryRoutes } from "./routes/admin-industries.js";
 import { getMaintenance, DEFAULT_MAINTENANCE_MESSAGE } from "./lib/settings.js";
 import { adminRoutes } from "./routes/admin.js";
 import { publicMediaRoutes } from "./routes/media.js";
@@ -71,7 +76,7 @@ export function buildApp(config: Config, dbCheck: HealthCheck = async () => true
       return reply.code(ok ? 200 : 503).send({ status: ok ? "ok" : "degraded", db: ok });
     });
 
-    templateRoutes(api);
+    templateRoutes(api, db);
 
     if (db) {
       // Modo mantenimiento: frena SOLO los registros y los pedidos nuevos (503 con mensaje). Login, panel y admin siguen andando.
@@ -90,6 +95,8 @@ export function buildApp(config: Config, dbCheck: HealthCheck = async () => true
       const mailer = deps.mailer ?? createSmtpMailer(config);
       orderRoutes(api, db, config.ORDERS_PER_MINUTE, mailer, config.APP_URL);
       contactRoutes(api, db, mailer, config.REPORTS_PER_MINUTE);
+      publicReviewRoutes(api, db, config.REPORTS_PER_MINUTE, mailer, config.APP_URL);
+      publicMailRoutes(api, db, config);
       publicStatsRoutes(api, db, config.EVENTS_PER_MINUTE);
       publicCouponRoutes(api, db, config.COUPONS_VALIDATE_PER_MINUTE);
       publicAppointmentRoutes(api, db, config.APPOINTMENTS_PER_MINUTE, mailer, config.APP_URL);
@@ -102,6 +109,10 @@ export function buildApp(config: Config, dbCheck: HealthCheck = async () => true
         adminRoutes(adminScope, db, config, mailer, storage, notify);
         adminModerationRoutes(adminScope, db, config, notify);
         adminSystemRoutes(adminScope, db, config);
+        adminMailRoutes(adminScope, db, config, mailer);
+        adminLeadRoutes(adminScope, db, config, mailer);
+        adminReferralRoutes(adminScope, db, config);
+        adminIndustryRoutes(adminScope, db, config);
       });
     }
   });

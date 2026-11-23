@@ -50,9 +50,19 @@ export const contentSchema = z
     hours: z.array(z.object({ open: z.boolean(), from: z.union([hhmm, z.literal("")]), to: z.union([hhmm, z.literal("")]) })).length(7),
     announcement: z.string().max(120),
     whatsappGreeting: z.string().max(200),
+    // Medición de campañas (módulo "pixels" del plan): solo el ID, nunca código. "" = sin pixel.
+    metaPixelId: z.union([z.string().regex(/^\d{8,20}$/), z.literal("")]).default(""),
+    gaId: z.union([z.string().regex(/^G-[A-Z0-9]{6,14}$/), z.literal("")]).default(""),
     showQuantities: z.boolean(),
     // Pedidos opcionales: apagado = la página es un catálogo con botón de consulta por WhatsApp.
     ordersEnabled: z.boolean().default(true),
+    // Cuotas sin interés que ofrece el negocio (informativo: el cobro lo coordina el negocio).
+    installments: z.object({
+      enabled: z.boolean(),
+      count: z.number().int().min(2).max(24),
+      note: z.string().max(80),
+      minAmount: z.number().int().min(0).max(100_000_000),
+    }).default({ enabled: false, count: 3, note: "", minAmount: 0 }),
     askEventDate: z.boolean(),
     design: designSchema.extend({ buttonShape: z.enum(["redondeado", "pildora", "recto"]) }),
     categories: z.array(category).max(30),

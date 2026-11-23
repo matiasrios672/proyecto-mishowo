@@ -50,7 +50,7 @@ test("estadísticas, QR y SEO de un negocio publicado", async ({ page, browser }
 
   // ── QR: se genera, se descarga como PNG y apunta al link con el origen marcado
   await page.goto("/panel/qr");
-  await expect(page.getByTestId("qr-poster")).toContainText(name);
+  await expect(page.getByTestId("qr-image")).toHaveAttribute("alt", new RegExp(name));
   await expect(page.getByTestId("qr-image")).toHaveAttribute("src", /^data:image\/png/);
   await expect(page.getByTestId("qr-image")).toHaveAttribute("alt", new RegExp(`${slug}\\.localhost`));
   const download = page.waitForEvent("download");

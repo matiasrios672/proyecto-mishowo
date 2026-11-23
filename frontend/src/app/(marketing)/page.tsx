@@ -1,10 +1,8 @@
-import { Suspense } from "react";
 import type { Metadata } from "next";
-import {
-  Benefits, DemoSection, Examples, FaqSection, FinalCta, Hero, Plans, PlansList, Soon, Testimonials,
-} from "@/components/marketing/sections";
-import { getSiteConfig } from "@/lib/siteConfig";
-import { Compare, RubrosMarquee, Story, TrustStrip } from "@/components/marketing/Story";
+import { DemoSection, FinalCta, Hero } from "@/components/marketing/sections";
+import { TrustStrip } from "@/components/marketing/Story";
+import { ExploreGrid } from "@/components/marketing/Explore";
+import { StickyCta } from "@/components/marketing/StickyCta";
 
 export const metadata: Metadata = {
   title: { absolute: "MiShowo: creá la página de tu negocio desde el celular" },
@@ -13,47 +11,29 @@ export const metadata: Metadata = {
   openGraph: {
     title: "MiShowo: tu negocio, en un link",
     description: "Catálogo, pedidos por WhatsApp y tu link para Instagram. Empezá gratis.",
-    type: "website", locale: "es_AR", siteName: "MiShowo", images: ["/video/poster.jpg"],
+    type: "website", locale: "es_AR", siteName: "MiShowo", images: [{ url: "/opengraph-image", width: 1200, height: 630 }],
   },
 };
 
-/** Datos estructurados: la FAQ tiene que coincidir con la que se ve (la del admin si la editó). */
-async function LandingJsonLd() {
-  const { faq } = await getSiteConfig();
-  const jsonLd = {
-    "@context": "https://schema.org",
-    "@graph": [
-      { "@type": "Organization", name: "MiShowo", url: "https://mishowo.com" },
-      { "@type": "SoftwareApplication", name: "MiShowo", applicationCategory: "BusinessApplication", operatingSystem: "Web", offers: { "@type": "Offer", price: "0", priceCurrency: "ARS" } },
-      { "@type": "FAQPage", mainEntity: faq.map((f) => ({ "@type": "Question", name: f.q, acceptedAnswer: { "@type": "Answer", text: f.a } })) },
-    ],
-  };
-  return <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }} />;
-}
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@graph": [
+    { "@type": "Organization", name: "MiShowo", url: "https://mishowo.com" },
+    { "@type": "SoftwareApplication", name: "MiShowo", applicationCategory: "BusinessApplication", operatingSystem: "Web", offers: { "@type": "Offer", price: "0", priceCurrency: "ARS" } },
+  ],
+};
 
+/** Home corta: el mensaje, la demo para probar y un menú para elegir qué ver. Cada tema vive en su página. */
 export default function Home() {
   return (
     <>
-      <Suspense fallback={null}><LandingJsonLd /></Suspense>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }} />
       <Hero />
       <TrustStrip />
-      <RubrosMarquee />
       <DemoSection />
-      <Story />
-      <Compare />
-      <Examples />
-      <Benefits />
-      <Plans
-        fallback={
-          <Suspense fallback={<p className="mt-10 text-muted-foreground">Cargando planes…</p>}>
-            <PlansList />
-          </Suspense>
-        }
-      />
-      <Testimonials />
-      <FaqSection />
-      <Soon />
+      <ExploreGrid />
       <FinalCta />
+      <StickyCta />
     </>
   );
 }

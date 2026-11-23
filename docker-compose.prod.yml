@@ -1,0 +1,78 @@
+# Referencia de producción para Coolify (Docker Compose build pack) o cualquier host con Docker + Traefik.
+# No publica puertos: el proxy (Traefik de Coolify) enruta por dominio.
+#   - frontend: mishowo.com y *.mishowo.com (wildcard, certificado por DNS challenge de Cloudflare)
+#   - backend:  api.mishowo.com
+# Todas las variables salen del entorno (ver .env.production.example). Sin valor, el arranque falla a propósito (:?).
+services:
+  db:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: mishowo
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?definir POSTGRES_PASSWORD}
+      POSTGRES_DB: mishowo
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U mishowo"]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+    mem_limit: 512m
+
+  backend:
+    build: ./backend
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgres://mishowo:${POSTGRES_PASSWORD}@db:5432/mishowo
+      FRONTEND_ORIGIN: https://${ROOT_DOMAIN:?}
+      ROOT_DOMAIN: ${ROOT_DOMAIN}
+      COOKIE_DOMAIN: .${ROOT_DOMAIN}
+      APP_URL: https://${ROOT_DOMAIN}
+      API_PUBLIC_URL: https://api.${ROOT_DOMAIN}
+      FRONTEND_INTERNAL_URL: http://frontend:3000
+      REVALIDATE_SECRET: ${REVALIDATE_SECRET:?openssl rand -hex 24}
+      ADMIN_SECRET_KEY: ${ADMIN_SECRET_KEY:?openssl rand -base64 32}
+      ADMIN_ALLOWED_IPS: ${ADMIN_ALLOWED_IPS:-}
+      SMTP_HOST: ${SMTP_HOST:?}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASS: ${SMTP_PASS:-}
+      SMTP_SECURE: ${SMTP_SECURE:-false}
+      MAIL_FROM: ${MAIL_FROM:-MiShowo <no-reply@mishowo.com>}
+      UPLOADS_DIR: /app/uploads
+    volumes:
+      - uploads:/app/uploads
+    expose:
+      - "4000"
+    mem_limit: 512m
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        NEXT_PUBLIC_API_URL: https://api.${ROOT_DOMAIN}
+        NEXT_PUBLIC_SITE_URL: https://${ROOT_DOMAIN}
+        NEXT_PUBLIC_ROOT_DOMAIN: ${ROOT_DOMAIN}
+        NEXT_PUBLIC_ROOT_SCHEME: https
+        NEXT_PUBLIC_LEGAL_ENTITY: ${LEGAL_ENTITY:-MiShowo}
+        NEXT_PUBLIC_SUPPORT_WHATSAPP: ${SUPPORT_WHATSAPP:-}
+    restart: unless-stopped
+    depends_on:
+      backend:
+        condition: service_healthy
+    environment:
+      API_URL: http://backend:4000
+      ROOT_DOMAIN: ${ROOT_DOMAIN}
+      REVALIDATE_SECRET: ${REVALIDATE_SECRET}
+    expose:
+      - "3000"
+    mem_limit: 512m
+
+volumes:
+  pgdata:
+  uploads:

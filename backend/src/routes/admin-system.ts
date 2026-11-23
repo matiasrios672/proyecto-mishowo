@@ -6,15 +6,13 @@ import type { Config } from "../config.js";
 import type { Db } from "../db/tenant.js";
 import * as s from "../db/schema.js";
 import { audit } from "../audit.js";
-import { requireAdmin } from "../admin/guard.js";
-import { ADMIN_ROLES } from "../auth/session.js";
+import { requirePerm } from "../admin/guard.js";
 import { RESERVED_SLUGS } from "../lib/slug.js";
 import {
   CMS_KEY, CRON_KEY, DEFAULT_MAINTENANCE_MESSAGE, MAINTENANCE_KEY, RESERVED_KEY,
   cmsSchema, getCms, getMaintenance, getReservedSlugs, maintenanceSchema, putSetting, reservedSlugsSchema,
 } from "../lib/settings.js";
 
-const MANAGE = ["owner", "admin"] as const;
 const VERSION = process.env.npm_package_version ?? "0.1.0";
 const STARTED = Date.now();
 
@@ -51,7 +49,7 @@ export function publicSiteConfigRoutes(app: FastifyInstance, db: Db) {
 export function adminSystemRoutes(app: FastifyInstance, db: Db, config: Config) {
   // ───────── Estado del sistema ─────────
   app.get("/admin/system", async (req, reply) => {
-    const ctx = await requireAdmin(db, config, req, reply);
+    const ctx = await requirePerm(db, config, req, reply, "sistema","view");
     if (!ctx) return;
     const t0 = performance.now();
     let dbOk = true;
@@ -79,7 +77,7 @@ export function adminSystemRoutes(app: FastifyInstance, db: Db, config: Config) 
 
   // ───────── Modo mantenimiento ─────────
   app.put("/admin/system/maintenance", async (req, reply) => {
-    const ctx = await requireAdmin(db, config, req, reply, MANAGE);
+    const ctx = await requirePerm(db, config, req, reply, "sistema","manage");
     if (!ctx) return;
     const p = maintenanceSchema.safeParse(req.body);
     if (!p.success) return reply.code(400).send({ error: "invalid_request" });
@@ -93,12 +91,12 @@ export function adminSystemRoutes(app: FastifyInstance, db: Db, config: Config) 
 
   // ───────── Slugs reservados ─────────
   app.get("/admin/settings/reserved-slugs", async (req, reply) => {
-    const ctx = await requireAdmin(db, config, req, reply);
+    const ctx = await requirePerm(db, config, req, reply, "sistema","view");
     if (!ctx) return;
     return { slugs: await getReservedSlugs(db), builtin: [...RESERVED_SLUGS].sort() };
   });
   app.put("/admin/settings/reserved-slugs", async (req, reply) => {
-    const ctx = await requireAdmin(db, config, req, reply, MANAGE);
+    const ctx = await requirePerm(db, config, req, reply, "sistema","manage");
     if (!ctx) return;
     const p = reservedSlugsSchema.safeParse(req.body);
     if (!p.success) return reply.code(400).send({ error: "invalid_request" });
@@ -116,12 +114,12 @@ export function adminSystemRoutes(app: FastifyInstance, db: Db, config: Config) 
 
   // ───────── Mini CMS (FAQ y aviso global de la landing) ─────────
   app.get("/admin/settings/cms", async (req, reply) => {
-    const ctx = await requireAdmin(db, config, req, reply, ADMIN_ROLES);
+    const ctx = await requirePerm(db, config, req, reply, "contenido","view");
     if (!ctx) return;
     return await getCms(db);
   });
   app.put("/admin/settings/cms", async (req, reply) => {
-    const ctx = await requireAdmin(db, config, req, reply, MANAGE);
+    const ctx = await requirePerm(db, config, req, reply, "contenido","manage");
     if (!ctx) return;
     const p = cmsSchema.safeParse(req.body);
     if (!p.success) return reply.code(400).send({ error: "invalid_request" });

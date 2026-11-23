@@ -26,9 +26,21 @@ export const users = pgTable("users", {
   blockedAt: timestamp("blocked_at", { withTimezone: true }),
   totpSecret: text("totp_secret"), // cifrado (AES-256-GCM)
   totpEnabledAt: timestamp("totp_enabled_at", { withTimezone: true }),
+  /** Permisos a medida del equipo (área -> view|manage). null = los de su plantilla de rol. Ver lib/permissions.ts. */
+  permissions: jsonb("permissions"),
   lastLoginAt: timestamp("last_login_at", { withTimezone: true }),
+  /** Se dio de baja de las novedades (los avisos del servicio y de la cuenta se siguen mandando). */
+  newsletterOptoutAt: timestamp("newsletter_optout_at", { withTimezone: true }),
+  /** De dónde llegó al registrarse (utm_source o sitio de origen): base para saber qué canal trae leads. */
+  signupSource: text("signup_source"),
+  /** Código para invitar a otras personas (se genera la primera vez que lo pide). */
+  referralCode: text("referral_code"),
+  /** Quién lo invitó (si se registró con el link de otra persona). */
+  referredBy: uuid("referred_by"),
+  /** Última vez que le escribimos para retomar su página (manual o automático): evita insistir. */
+  lastNudgeAt: timestamp("last_nudge_at", { withTimezone: true }),
   createdAt: ts("created_at"),
-}, (t) => [uniqueIndex("users_email_idx").on(t.email)]);
+}, (t) => [uniqueIndex("users_email_idx").on(t.email), uniqueIndex("users_referral_code_idx").on(t.referralCode)]);
 
 export const sessions = pgTable("sessions", {
   id: text("id").primaryKey(), // hash del token
@@ -232,8 +244,51 @@ export const contactRequests = pgTable("contact_requests", {
   reference: text("reference"), // email de la cuenta, link de la página o número de pago
   message: text("message"),
   status: text("status").notNull().default("nuevo"), // nuevo | resuelto
+  handledBy: uuid("handled_by").references(() => users.id, { onDelete: "set null" }),
+  handledAt: timestamp("handled_at", { withTimezone: true }),
+  internalNote: text("internal_note"),
+  repliedAt: timestamp("replied_at", { withTimezone: true }),
   createdAt: ts("created_at"),
 }, (t) => [index("contact_requests_status_idx").on(t.status, t.createdAt)]);
+
+// ---- Reseñas de clientes (moderadas por el dueño: solo las aprobadas se ven en la página) ----
+export const reviews = pgTable("reviews", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  businessId: uuid("business_id").notNull().references(() => businesses.id, { onDelete: "cascade" }),
+  authorName: text("author_name").notNull(),
+  rating: integer("rating").notNull(), // 1..5
+  comment: text("comment"),
+  status: text("status").notNull().default("pendiente"), // pendiente | aprobada | rechazada
+  reply: text("reply"), // respuesta pública del negocio
+  ipHash: text("ip_hash").notNull(), // hash(ip + negocio): solo para frenar repeticiones, no identifica a nadie
+  createdAt: ts("created_at"),
+}, (t) => [index("reviews_biz_status_idx").on(t.businessId, t.status, t.createdAt)]);
+
+// ---- Plantillas de email editables (si no hay fila, vale el texto por defecto del código) ----
+export const emailTemplates = pgTable("email_templates", {
+  key: text("key").primaryKey(),
+  subject: text("subject").notNull(),
+  body: text("body").notNull(),
+  enabled: boolean("enabled").notNull().default(true),
+  updatedBy: uuid("updated_by").references(() => users.id, { onDelete: "set null" }),
+  updatedAt: ts("updated_at"),
+});
+
+// ---- Comunicados por email a grupos de usuarios (inmediatos o programados) ----
+export const emailCampaigns = pgTable("email_campaigns", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  subject: text("subject").notNull(),
+  body: text("body").notNull(),
+  kind: text("kind").notNull().default("novedades"), // servicio (siempre llega) | novedades (con baja)
+  segment: text("segment").notNull().default("todos"),
+  status: text("status").notNull().default("borrador"), // borrador | programado | enviando | enviado | cancelado
+  scheduledAt: timestamp("scheduled_at", { withTimezone: true }),
+  sentAt: timestamp("sent_at", { withTimezone: true }),
+  recipients: integer("recipients").notNull().default(0),
+  failed: integer("failed").notNull().default(0),
+  createdBy: uuid("created_by").references(() => users.id, { onDelete: "set null" }),
+  createdAt: ts("created_at"),
+}, (t) => [index("email_campaigns_status_idx").on(t.status, t.scheduledAt)]);
 
 // ---- Ajustes editables desde el admin (datos para transferir, etc.) ----
 export const appSettings = pgTable("app_settings", {
@@ -287,7 +342,8 @@ export const appointmentSettings = pgTable("appointment_settings", {
   minNoticeHours: integer("min_notice_hours").notNull().default(2),
   capacity: integer("capacity").notNull().default(1), // cupos por franja
   horizonDays: integer("horizon_days").notNull().default(30),
-  services: jsonb("services").notNull().default([]),
+  services: jsonb("services").notNull().default([]), // [{ name, minutes|null, price|null }] (los viejos eran solo el nombre)
+  staff: jsonb("staff").notNull().default([]), // [{ id, name }]: con profesionales, cada uno atiende un turno a la vez
   updatedAt: ts("updated_at"),
 });
 
@@ -299,6 +355,11 @@ export const appointments = pgTable("appointments", {
   customerName: text("customer_name").notNull(),
   customerPhone: text("customer_phone").notNull(),
   service: text("service"),
+  price: numeric("price", { precision: 12, scale: 2 }),
+  staffId: text("staff_id"),
+  staffName: text("staff_name"),
+  customerEmail: text("customer_email"),
+  reminderSentAt: timestamp("reminder_sent_at", { withTimezone: true }),
   notes: text("notes"),
   status: text("status").notNull().default("pendiente"), // pendiente | confirmado | cancelado
   createdAt: ts("created_at"),

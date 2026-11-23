@@ -12,34 +12,36 @@ test.describe("landing de MiShowo", () => {
       await expect(page.getByRole("heading", { level: 1 })).toContainText("Tu negocio, en un link.");
       expect(await noOverflow(page), `@${width}`).toBe(true);
     }
-    for (const name of ["Del celular a tus clientes, en tres pasos", "Páginas reales, de rubros como el tuyo", "Todo lo que necesitás para vender", "Empezá gratis, crecé cuando lo necesites", "Preguntas frecuentes", "Próximamente"])
+    // La home es corta: la demo y el menú para elegir qué ver. El resto vive en su propia página.
+    for (const name of ["Probalo vos mismo, ahora", "¿Qué querés ver?", "Creá tu página gratis"])
       await expect(page.getByRole("heading", { name, exact: true })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Preguntas frecuentes" })).toHaveCount(0);
+    await expect(page.locator("#planes")).toHaveCount(0);
   });
 
   test("el hero ilustrado: celular que arma la página, dibujos y sin video", async ({ page }) => {
     await page.goto("/");
     await expect(page.locator("video")).toHaveCount(0);
-    await expect(page.getByRole("img", { name: /Demostración: un cursor agrega dos productos/ })).toBeVisible();
-    await expect(page.getByLabel("Rubros que usan MiShowo")).toBeVisible();
-    await expect(page.getByRole("heading", { name: "Del celular a tus clientes, en tres pasos" })).toBeVisible();
-    for (const t of ["Cargás lo que vendés", "Compartís tu link", "Te piden por WhatsApp"]) await expect(page.getByRole("heading", { name: t })).toBeAttached();
+    await expect(page.getByRole("img", { name: /Vista de la página de un negocio/ })).toBeVisible();
+    await expect(page.getByLabel("Rubros que usan MiShowo")).toHaveCount(0); // sin carrusel de rubros
     await expect(page.getByRole("link", { name: "Creá tu página gratis" }).first()).toBeVisible();
   });
 
   test("con movimiento reducido todo queda visible y quieto", async ({ browser }) => {
     const ctx = await browser.newContext({ reducedMotion: "reduce" });
     const page = await ctx.newPage();
+    await page.goto("/como-funciona");
+    await expect(page.getByRole("heading", { name: "Del celular a tus clientes, en tres pasos" })).toBeVisible();
+    await expect(page.getByTestId("steps").getByRole("listitem")).toHaveCount(3);
     await page.goto("/");
-    await expect(page.getByRole("heading", { name: "Te piden por WhatsApp" })).toBeVisible();
-    expect(await page.locator(".mk-cursor").evaluate((e) => getComputedStyle(e).display)).toBe("none");
-    expect(await page.locator(".mk-notify").evaluate((e) => getComputedStyle(e).animationName)).toBe("none");
-    expect(await page.locator(".mk-notify").evaluate((e) => getComputedStyle(e).opacity)).toBe("1");
-    expect(await page.locator(".mk-blob").first().evaluate((e) => getComputedStyle(e).animationName)).toBe("none");
+    await expect(page.getByRole("img", { name: /Vista de la página de un negocio/ })).toBeVisible(); // el hero ya no tiene cursor ni tarjetas animadas
+    await expect(page.locator(".mk-cursor, .mk-notify")).toHaveCount(0);
+    expect(await page.evaluate(() => document.getAnimations().filter((a) => a.effect?.getTiming().iterations === Infinity).length)).toBe(0); // nada corre en bucle
     await ctx.close();
   });
 
-  test("los planes salen de la base de datos con precio y límites", async ({ page }) => {
-    await page.goto("/");
+  test("los planes (en /precios) salen de la base de datos con precio y límites", async ({ page }) => {
+    await page.goto("/precios");
     const plans = page.locator("#planes");
     await expect(plans.getByRole("heading", { name: "Gratis", exact: true })).toBeVisible();
     await expect(plans.getByRole("heading", { name: "Emprende", exact: true })).toBeVisible();
@@ -76,13 +78,18 @@ test.describe("landing de MiShowo", () => {
     await demo.getByRole("button", { name: "Belleza" }).click();
     await expect(demo.locator("[data-site-layout]")).toHaveAttribute("data-site-layout", "servicios");
     await demo.getByRole("button", { name: "Usar este diseño para mi página" }).click();
+    // Para seguir hace falta cuenta: el diseño elegido viaja con la persona y aparece al crearla.
+    await page.waitForURL("**/registro**");
+    await page.getByLabel(/^Email/).fill(`demo-${Date.now()}@test.com`);
+    await page.getByLabel(/^Contraseña/).fill("claveSegura123");
+    await page.getByRole("button", { name: "Crear mi cuenta" }).click();
     await page.waitForURL("**/editor");
     await expect(page.getByTestId("header-name")).toHaveText("Mi Panadería");
     await expect(page.getByTestId("preview-frame")).toContainText("Esmaltado semipermanente");
   });
 
-  test("las preguntas frecuentes se abren y se cierran", async ({ page }) => {
-    await page.goto("/");
+  test("las preguntas frecuentes (en /precios) se abren y se cierran", async ({ page }) => {
+    await page.goto("/precios");
     await page.waitForFunction(() => !document.querySelector('div[hidden][id^="S:"]')); // la FAQ llega por streaming: esperar a que termine de reemplazarse
     const q = page.locator("details:visible", { hasText: "¿Cómo cobro?" });
     await expect(q).not.toHaveAttribute("open", "");
@@ -92,13 +99,16 @@ test.describe("landing de MiShowo", () => {
     await expect(q).not.toHaveAttribute("open", "");
   });
 
-  test("datos estructurados (Organization, SoftwareApplication, FAQPage) y metadatos para compartir", async ({ page }) => {
+  test("datos estructurados (Organization y SoftwareApplication en la home, FAQPage en /precios) y metadatos para compartir", async ({ page }) => {
+    await page.goto("/precios");
+    const faq = JSON.parse((await page.locator('script[type="application/ld+json"]').first().textContent())!);
+    expect(faq["@type"]).toBe("FAQPage");
+    expect(faq.mainEntity.length).toBeGreaterThanOrEqual(6);
     await page.goto("/");
     const ld = JSON.parse((await page.locator('script[type="application/ld+json"]').first().textContent())!);
-    expect(ld["@graph"].map((x: { "@type": string }) => x["@type"])).toEqual(["Organization", "SoftwareApplication", "FAQPage"]);
-    expect(ld["@graph"][2].mainEntity.length).toBeGreaterThanOrEqual(6);
+    expect(ld["@graph"].map((x: { "@type": string }) => x["@type"])).toEqual(["Organization", "SoftwareApplication"]);
     await expect(page.locator('meta[name="description"]')).toHaveAttribute("content", /pedidos por WhatsApp/);
-    await expect(page.locator('meta[property="og:image"]')).toHaveAttribute("content", /poster\.jpg/);
+    await expect(page.locator('meta[property="og:image"]')).toHaveAttribute("content", /opengraph-image/);
     await expect(page.locator('link[rel="canonical"]')).toHaveAttribute("href", /^https?:\/\/[^/]+\/?$/);
   });
 
@@ -106,6 +116,63 @@ test.describe("landing de MiShowo", () => {
     await page.goto("/");
     const hrefs = await page.locator("footer a[href^='/']").evaluateAll((as) => as.map((a) => (a as HTMLAnchorElement).getAttribute("href")!.split("#")[0]!));
     for (const h of new Set(hrefs.filter(Boolean))) expect((await request.get(h)).status(), h).toBe(200);
+  });
+});
+
+test.describe("páginas de la web (la home es corta y cada tema tiene la suya)", () => {
+  const PAGES = [
+    ["/como-funciona", "Cómo funciona"],
+    ["/rubros", "Una página para cada rubro"],
+    ["/cuotas", "Cuotas sin interés"],
+    ["/funciones", "Todo lo que incluye"],
+    ["/precios", "Precios"],
+  ] as const;
+
+  for (const [path, title] of PAGES) {
+    test(`${path}: un solo h1, sin desbordes, con cierre y vuelta a la home`, async ({ page }) => {
+      for (const width of [390, 820, 1440]) {
+        await page.setViewportSize({ width, height: 900 });
+        const res = await page.goto(path);
+        expect(res?.status()).toBe(200);
+        await expect(page.getByRole("heading", { level: 1 })).toHaveCount(1);
+        await expect(page.getByRole("heading", { level: 1 })).toHaveText(title);
+        expect(await noOverflow(page), `${path} @${width}`).toBe(true);
+      }
+      await expect(page.getByRole("heading", { name: "Creá tu página gratis", exact: true })).toBeVisible();
+      await page.getByRole("navigation", { name: "Ubicación" }).getByRole("link", { name: /Inicio/ }).click();
+      await expect(page).toHaveURL("/");
+    });
+  }
+
+  test("la home enlaza a cada tema desde «¿Qué querés ver?»", async ({ page }) => {
+    await page.goto("/");
+    const grid = page.locator("#explorar");
+    for (const [path] of PAGES) await expect(grid.locator(`a[href="${path}"]`)).toBeVisible();
+    await grid.getByRole("link", { name: /Cuotas sin interés/ }).click();
+    await expect(page).toHaveURL(/\/cuotas$/);
+  });
+
+  test("en celular el menú abre, navega, se cierra solo y responde a Escape", async ({ page }, info) => {
+    test.skip(info.project.name !== "mobile", "solo en celular");
+    await page.goto("/");
+    const button = page.getByRole("button", { name: "Abrir menú" });
+    await expect(button).toHaveAttribute("aria-expanded", "false");
+    await button.click();
+    await expect(page.getByRole("button", { name: "Cerrar menú" })).toHaveAttribute("aria-expanded", "true");
+    await page.keyboard.press("Escape");
+    await expect(page.getByRole("button", { name: "Abrir menú" })).toHaveAttribute("aria-expanded", "false");
+    await page.getByRole("button", { name: "Abrir menú" }).click();
+    await page.getByRole("navigation", { name: "Menú" }).getByRole("link", { name: "Precios" }).click();
+    await expect(page).toHaveURL(/\/precios$/);
+    await expect(page.getByRole("navigation", { name: "Menú" })).toHaveCount(0); // se cerró al navegar
+  });
+
+  test("en compu la cabecera muestra los temas y no el botón de menú", async ({ page }, info) => {
+    test.skip(info.project.name !== "desktop", "solo en compu");
+    await page.goto("/");
+    const nav = page.getByRole("navigation", { name: "Principal" });
+    for (const name of ["Cómo funciona", "Rubros", "Cuotas", "Precios", "Ayuda"]) await expect(nav.getByRole("link", { name })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Abrir menú" })).toBeHidden();
   });
 });
 

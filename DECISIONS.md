@@ -113,3 +113,27 @@ Formato: ID · fecha · decisión · motivo · consecuencias. Las más nuevas ar
 - El borrador local y la marca de sincronización se leen **una sola vez al abrir** (no en cada render): el propio editor los va actualizando al guardar y, releídos, parecen un conflicto.
 - El editor completo y guiado (`/editor`) queda para la primera vez y para quien aún no tiene cuenta.
 - Pedidos opcionales: `ordersEnabled` en `businesses.settings` (default true); con pedidos apagados el servidor rechaza `POST /public/orders` (409 `orders_disabled`).
+
+## D-019 · 2026-11-23 · Módulos por plan, plantillas de email y equipo desde el admin
+- **Módulos por plan** (`backend/src/lib/modules.ts`): `plans.limits.modules` (pedidos, cupones, turnos, estadísticas completas, sin marca, píxeles). El sysadmin los prende/apaga en /admin/planes; si un plan no define uno, vale el default (abierto), así los planes existentes no cambian. Se aplican en el servidor (cupones 403, turnos 403, estadísticas recortadas a 7 días) y el panel oculta lo que el plan no incluye. Bug previo corregido: guardar un plan desde el admin borraba `limits.coupons` y `limits.appointments` (el schema no los conocía).
+- **Plantillas de email** (`backend/src/mail/`): textos de fábrica en código; las ediciones del admin viven en `email_templates` (si no hay fila, vale el de fábrica). Variables `{{x}}` validadas contra una lista por plantilla; el texto de la plantilla **y** los valores se escapan en el HTML (la vista previa lo detectó). Los mails de acceso y el acuse de arrepentimiento (`locked`) no se pueden apagar ni quedarse sin `{{link}}`.
+- **Comunicados**: segmentos fijos (todos, gratis, pago, por vencer, publicados, sin publicar, sin página, equipo), inmediatos o programados (`node dist/cron.js send-campaigns`, cada 5 min). Se "reclaman" con un UPDATE atómico: no se duplican. Tipo *novedades* lleva baja con enlace firmado (HMAC con `ADMIN_SECRET_KEY`) y respeta `users.newsletter_optout_at`; tipo *servicio* llega siempre. Tope 2.000 destinatarios por envío.
+- **Equipo**: el Owner invita por email (crea la cuenta sin contraseña + enlace de 3 días); el 2FA sigue siendo obligatorio al entrar al admin. Soporte ve/prueba plantillas y atiende la bandeja de consultas (responder por email, resolver, buscar), pero no edita planes, plantillas ni manda comunicados.
+- **Días del aviso de vencimiento** configurables (`app_settings.email_automation`).
+- **Imágenes para compartir**: `/opengraph-image` (landing) y `/og` por negocio (nombre + color de marca) cuando no hay foto; así WhatsApp/Instagram nunca muestran un link pelado.
+
+## D-020 · 2026-11-23 · Alta con cuenta, leads, turnos, reseñas, píxeles y referidos
+- **Cuenta antes de diseñar:** permite acompañar a quien no termina y volver a escribirle. El borrador de la demo de la landing viaja por el registro y se migra a la cuenta.
+- **Leads = cuentas de clientes** con etapa calculada (sin confirmar, sin página, borrador, publicado). El aviso automático viene apagado: es un mail que sale solo a gente que no lo pidió. Una sola vez por persona, nunca a quien se dio de baja de las novedades.
+- **Turnos:** la grilla avanza de a `slotMinutes` y cada turno dura lo que dura su servicio; con profesionales, el cupo es cada persona (el campo `capacity` solo vale sin profesionales). Los servicios viejos (solo nombre) se siguen aceptando.
+- **Reseñas:** pendientes hasta que el dueño las aprueba; sin cuenta, con campo trampa y una por conexión por día (hash de IP + negocio). Las estrellas en Google solo con 3 o más aprobadas.
+- **Píxeles:** solo IDs con formato válido (nunca código libre), y el servidor no los expone si el plan no tiene el módulo.
+- **Referidos:** se registra y se cuenta; el premio (meses gratis, descuento) es una decisión de precios y queda para el dueño.
+- **Rubros:** overrides en `app_settings` (nombre, bajada, frase, tema, diseño, tipografía, visibilidad) sobre las plantillas de código; el contenido de ejemplo no se edita desde el admin.
+
+
+## D-021 · 2026-11-23 · Cuotas sin interés: aviso informativo, sin pasarela
+- **Contexto:** los negocios quieren ofrecer cuotas sin interés. Mercado Pago y pasarelas están fuera de alcance (CLAUDE.md).
+- **Decisión:** el negocio activa «cuotas sin interés» (2 a 24, compra mínima y aclaración opcionales) en Pedidos. La página muestra «N cuotas sin interés de $X» en cada precio y el carrito ofrece «Quiero pagar en cuotas»; eso se suma al mensaje de WhatsApp. MiShowo no cobra ni procesa nada: el negocio cobra por su medio (posnet, MP propio, banco). Se guarda en `settings.installments` (sin migración).
+- **Por qué:** entrega el valor comercial (cuotas visibles) sin custodiar dinero ni cumplir normas de procesadores de pago.
+- **Cómo cambiarlo:** si algún día se integra una pasarela, `installments` pasa a ser la configuración que se envía al checkout.

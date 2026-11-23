@@ -1,3 +1,7 @@
+import { Wordmark } from "@/components/brand/Wordmark";
+import { FloatingWhatsApp } from "./FloatingWhatsApp";
+import { Pixels } from "./Pixels";
+import { ReviewsBlock } from "./ReviewsBlock";
 import type { CSSProperties } from "react";
 import type { SiteModel, SiteProduct } from "@/lib/site";
 import { themeStyle } from "@/lib/themes";
@@ -73,21 +77,25 @@ export function SiteView({ site, preview = false, orderable }: { site: SiteModel
       <Catalog site={site} cats={cats} preview={preview} order={order} />
 
       {orderable && !preview && services && <BookingBlock slug={orderable.slug} whatsapp={site.whatsapp} businessName={site.name} />}
+      {orderable && !preview && site.reviews && <ReviewsBlock slug={orderable.slug} businessName={site.name} />}
       <InfoSection site={site} whatsappHref={whatsappHref} />
       {site.whatsapp && <CtaBand whatsapp={site.whatsapp} services={services} orders={site.ordersEnabled} />}
 
-      <footer className={`flex flex-col items-center space-y-3 border-t border-border/60 px-5 py-8 text-center ${order ? "pb-28 @2xl:pb-8" : ""}`}>
+      <footer className={`flex flex-col items-center space-y-3 border-t border-border/60 px-5 py-8 text-center ${order || (whatsappHref && !preview) ? "pb-28 @2xl:pb-8" : ""}`}>
         <div className="flex items-center gap-2.5">
           <Brand name={site.name} logo={site.logo} logoSet={site.logoSet} size="sm" />
           <span className="site-display font-bold">{site.name}</span>
         </div>
-        {!site.hideBranding && <p className="text-xs text-muted-foreground">Hecho con <strong>MiShowo</strong></p>}
+        {!site.hideBranding && <p className="flex items-center gap-1.5 text-xs text-muted-foreground">Hecho con <a href="https://mishowo.com" target="_blank" rel="noopener noreferrer" aria-label="MiShowo" className="inline-flex"><Wordmark className="text-sm" /></a></p>}
         {orderable && <ReportButton slug={orderable.slug} />}
       </footer>
 
+      {!preview && site.pixels && <Pixels meta={site.pixels.meta} ga={site.pixels.ga} />}
+      {whatsappHref && !preview && <FloatingWhatsApp href={whatsappHref} slug={order?.slug} />}
+
       {order && (
         <CartDrawer slug={order.slug} businessName={site.name} whatsapp={site.whatsapp} greeting={site.whatsappGreeting}
-          showQuantities={site.showQuantities} askEventDate={site.askEventDate} />
+          showQuantities={site.showQuantities} askEventDate={site.askEventDate} installments={site.installments} />
       )}
     </div>
   );

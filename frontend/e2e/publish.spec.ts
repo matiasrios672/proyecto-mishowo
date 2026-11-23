@@ -22,12 +22,11 @@ async function tokenFromMail(to: string): Promise<string> {
 
 async function signUp(page: Page, mail: string) {
   await page.goto("/crear");
-  await page.getByRole("button", { name: /Rotisería y comidas/ }).click();
-  await page.waitForURL("**/editor");
-  await page.getByRole("link", { name: "Guardar mi página" }).click();
+  await page.getByLabel(/^Tu nombre/).fill("Persona de Prueba");
   await page.getByLabel(/^Email/).fill(mail);
   await page.getByLabel(/^Contraseña/).fill(PASS);
   await page.getByRole("button", { name: "Crear mi cuenta" }).click();
+  await page.getByRole("button", { name: /Rotisería y comidas/ }).click();
   await page.waitForURL("**/editor");
   await expect(status(page)).toHaveText("Guardado en tu cuenta", { timeout: 15_000 });
 }
@@ -131,14 +130,5 @@ test.describe("publicar la página", () => {
     await page.getByTestId("publish-button").click();
     await expect(page.locator("p[role=alert]:visible")).toContainText("Todavía falta");
     await expect(page.locator("p[role=alert]:visible")).toContainText("tu WhatsApp");
-  });
-
-  test("sin cuenta, publicar invita a crearla", async ({ page }) => {
-    await page.goto("/crear");
-    await page.getByRole("button", { name: /Rotisería y comidas/ }).click();
-    await page.waitForURL("**/editor");
-    await page.getByRole("tab", { name: "Publicar", exact: true }).click();
-    await expect(page.getByRole("button", { name: "Publicar mi página" })).toBeDisabled();
-    await expect(page.getByRole("link", { name: "Crear mi cuenta" })).toHaveAttribute("href", "/registro?next=/editor");
   });
 });

@@ -4,9 +4,12 @@ import { z } from "zod";
 import type { Config } from "../config.js";
 import type { Db } from "../db/tenant.js";
 import * as s from "../db/schema.js";
+import { MODULES, MODULE_KEYS, planModules } from "../lib/modules.js";
+import { sendTemplate } from "../mail/service.js";
 import { audit } from "../audit.js";
-import { requireAdmin, requireAdminSession } from "../admin/guard.js";
-import { ADMIN_ROLES, isAdminRole, strictOriginOk } from "../auth/session.js";
+import { requireAdmin, requireAdminSession, requirePerm } from "../admin/guard.js";
+import { can, effectivePermissions, normalizePermissions, permissionsSchema, storedPermissions, AREAS, PRESETS, type AreaKey, type Level } from "../lib/permissions.js";
+import { isAdminRole, strictOriginOk } from "../auth/session.js";
 import { newTotpSecret, otpauthUrl, verifyTotp } from "../auth/totp.js";
 import { decryptSecret, encryptSecret } from "../lib/crypto.js";
 import { activatePlan } from "../billing/activate.js";
@@ -19,13 +22,14 @@ import { sniff } from "../storage/sniff.js";
 const PAGE = 25;
 const uuid = z.string().uuid();
 const page = z.coerce.number().int().min(1).max(10_000).default(1);
-const MANAGE = ["owner", "admin"] as const; // Soporte mira y deja notas, pero no toca planes, pagos ni moderación
 
 const limitsSchema = z.object({
   products: z.number().int().min(1).max(100_000).nullable(),
   photosPerProduct: z.number().int().min(0).max(50),
   whatsappNumbers: z.number().int().min(1).max(20),
   uploadMb: z.number().int().min(1).max(100),
+  coupons: z.number().int().min(0).max(10_000).nullable().optional(),
+  modules: z.partialRecord(z.enum(MODULE_KEYS), z.boolean()).optional(),
 });
 const planSchema = z.object({
   name: z.string().trim().min(2).max(40),
@@ -42,7 +46,7 @@ export function adminRoutes(app: FastifyInstance, db: Db, config: Config, mailer
   app.addHook("onRequest", async (req, reply) => {
     if (!strictOriginOk(config, req)) return reply.code(403).send({ error: "bad_origin" });
   });
-  const safeMail = async (m: Parameters<Mailer["send"]>[0]) => { try { await mailer.send(m); } catch (e) { app.log.error({ err: e }, "no se pudo enviar el email"); } };
+  const sendT = (key: string, to: string, vars: Record<string, string>) => sendTemplate(db, mailer, key, to, vars, (e) => app.log.error({ err: e }, "no se pudo enviar el email"));
   const keyOk = () => !!config.ADMIN_SECRET_KEY;
 
   // ───────────────────────── 2FA ─────────────────────────
@@ -51,7 +55,7 @@ export function adminRoutes(app: FastifyInstance, db: Db, config: Config, mailer
     if (!ctx) return;
     const verified = !!ctx.session.adminVerifiedAt && Date.now() - ctx.session.adminVerifiedAt.getTime() < config.ADMIN_VERIFY_HOURS * 3600_000;
     reply.header("Cache-Control", "no-store");
-    return { user: { id: ctx.user.id, email: ctx.user.email, role: ctx.user.role }, totpEnabled: !!ctx.user.totpEnabledAt, verified };
+    return { user: { id: ctx.user.id, email: ctx.user.email, role: ctx.user.role }, permissions: effectivePermissions(ctx.user), totpEnabled: !!ctx.user.totpEnabledAt, verified };
   });
 
   app.post("/admin/2fa/setup", { config: { rateLimit: { max: config.ADMIN_2FA_PER_MINUTE, timeWindow: "1 minute" } } }, async (req, reply) => {
@@ -109,7 +113,7 @@ export function adminRoutes(app: FastifyInstance, db: Db, config: Config, mailer
     if (!ctx) return;
     const one = async <T,>(q: ReturnType<typeof sql>) => ((await db.execute(q)).rows[0] ?? {}) as T;
     const many = async <T,>(q: ReturnType<typeof sql>) => (await db.execute(q)).rows as T[];
-    const [k, mrr, orders7, pending, churn, converted, reportsNew, byPlan, byIndustry, signups, stale] = await Promise.all([
+    const [k, mrr, orders7, pending, churn, converted, reportsNew, byPlan, byIndustry, signups, stale, contactsNew] = await Promise.all([
       one<Record<string, number>>(sql`select
         count(*) filter (where deleted_at is null)::int as total,
         count(*) filter (where deleted_at is null and status = 'published')::int as published,
@@ -133,25 +137,30 @@ export function adminRoutes(app: FastifyInstance, db: Db, config: Config, mailer
         from generate_series(current_date - 29, current_date, interval '1 day') d
         left join businesses b on b.created_at::date = d::date and b.deleted_at is null group by d order by d`),
       one<{ n: number }>(sql`select count(*)::int as n from payments where status = 'pendiente' and created_at < now() - interval '2 days'`),
+      one<{ n: number }>(sql`select count(*)::int as n from contact_requests where status = 'nuevo'`),
     ]);
     const total = k.total ?? 0;
     reply.header("Cache-Control", "no-store");
+    // Ingresos, pagos y planes solo con permiso de ver pagos (igual que /admin/payments).
+    const finance = can(ctx.user, "pagos", "view");
     return {
+      finance,
       kpis: {
         businesses: total, published: k.published, suspended: k.suspended, newToday: k.today, newWeek: k.week, newMonth: k.month,
-        active7d: orders7.n ?? 0, paidActive: k.paid_active, mrr: Number(mrr.mrr ?? 0), expiring7d: k.expiring_7d,
-        churn30d: churn.n ?? 0, conversion: total > 0 ? Math.round(((converted.n ?? 0) / total) * 1000) / 10 : 0,
+        active7d: orders7.n ?? 0,
+        paidActive: finance ? k.paid_active : 0, mrr: finance ? Number(mrr.mrr ?? 0) : 0, expiring7d: finance ? k.expiring_7d : 0,
+        churn30d: finance ? (churn.n ?? 0) : 0, conversion: finance && total > 0 ? Math.round(((converted.n ?? 0) / total) * 1000) / 10 : 0,
       },
-      byPlan: byPlan.map((r) => ({ plan: r.plan_id, count: r.n })),
+      byPlan: finance ? byPlan.map((r) => ({ plan: r.plan_id, count: r.n })) : [],
       byIndustry: byIndustry.map((r) => ({ industry: r.industry, count: r.n })),
       signups: signups.map((r) => ({ day: r.day, count: r.n })),
-      alerts: { pendingPayments: pending.n ?? 0, oldestPending: pending.oldest, expiring7d: k.expiring_7d, newReports: reportsNew.n ?? 0, stalePayments: stale.n ?? 0 },
+      alerts: { pendingPayments: finance ? (pending.n ?? 0) : 0, oldestPending: finance ? pending.oldest : null, expiring7d: finance ? k.expiring_7d : 0, newReports: reportsNew.n ?? 0, newContacts: contactsNew.n ?? 0, stalePayments: finance ? (stale.n ?? 0) : 0 },
     };
   });
 
   // ───────────────────────── Negocios ─────────────────────────
   app.get("/admin/businesses", async (req, reply) => {
-    const ctx = await requireAdmin(db, config, req, reply);
+    const ctx = await requirePerm(db, config, req, reply, "negocios","view");
     if (!ctx) return;
     const q = z.object({ q: z.string().max(80).optional(), status: z.enum(["draft", "published", "suspended"]).optional(), plan: z.string().max(40).optional(), page }).safeParse(req.query);
     if (!q.success) return reply.code(400).send({ error: "invalid_request" });
@@ -174,7 +183,7 @@ export function adminRoutes(app: FastifyInstance, db: Db, config: Config, mailer
   });
 
   app.get<{ Params: { id: string } }>("/admin/businesses/:id", async (req, reply) => {
-    const ctx = await requireAdmin(db, config, req, reply);
+    const ctx = await requirePerm(db, config, req, reply, "negocios","view");
     if (!ctx) return;
     if (!uuid.safeParse(req.params.id).success) return reply.code(404).send({ error: "not_found" });
     const [row] = await db.select({ b: s.businesses, owner: { id: s.users.id, email: s.users.email, name: s.users.name, blockedAt: s.users.blockedAt } })
@@ -199,9 +208,9 @@ export function adminRoutes(app: FastifyInstance, db: Db, config: Config, mailer
     return { business: b, view, owner: row.owner, counts: counts.rows[0], payments: payments.map((p) => ({ id: p.id, planId: p.planId, months: p.months, amount: Number(p.amount), status: p.status, createdAt: p.createdAt })), history };
   });
 
-  const bizAction = (path: string, roles: readonly (typeof ADMIN_ROLES)[number][], run: (tx: Parameters<Parameters<Db["transaction"]>[0]>[0], biz: typeof s.businesses.$inferSelect, body: unknown, ctx: NonNullable<Awaited<ReturnType<typeof requireAdmin>>>) => Promise<{ action: string; after: Partial<typeof s.businesses.$inferSelect>; error?: undefined } | { error: string; status: number }>, method: "POST" | "PUT" | "DELETE" = "POST") => {
+  const bizAction = (path: string, perm: readonly [AreaKey, Level], run: (tx: Parameters<Parameters<Db["transaction"]>[0]>[0], biz: typeof s.businesses.$inferSelect, body: unknown, ctx: NonNullable<Awaited<ReturnType<typeof requireAdmin>>>) => Promise<{ action: string; after: Partial<typeof s.businesses.$inferSelect>; error?: undefined } | { error: string; status: number }>, method: "POST" | "PUT" | "DELETE" = "POST") => {
     app.route<{ Params: { id: string } }>({ method, url: `/admin/businesses/:id${path}`, handler: async (req, reply) => {
-      const ctx = await requireAdmin(db, config, req, reply, roles);
+      const ctx = await requirePerm(db, config, req, reply, perm[0], perm[1]);
       if (!ctx) return;
       if (!uuid.safeParse(req.params.id).success) return reply.code(404).send({ error: "not_found" });
       const out = await db.transaction(async (tx): Promise<{ error: string; status: number } | { ok: true; slug: string }> => {
@@ -220,16 +229,16 @@ export function adminRoutes(app: FastifyInstance, db: Db, config: Config, mailer
     } });
   };
 
-  bizAction("/suspend", MANAGE, async (_tx, biz) => (biz.status === "suspended" ? { error: "already_suspended", status: 409 } : { action: "business.suspend", after: { status: "suspended" } }));
-  bizAction("/reactivate", MANAGE, async (_tx, biz) =>
+  bizAction("/suspend", ["negocios", "manage"], async (_tx, biz) => (biz.status === "suspended" ? { error: "already_suspended", status: 409 } : { action: "business.suspend", after: { status: "suspended" } }));
+  bizAction("/reactivate", ["negocios", "manage"], async (_tx, biz) =>
     biz.status !== "suspended" ? { error: "not_suspended", status: 409 } : { action: "business.reactivate", after: { status: biz.publishedAt ? "published" : "draft" } });
-  bizAction("/unpublish", MANAGE, async (_tx, biz) => (biz.status !== "published" ? { error: "not_published", status: 409 } : { action: "business.unpublish", after: { status: "draft" } }));
-  bizAction("", MANAGE, async (_tx, biz) => ({ action: "business.delete", after: { deletedAt: new Date(), status: biz.status === "suspended" ? "suspended" : "draft" } }), "DELETE");
-  bizAction("/note", ADMIN_ROLES, async (_tx, _biz, body) => {
+  bizAction("/unpublish", ["negocios", "manage"], async (_tx, biz) => (biz.status !== "published" ? { error: "not_published", status: 409 } : { action: "business.unpublish", after: { status: "draft" } }));
+  bizAction("", ["negocios", "manage"], async (_tx, biz) => ({ action: "business.delete", after: { deletedAt: new Date(), status: biz.status === "suspended" ? "suspended" : "draft" } }), "DELETE");
+  bizAction("/note", ["negocios", "view"], async (_tx, _biz, body) => {
     const p = z.object({ note: z.string().trim().max(1000) }).safeParse(body);
     return p.success ? { action: "business.note", after: { internalNote: p.data.note || null } } : { error: "invalid_request", status: 400 };
   }, "PUT");
-  bizAction("/plan", MANAGE, async (_tx, biz, body) => {
+  bizAction("/plan", ["planes", "manage"], async (_tx, biz, body) => {
     const p = z.object({ planId: z.string().min(1).max(40), days: z.number().int().min(1).max(3650).optional() }).safeParse(body);
     if (!p.success) return { error: "invalid_request", status: 400 };
     const [plan] = await db.select().from(s.plans).where(eq(s.plans.id, p.data.planId));
@@ -241,7 +250,7 @@ export function adminRoutes(app: FastifyInstance, db: Db, config: Config, mailer
 
   // ───────────────────────── Usuarios ─────────────────────────
   app.get("/admin/users", async (req, reply) => {
-    const ctx = await requireAdmin(db, config, req, reply);
+    const ctx = await requirePerm(db, config, req, reply, "usuarios","view");
     if (!ctx) return;
     const q = z.object({ q: z.string().max(80).optional(), page }).safeParse(req.query);
     if (!q.success) return reply.code(400).send({ error: "invalid_request" });
@@ -257,7 +266,7 @@ export function adminRoutes(app: FastifyInstance, db: Db, config: Config, mailer
 
   for (const [path, block] of [["block", true], ["unblock", false]] as const) {
     app.post<{ Params: { id: string } }>(`/admin/users/:id/${path}`, async (req, reply) => {
-      const ctx = await requireAdmin(db, config, req, reply, MANAGE);
+      const ctx = await requirePerm(db, config, req, reply, "usuarios","manage");
       if (!ctx) return;
       if (!uuid.safeParse(req.params.id).success) return reply.code(404).send({ error: "not_found" });
       if (req.params.id === ctx.user.id) return reply.code(409).send({ error: "cannot_target_self" });
@@ -275,7 +284,7 @@ export function adminRoutes(app: FastifyInstance, db: Db, config: Config, mailer
 
   // ───────────────────────── Pagos ─────────────────────────
   app.get("/admin/payments", async (req, reply) => {
-    const ctx = await requireAdmin(db, config, req, reply, MANAGE);
+    const ctx = await requirePerm(db, config, req, reply, "pagos","view");
     if (!ctx) return;
     const q = z.object({ status: z.enum(["pendiente", "confirmado", "rechazado"]).default("pendiente"), page }).safeParse(req.query);
     if (!q.success) return reply.code(400).send({ error: "invalid_request" });
@@ -290,7 +299,7 @@ export function adminRoutes(app: FastifyInstance, db: Db, config: Config, mailer
   });
 
   app.get<{ Params: { id: string } }>("/admin/payments/:id/receipt", async (req, reply) => {
-    const ctx = await requireAdmin(db, config, req, reply, MANAGE);
+    const ctx = await requirePerm(db, config, req, reply, "pagos","view");
     if (!ctx) return;
     if (!uuid.safeParse(req.params.id).success) return reply.code(404).send({ error: "not_found" });
     const [p] = await db.select({ path: s.payments.receiptPath }).from(s.payments).where(eq(s.payments.id, req.params.id));
@@ -313,13 +322,13 @@ export function adminRoutes(app: FastifyInstance, db: Db, config: Config, mailer
       return { slug: business.slug, email: owner?.email, planName: plan?.name ?? claimed.planId, endsAt };
     });
     if (!out) return null;
-    if (out.email) await safeMail({ to: out.email, subject: `¡Tu plan ${out.planName} está activo!`, text: `Confirmamos tu pago. Tu plan ${out.planName} está activo hasta el ${dateAr(out.endsAt)}.\n\nGracias por elegir MiShowo.` });
+    if (out.email) await sendT("plan_confirmed", out.email, { plan: out.planName, until: dateAr(out.endsAt) });
     notify(out.slug);
     return out;
   }
 
   app.post<{ Params: { id: string } }>("/admin/payments/:id/confirm", async (req, reply) => {
-    const ctx = await requireAdmin(db, config, req, reply, MANAGE);
+    const ctx = await requirePerm(db, config, req, reply, "pagos","manage");
     if (!ctx) return;
     if (!uuid.safeParse(req.params.id).success) return reply.code(404).send({ error: "not_found" });
     const out = await confirm(req.params.id, ctx);
@@ -328,7 +337,7 @@ export function adminRoutes(app: FastifyInstance, db: Db, config: Config, mailer
   });
 
   app.post<{ Params: { id: string } }>("/admin/payments/:id/reject", async (req, reply) => {
-    const ctx = await requireAdmin(db, config, req, reply, MANAGE);
+    const ctx = await requirePerm(db, config, req, reply, "pagos","manage");
     if (!ctx) return;
     const p = z.object({ reason: z.string().trim().min(3).max(300) }).safeParse(req.body);
     if (!p.success || !uuid.safeParse(req.params.id).success) return reply.code(400).send({ error: "invalid_request" });
@@ -341,12 +350,12 @@ export function adminRoutes(app: FastifyInstance, db: Db, config: Config, mailer
       return row?.email ?? "";
     });
     if (out === null) return reply.code(409).send({ error: "not_pending" });
-    if (out) await safeMail({ to: out, subject: "No pudimos confirmar tu pago", text: `No pudimos confirmar tu pago.\n\nMotivo: ${p.data.reason}\n\nPodés volver a avisar tu pago desde la sección de planes, o escribirnos para resolverlo.` });
+    if (out) await sendT("payment_rejected", out, { reason: p.data.reason });
     return { ok: true };
   });
 
   app.post("/admin/payments/manual", async (req, reply) => {
-    const ctx = await requireAdmin(db, config, req, reply, MANAGE);
+    const ctx = await requirePerm(db, config, req, reply, "pagos","manage");
     if (!ctx) return;
     const p = z.object({
       businessId: uuid, planId: z.string().min(1).max(40), months: z.number().int().min(1).max(24),
@@ -365,20 +374,22 @@ export function adminRoutes(app: FastifyInstance, db: Db, config: Config, mailer
 
   // ───────────────────────── Planes y ajustes ─────────────────────────
   app.get("/admin/plans", async (req, reply) => {
-    const ctx = await requireAdmin(db, config, req, reply, MANAGE);
+    const ctx = await requirePerm(db, config, req, reply, "planes","view");
     if (!ctx) return;
     const rows = await db.select().from(s.plans).orderBy(s.plans.priceMonthly);
-    return { plans: rows.map((p) => ({ id: p.id, name: p.name, priceMonthly: Number(p.priceMonthly), limits: p.limits, features: p.features, active: p.active })) };
+    return { modules: MODULES, plans: rows.map((p) => ({ id: p.id, name: p.name, priceMonthly: Number(p.priceMonthly), limits: p.limits, modules: planModules(p.limits), features: p.features, active: p.active })) };
   });
 
   app.put<{ Params: { id: string } }>("/admin/plans/:id", async (req, reply) => {
-    const ctx = await requireAdmin(db, config, req, reply, MANAGE);
+    const ctx = await requirePerm(db, config, req, reply, "planes","manage");
     if (!ctx) return;
     if (!/^[a-z0-9-]{2,30}$/.test(req.params.id)) return reply.code(400).send({ error: "invalid_request" });
     const p = planSchema.safeParse(req.body);
     if (!p.success) return reply.code(400).send({ error: "invalid_request", issues: p.error.issues.slice(0, 5).map((i) => `${i.path.join(".")}: ${i.message}`) });
     // El plan gratuito tiene que seguir existiendo y costando $0: es donde caen las cuentas que no renuevan.
     if (req.params.id === "gratis" && (p.data.priceMonthly !== 0 || !p.data.active)) return reply.code(422).send({ error: "gratis_must_stay_free" });
+    // `appointments` queda espejado como booleano suelto: es lo que leen los negocios guardados antes de existir los módulos.
+    if (p.data.limits.modules) (p.data.limits as Record<string, unknown>).appointments = p.data.limits.modules.appointments !== false;
     await db.transaction(async (tx) => {
       const [before] = await tx.select().from(s.plans).where(eq(s.plans.id, req.params.id));
       await tx.insert(s.plans).values({ id: req.params.id, name: p.data.name, priceMonthly: String(p.data.priceMonthly), limits: p.data.limits, features: p.data.features, active: p.data.active })
@@ -410,25 +421,49 @@ export function adminRoutes(app: FastifyInstance, db: Db, config: Config, mailer
   app.get("/admin/admins", async (req, reply) => {
     const ctx = await requireAdmin(db, config, req, reply, ["owner"]);
     if (!ctx) return;
-    const rows = await db.select({ id: s.users.id, email: s.users.email, role: s.users.role, totpEnabledAt: s.users.totpEnabledAt, lastLoginAt: s.users.lastLoginAt })
+    const rows = await db.select({ id: s.users.id, email: s.users.email, name: s.users.name, role: s.users.role, permissions: s.users.permissions, totpEnabledAt: s.users.totpEnabledAt, lastLoginAt: s.users.lastLoginAt })
       .from(s.users).where(or(eq(s.users.role, "owner"), eq(s.users.role, "admin"), eq(s.users.role, "support"))).orderBy(s.users.createdAt);
-    return { admins: rows.map((r) => ({ ...r, totpEnabled: !!r.totpEnabledAt })) };
+    return {
+      admins: rows.map(({ permissions: custom, totpEnabledAt, ...r }) => ({ ...r, totpEnabled: !!totpEnabledAt, permissions: effectivePermissions({ role: r.role, permissions: custom }), customPermissions: normalizePermissions(custom) !== null })),
+      areas: AREAS, presets: PRESETS,
+    };
   });
 
   app.post("/admin/admins", async (req, reply) => {
     const ctx = await requireAdmin(db, config, req, reply, ["owner"]);
     if (!ctx) return;
-    const p = z.object({ email: z.string().trim().toLowerCase().email(), role: z.enum(["admin", "support"]) }).safeParse(req.body);
+    const p = z.object({ email: z.string().trim().toLowerCase().email(), role: z.enum(["admin", "support"]), permissions: permissionsSchema.optional() }).safeParse(req.body);
     if (!p.success) return reply.code(400).send({ error: "invalid_request" });
     const [u] = await db.select().from(s.users).where(eq(s.users.email, p.data.email));
     if (!u) return reply.code(404).send({ error: "user_not_found" }); // la persona tiene que crearse una cuenta primero
     if (u.role === "owner") return reply.code(409).send({ error: "is_owner" });
     await db.transaction(async (tx) => {
-      await tx.update(s.users).set({ role: p.data.role }).where(eq(s.users.id, u.id));
+      const stored = storedPermissions(p.data.role, p.data.permissions);
+      await tx.update(s.users).set({ role: p.data.role, permissions: stored }).where(eq(s.users.id, u.id));
       await tx.delete(s.sessions).where(eq(s.sessions.userId, u.id)); // al cambiar de rol vuelve a ingresar (y pasar el 2FA)
-      await audit(tx, { actorId: ctx.user.id, action: "admin.grant", entity: "user", entityId: u.id, before: { role: u.role }, after: { role: p.data.role }, ip: ctx.ip });
+      await audit(tx, { actorId: ctx.user.id, action: "admin.grant", entity: "user", entityId: u.id, before: { role: u.role }, after: { role: p.data.role, ...(stored ? { permissions: stored } : {}) }, ip: ctx.ip });
     });
     return reply.code(201).send({ ok: true });
+  });
+
+  /** Ajusta el rol (plantilla) y los permisos de una persona del equipo. Rige de inmediato: los permisos se leen en cada pedido. Solo Owner. */
+  app.put<{ Params: { id: string } }>("/admin/admins/:id/permissions", async (req, reply) => {
+    const ctx = await requireAdmin(db, config, req, reply, ["owner"]);
+    if (!ctx) return;
+    if (!uuid.safeParse(req.params.id).success) return reply.code(404).send({ error: "not_found" });
+    const p = z.object({ role: z.enum(["admin", "support"]).optional(), permissions: permissionsSchema }).safeParse(req.body);
+    if (!p.success) return reply.code(400).send({ error: "invalid_request" });
+    if (req.params.id === ctx.user.id) return reply.code(409).send({ error: "cannot_target_self" });
+    const [u] = await db.select().from(s.users).where(eq(s.users.id, req.params.id));
+    if (!u || !isAdminRole(u.role)) return reply.code(404).send({ error: "not_found" });
+    if (u.role === "owner") return reply.code(409).send({ error: "is_owner" });
+    const role = p.data.role ?? (u.role as "admin" | "support");
+    const stored = storedPermissions(role, p.data.permissions);
+    await db.transaction(async (tx) => {
+      await tx.update(s.users).set({ role, permissions: stored }).where(eq(s.users.id, u.id));
+      await audit(tx, { actorId: ctx.user.id, action: "admin.permissions", entity: "user", entityId: u.id, before: { role: u.role, permissions: effectivePermissions(u) }, after: { role, permissions: effectivePermissions({ role, permissions: stored }) }, ip: ctx.ip });
+    });
+    return { ok: true, permissions: effectivePermissions({ role, permissions: stored }), customPermissions: stored !== null };
   });
 
   app.delete<{ Params: { id: string } }>("/admin/admins/:id", async (req, reply) => {
@@ -440,7 +475,7 @@ export function adminRoutes(app: FastifyInstance, db: Db, config: Config, mailer
     if (!u || !isAdminRole(u.role)) return reply.code(404).send({ error: "not_found" });
     if (u.role === "owner") return reply.code(409).send({ error: "is_owner" });
     await db.transaction(async (tx) => {
-      await tx.update(s.users).set({ role: "user", totpSecret: null, totpEnabledAt: null }).where(eq(s.users.id, u.id));
+      await tx.update(s.users).set({ role: "user", permissions: null, totpSecret: null, totpEnabledAt: null }).where(eq(s.users.id, u.id));
       await tx.delete(s.sessions).where(eq(s.sessions.userId, u.id));
       await audit(tx, { actorId: ctx.user.id, action: "admin.revoke", entity: "user", entityId: u.id, before: { role: u.role }, after: { role: "user" }, ip: ctx.ip });
     });
@@ -449,7 +484,7 @@ export function adminRoutes(app: FastifyInstance, db: Db, config: Config, mailer
 
   // ───────────────────────── Auditoría ─────────────────────────
   app.get("/admin/audit", async (req, reply) => {
-    const ctx = await requireAdmin(db, config, req, reply, MANAGE);
+    const ctx = await requirePerm(db, config, req, reply, "auditoria","view");
     if (!ctx) return;
     const q = z.object({ entity: z.string().max(30).optional(), entityId: z.string().max(64).optional(), action: z.string().max(40).optional(), page }).safeParse(req.query);
     if (!q.success) return reply.code(400).send({ error: "invalid_request" });

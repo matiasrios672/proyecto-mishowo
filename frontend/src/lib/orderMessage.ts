@@ -13,6 +13,8 @@ export interface MessageInput {
   eventDate?: string | null;  // YYYY-MM-DD
   couponCode?: string | null; // cupón aplicado (el descuento lo calculó el servidor)
   discount?: number;
+  /** El cliente pidió pagar en cuotas (se coordina con el negocio). */
+  installments?: { count: number; amount: number } | null;
 }
 
 /** "2026-12-25" -> "25/12/2026" sin pasar por Date (evita corrimientos por zona horaria). */
@@ -34,6 +36,7 @@ export function buildOrderMessage(i: MessageInput): string {
   lines.push("");
   if (i.couponCode && i.discount) lines.push(`Cupón ${i.couponCode}: -${formatPrice(i.discount)}`);
   lines.push(`*Total: ${formatPrice(i.total)}*${i.hasUnpriced ? " (más los productos a consultar)" : ""}`);
+  if (i.installments) lines.push(`Quiero pagar en ${i.installments.count} cuotas sin interés de ${formatPrice(i.installments.amount)}`);
   const extra: string[] = [];
   if (i.eventDate) extra.push(`Fecha del evento: ${formatEventDate(i.eventDate)}`);
   if (i.customerName?.trim()) extra.push(`Nombre: ${i.customerName.trim()}`);

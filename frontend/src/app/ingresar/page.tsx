@@ -8,7 +8,7 @@ export const metadata: Metadata = { title: "Ingresá a tu cuenta", robots: { ind
 
 export default function Page() {
   return (
-    <AuthShell title="Ingresá a tu cuenta"  footer={<>¿Primera vez? <Link className="underline" href="/registro">Creá tu cuenta</Link></>}>
+    <AuthShell title="Ingresá a tu cuenta"  footer={<>¿Primera vez? <Link className="" href="/registro">Creá tu cuenta</Link></>}>
       <Suspense fallback={<p className="text-muted-foreground">Cargando…</p>}><LoginForm /></Suspense>
     </AuthShell>
   );

@@ -1,6 +1,7 @@
 // Borrador del negocio: vive en localStorage hasta que la persona crea su cuenta (Épica 6).
 // Todo el contenido que viene de una plantilla lleva isExample=true hasta que lo edita.
 import { defaultHours, type Hours } from "./hours";
+import { NO_INSTALLMENTS, normalizeInstallments, type Installments } from "./installments";
 
 export interface DraftOption { id: string; label: string; price: number | null; soldOut: boolean }
 export interface DraftProduct {
@@ -19,9 +20,14 @@ export interface Draft {
   hours: Hours;
   announcement: string;
   whatsappGreeting: string;
+  /** Medición de campañas (planes con el módulo): ID del pixel de Meta y de Google Analytics 4. */
+  metaPixelId: string;
+  gaId: string;
   showQuantities: boolean;
   /** false = catálogo sin carrito: la página ofrece consultar por WhatsApp. */
   ordersEnabled: boolean;
+  /** Cuotas sin interés que ofrece el negocio (informativo). */
+  installments: Installments;
   askEventDate: boolean;
   design: DraftDesign;
   categories: DraftCategory[];
@@ -47,7 +53,8 @@ export function createDraftFromTemplate(t: TemplateInput): Draft {
     tagline: t.tagline, description: t.description, textsAreExample: true,
     whatsapp: "", instagram: "", address: "", deliveryZone: t.deliveryZone,
     extraWhatsapps: [], hours: defaultHours(), announcement: "",
-    whatsappGreeting: "Hola! Quiero hacer este pedido:", showQuantities: true, ordersEnabled: true,
+    whatsappGreeting: "Hola! Quiero hacer este pedido:", metaPixelId: "", gaId: "", showQuantities: true, ordersEnabled: true,
+    installments: { ...NO_INSTALLMENTS },
     askEventDate: t.eventDate,
     design: { layout: t.layout, theme: t.theme, fontPair: t.fontPair, brandColor: null, buttonShape: "redondeado" },
     categories: t.categories.map((c) => ({
@@ -84,8 +91,11 @@ export function normalizeDraft(d: Draft): Draft {
     hours: Array.isArray(d.hours) && d.hours.length === 7 ? d.hours : defaultHours(),
     announcement: d.announcement ?? "",
     whatsappGreeting: d.whatsappGreeting ?? "Hola! Quiero hacer este pedido:",
+    metaPixelId: d.metaPixelId ?? "",
+    gaId: d.gaId ?? "",
     showQuantities: d.showQuantities ?? true,
     ordersEnabled: d.ordersEnabled ?? true,
+    installments: normalizeInstallments(d.installments),
   };
 }
 

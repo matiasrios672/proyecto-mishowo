@@ -7,6 +7,7 @@ import { Field, Select, TextArea, TextInput } from "@/components/ui/fields";
 import { API_URL, api } from "@/lib/authClient";
 import { siteUrl } from "@/lib/siteUrl";
 import { ErrorBox, Money, Pager, useAdmin, when } from "./AdminShell";
+import { InviteForm } from "./AdminMail";
 
 const th = "px-3 py-2 text-left text-xs font-medium text-muted-foreground";
 const td = "px-3 py-2 align-top text-sm";
@@ -35,42 +36,82 @@ export function useLoad<T>(path: string) {
 
 // ───────────── Resumen ─────────────
 interface Dash {
-  kpis: Record<string, number>; byPlan: { plan: string; count: number }[]; byIndustry: { industry: string; count: number }[];
-  signups: { day: string; count: number }[]; alerts: { pendingPayments: number; expiring7d: number; newReports: number; stalePayments: number; oldestPending: string | null };
+  finance?: boolean; kpis: Record<string, number>; byPlan: { plan: string; count: number }[]; byIndustry: { industry: string; count: number }[];
+  signups: { day: string; count: number }[]; alerts: { pendingPayments: number; expiring7d: number; newReports: number; newContacts?: number; stalePayments: number; oldestPending: string | null };
 }
 export function Dashboard() {
   const { data: d, error } = useLoad<Dash>("/admin/dashboard");
   if (!d) return <><ErrorBox error={error} />{!error && <p className="text-muted-foreground">Cargando…</p>}</>;
-  const k = d.kpis;
-  const tiles: [string, string][] = [
-    ["Negocios", String(k.businesses)], ["Publicados", String(k.published)], ["Nuevos hoy", String(k.newToday)], ["Nuevos esta semana", String(k.newWeek)], ["Nuevos este mes", String(k.newMonth)],
-    ["Activos (pedidos en 7 días)", String(k.active7d)], ["Con plan pago", String(k.paidActive)], ["Ingreso mensual estimado", Money(k.mrr)],
-    ["Vencen en 7 días", String(k.expiring7d)], ["Bajas del mes", String(k.churn30d)], ["Conversión a pago", `${k.conversion}%`], ["Suspendidos", String(k.suspended)],
+  const k = d.kpis, a = d.alerts;
+  const finance = d.finance !== false; // Soporte no ve ingresos ni planes
+  const groups: { title: string; tiles: [string, string][] }[] = [
+    { title: "Negocios", tiles: [["Negocios", String(k.businesses)], ["Publicados", String(k.published)], ["Suspendidos", String(k.suspended)], ["Activos (pedidos en 7 días)", String(k.active7d)]] },
+    { title: "Crecimiento", tiles: [["Nuevos hoy", String(k.newToday)], ["Nuevos esta semana", String(k.newWeek)], ["Nuevos este mes", String(k.newMonth)], ...(finance ? [["Conversión a pago", `${k.conversion}%`] as [string, string]] : [])] },
+    ...(finance ? [{ title: "Ingresos", tiles: [["Con plan pago", String(k.paidActive)], ["Ingreso mensual estimado", Money(k.mrr)], ["Vencen en 7 días", String(k.expiring7d)], ["Bajas del mes", String(k.churn30d)]] as [string, string][] }] : []),
   ];
+  const todo: { label: string; n: number; href?: string; tone: "alert" | "info" }[] = [
+    { label: "Pagos para confirmar", n: a.pendingPayments, href: "/admin/pagos", tone: "info" },
+    { label: "Pagos esperando hace más de 2 días", n: a.stalePayments, href: "/admin/pagos", tone: "alert" },
+    { label: "Consultas sin responder", n: a.newContacts ?? 0, href: "/admin/consultas", tone: "info" },
+    { label: "Denuncias nuevas", n: a.newReports, href: "/admin/denuncias", tone: "alert" },
+    { label: "Planes por vencer en 7 días", n: a.expiring7d, tone: "info" },
+  ];
+  const pending = todo.filter((t) => t.n > 0);
   const max = Math.max(1, ...d.signups.map((s) => s.count));
+  const topPlan = Math.max(1, ...d.byPlan.map((p) => p.count)), topInd = Math.max(1, ...d.byIndustry.map((p) => p.count));
   return (
     <div className="space-y-8">
       <h1 className="text-2xl font-bold">Resumen</h1>
-      {(d.alerts.pendingPayments > 0 || d.alerts.expiring7d > 0 || d.alerts.newReports > 0 || d.alerts.stalePayments > 0) && (
-        <ul className="flex flex-wrap gap-3" aria-label="Alertas">
-          {d.alerts.pendingPayments > 0 && <li><Link href="/admin/pagos" className="block rounded-lg border-2 border-primary px-4 py-2 text-sm font-medium">{d.alerts.pendingPayments} pago{d.alerts.pendingPayments === 1 ? "" : "s"} para confirmar</Link></li>}
-          {d.alerts.expiring7d > 0 && <li className="rounded-lg border px-4 py-2 text-sm">{d.alerts.expiring7d} plan{d.alerts.expiring7d === 1 ? "" : "es"} por vencer en 7 días</li>}
-          {d.alerts.stalePayments > 0 && <li><Link href="/admin/pagos" className="block rounded-lg border border-destructive/50 px-4 py-2 text-sm font-medium text-destructive">{d.alerts.stalePayments} pago{d.alerts.stalePayments === 1 ? "" : "s"} esperando hace más de 2 días</Link></li>}
-          {d.alerts.newReports > 0 && <li><Link href="/admin/denuncias" className="block rounded-lg border border-destructive/50 px-4 py-2 text-sm text-destructive">{d.alerts.newReports} denuncia{d.alerts.newReports === 1 ? "" : "s"} nueva{d.alerts.newReports === 1 ? "" : "s"}</Link></li>}
-        </ul>
-      )}
-      <dl className="grid grid-cols-2 gap-x-6 gap-y-5 sm:grid-cols-3 lg:grid-cols-4" data-testid="kpis">
-        {tiles.map(([label, value]) => <div key={label} className="border-t pt-2"><dt className="text-xs text-muted-foreground">{label}</dt><dd className="text-2xl font-bold tabular-nums">{value}</dd></div>)}
-      </dl>
-      <section aria-labelledby="altas">
-        <h2 id="altas" className="mb-3 font-semibold">Altas por día (últimos 30 días)</h2>
+      <section aria-labelledby="todo-title">
+        <h2 id="todo-title" className="mb-3 text-sm font-semibold uppercase tracking-wide text-muted-foreground">Para atender</h2>
+        {pending.length === 0 ? (
+          <p className="rounded-2xl bg-[#EAF4FC] p-5 text-sm font-medium">Todo al día: no hay pagos, consultas ni denuncias esperando.</p>
+        ) : (
+          <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3" aria-label="Alertas">
+            {pending.map((t) => {
+              const body = (
+                <>
+                  <span className={`text-3xl font-extrabold tabular-nums ${t.tone === "alert" ? "text-destructive" : "text-[#2F6FB0]"}`}>{t.n}</span>
+                  <span className="text-sm font-medium">{t.label}</span>
+                  {t.href && <span aria-hidden className="ml-auto text-muted-foreground">→</span>}
+                </>
+              );
+              const cls = `flex min-h-16 items-center gap-3 rounded-2xl border-2 px-4 py-3 ${t.tone === "alert" ? "border-destructive/40 bg-destructive/5" : "border-[#2F6FB0]/30 bg-[#F4F9FE]"}`;
+              return <li key={t.label}>{t.href ? <Link href={t.href} className={`${cls} transition-colors hover:bg-white`}>{body}</Link> : <div className={cls}>{body}</div>}</li>;
+            })}
+          </ul>
+        )}
+      </section>
+      <div className="grid gap-4 lg:grid-cols-3" data-testid="kpis">
+        {groups.map((g) => (
+          <section key={g.title} aria-label={g.title} className="border-t border-[#E1EAF3] pt-4 lg:px-5 lg:first:pl-0 lg:[&:not(:first-child)]:border-l lg:border-t-0 lg:pt-0">
+            <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-muted-foreground">{g.title}</h2>
+            <dl className="grid grid-cols-2 gap-x-4 gap-y-4">
+              {g.tiles.map(([label, value]) => <div key={label}><dt className="text-xs text-muted-foreground">{label}</dt><dd className="text-2xl font-bold tabular-nums">{value}</dd></div>)}
+            </dl>
+          </section>
+        ))}
+      </div>
+      <section aria-labelledby="altas" className="border-t border-[#E1EAF3] pt-5">
+        <h2 id="altas" className="mb-3 font-semibold">Altas por día <span className="text-sm font-normal text-muted-foreground">(últimos 30 días)</span></h2>
         <div role="img" aria-label={`Altas por día: ${d.signups.map((s) => `${s.day} ${s.count}`).join(", ")}`} className="flex h-32 items-end gap-1">
           {d.signups.map((s) => <div key={s.day} title={`${s.day}: ${s.count}`} className="flex-1 rounded-t bg-primary" style={{ height: `${Math.max(3, (s.count / max) * 100)}%`, opacity: s.count ? 1 : 0.25 }} />)}
         </div>
       </section>
-      <div className="grid gap-8 sm:grid-cols-2">
-        <section><h2 className="mb-2 font-semibold">Por plan</h2><ul className="space-y-1 text-sm">{d.byPlan.map((p) => <li key={p.plan} className="flex justify-between border-b py-1"><span>{p.plan}</span><span className="tabular-nums">{p.count}</span></li>)}</ul></section>
-        <section><h2 className="mb-2 font-semibold">Por rubro</h2><ul className="space-y-1 text-sm">{d.byIndustry.map((p) => <li key={p.industry} className="flex justify-between border-b py-1"><span>{p.industry}</span><span className="tabular-nums">{p.count}</span></li>)}</ul></section>
+      <div className="grid gap-4 sm:grid-cols-2">
+        {([...(finance ? [["Por plan", d.byPlan.map((p) => [p.plan, p.count] as const), topPlan] as const] : []), ["Por rubro", d.byIndustry.map((p) => [p.industry, p.count] as const), topInd]] as const).map(([title, rows, top]) => (
+          <section key={title} className="border-t border-[#E1EAF3] pt-5">
+            <h2 className="mb-3 font-semibold">{title}</h2>
+            <ul className="space-y-2.5 text-sm">
+              {rows.map(([label, n]) => (
+                <li key={label}>
+                  <div className="flex justify-between"><span>{label}</span><span className="font-semibold tabular-nums">{n}</span></div>
+                  <div className="mt-1 h-1.5 rounded-full bg-muted" aria-hidden><div className="h-full rounded-full bg-[#2F6FB0]" style={{ width: `${Math.max(3, (n / top) * 100)}%` }} /></div>
+                </li>
+              ))}
+            </ul>
+          </section>
+        ))}
       </div>
     </div>
   );
@@ -112,7 +153,7 @@ export function Payments() {
           <li key={p.id} className="rounded-xl border p-4" data-testid="admin-payment">
             <div className="flex flex-wrap items-start justify-between gap-2">
               <div>
-                <p className="font-semibold"><Link className="underline underline-offset-4" href={`/admin/negocios/${p.businessId}`}>{p.businessName}</Link> · Plan {p.planId} · {p.months} {p.months === 1 ? "mes" : "meses"}</p>
+                <p className="font-semibold"><Link className="" href={`/admin/negocios/${p.businessId}`}>{p.businessName}</Link> · Plan {p.planId} · {p.months} {p.months === 1 ? "mes" : "meses"}</p>
                 <p className="text-sm text-muted-foreground">{p.ownerEmail} · {when(p.createdAt)}</p>
               </div>
               <p className="text-xl font-bold tabular-nums">{Money(p.amount)}</p>
@@ -184,7 +225,7 @@ export function Businesses() {
           <tbody>
             {data?.businesses.map((b) => (
               <tr key={b.id} className="border-t" data-testid="admin-business">
-                <td className={td}><Link href={`/admin/negocios/${b.id}`} className="font-medium underline underline-offset-4">{b.name}</Link><div className="text-xs text-muted-foreground">{b.slug}</div></td>
+                <td className={td}><Link href={`/admin/negocios/${b.id}`} className="font-medium ">{b.name}</Link><div className="text-xs text-muted-foreground">{b.slug}</div></td>
                 <td className={td}>{b.ownerEmail}</td><td className={td}>{b.status}</td><td className={td}>{b.planId}</td><td className={td}>{b.planExpiresAt ? when(b.planExpiresAt) : "—"}</td><td className={td}>{when(b.createdAt)}</td>
               </tr>
             ))}
@@ -222,13 +263,13 @@ export function BusinessDetail({ id }: { id: string }) {
   }
   return (
     <div className="space-y-6">
-      <Link href="/admin/negocios" className="text-sm underline underline-offset-4">← Negocios</Link>
+      <Link href="/admin/negocios" className="text-sm ">← Negocios</Link>
       <div><h1 className="text-2xl font-bold">{b.name}</h1><p className="text-sm text-muted-foreground">ID: <code>{b.id}</code> · {b.status} · plan {b.planId}{b.planExpiresAt ? ` hasta ${when(b.planExpiresAt)}` : ""}</p></div>
       <ErrorBox error={err} />
       <dl className="grid grid-cols-2 gap-4 sm:grid-cols-4">
         {([["Dueño", data.owner.email], ["Productos", data.counts.products], ["Pedidos", data.counts.orders], ["Alta", when(b.createdAt)]] as const).map(([k, v]) => <div key={k}><dt className="text-xs text-muted-foreground">{k}</dt><dd className="font-medium">{v}</dd></div>)}
       </dl>
-      {b.status === "published" && <a className="inline-block text-sm underline underline-offset-4" href={siteUrl(b.slug)} target="_blank" rel="noopener noreferrer">Ver la página publicada</a>}
+      {b.status === "published" && <a className="inline-block text-sm " href={siteUrl(b.slug)} target="_blank" rel="noopener noreferrer">Ver la página publicada</a>}
 
       <section aria-labelledby="view-title" data-testid="business-view">
         <h2 id="view-title" className="mb-2 font-semibold">Cómo está armada su página <span className="text-xs font-normal text-muted-foreground">(solo lectura)</span></h2>
@@ -303,8 +344,9 @@ export function Users() {
 }
 
 // ───────────── Planes y ajustes ─────────────
-interface PlanRow { id: string; name: string; priceMonthly: number; limits: { products: number | null; photosPerProduct: number; whatsappNumbers: number; uploadMb: number }; features: string[]; active: boolean }
-function PlanEditor({ plan, onSaved }: { plan: PlanRow; onSaved: () => void }) {
+interface ModuleDef { key: string; label: string; description: string }
+interface PlanRow { id: string; name: string; priceMonthly: number; limits: { products: number | null; photosPerProduct: number; whatsappNumbers: number; uploadMb: number; coupons?: number | null }; modules: Record<string, boolean>; features: string[]; active: boolean }
+function PlanEditor({ plan, modules, onSaved }: { plan: PlanRow; modules: ModuleDef[]; onSaved: () => void }) {
   const [err, setErr] = useState<string | null>(null);
   const [ok, setOk] = useState(false);
   const free = plan.id === "gratis";
@@ -315,7 +357,11 @@ function PlanEditor({ plan, onSaved }: { plan: PlanRow; onSaved: () => void }) {
       const prod = String(f.get("products")).trim();
       const r = await api(`/admin/plans/${plan.id}`, { method: "PUT", body: {
         name: String(f.get("name")), priceMonthly: Number(f.get("price")), active: f.get("active") === "on",
-        limits: { products: prod === "" ? null : Number(prod), photosPerProduct: Number(f.get("photos")), whatsappNumbers: Number(f.get("wa")), uploadMb: Number(f.get("mb")) },
+        limits: {
+          products: prod === "" ? null : Number(prod), photosPerProduct: Number(f.get("photos")), whatsappNumbers: Number(f.get("wa")), uploadMb: Number(f.get("mb")),
+          coupons: String(f.get("coupons")).trim() === "" ? null : Number(f.get("coupons")),
+          modules: Object.fromEntries(modules.map((m) => [m.key, f.get(`mod_${m.key}`) === "on"])),
+        },
         features: String(f.get("features")).split("\n").map((x) => x.trim()).filter(Boolean),
       } });
       if (r.ok) { setErr(null); setOk(true); onSaved(); } else { setOk(false); setErr(msg(r.data.error)); }
@@ -327,6 +373,18 @@ function PlanEditor({ plan, onSaved }: { plan: PlanRow; onSaved: () => void }) {
       <Field label="Fotos por producto">{(id) => <TextInput id={id} name="photos" type="number" min={0} defaultValue={plan.limits.photosPerProduct} required />}</Field>
       <Field label="WhatsApp">{(id) => <TextInput id={id} name="wa" type="number" min={1} defaultValue={plan.limits.whatsappNumbers} required />}</Field>
       <Field label="Subida máx. (MB)">{(id) => <TextInput id={id} name="mb" type="number" min={1} defaultValue={plan.limits.uploadMb} required />}</Field>
+      <Field label="Cupones máx." hint="Vacío = ilimitados">{(id, d) => <TextInput id={id} aria-describedby={d} name="coupons" type="number" min={0} defaultValue={plan.limits.coupons === undefined ? 3 : (plan.limits.coupons ?? "")} />}</Field>
+      <fieldset className="sm:col-span-3 rounded-lg border p-3" data-testid="plan-modules">
+        <legend className="px-1 text-sm font-semibold">Módulos habilitados en este plan</legend>
+        <div className="grid gap-2 sm:grid-cols-2">
+          {modules.map((m) => (
+            <label key={m.key} className="flex items-start gap-2.5 rounded-md p-2 text-sm hover:bg-muted/50">
+              <input type="checkbox" name={`mod_${m.key}`} defaultChecked={plan.modules[m.key] === true} className="mt-1 size-4" />
+              <span><span className="font-medium">{m.label}</span><span className="block text-xs text-muted-foreground">{m.description}</span></span>
+            </label>
+          ))}
+        </div>
+      </fieldset>
       <div className="sm:col-span-2"><Field label="Beneficios (uno por línea)">{(id) => <TextArea id={id} name="features" rows={4} defaultValue={plan.features.join("\n")} />}</Field></div>
       <label className="flex items-center gap-2 self-end text-sm"><input type="checkbox" name="active" defaultChecked={plan.active} disabled={free} /> Activo (se muestra y se puede contratar)</label>
       <div className="sm:col-span-3"><ErrorBox error={err} />{ok && <p role="status" className="mb-2 text-sm">Guardado. Ya se ve en la landing y en los avisos de pago.</p>}<Button type="submit" size="sm">Guardar {plan.name}</Button></div>
@@ -336,13 +394,13 @@ function PlanEditor({ plan, onSaved }: { plan: PlanRow; onSaved: () => void }) {
 
 export function Plans() {
   const me = useAdmin();
-  const { data, error, reload } = useLoad<{ plans: PlanRow[] }>("/admin/plans");
+  const { data, error, reload } = useLoad<{ plans: PlanRow[]; modules: ModuleDef[] }>("/admin/plans");
   return (
     <div className="space-y-6">
       <h1 className="text-2xl font-bold">Planes y precios</h1>
       <p className="max-w-[60ch] text-muted-foreground">Los precios y límites que cargues acá se aplican enseguida: en la landing, en los avisos de pago y en los límites de cada negocio.</p>
       <ErrorBox error={error} />
-      {data?.plans.map((p) => <PlanEditor key={p.id} plan={p} onSaved={reload} />)}
+      {data?.plans.map((p) => <PlanEditor key={p.id} plan={p} modules={data.modules} onSaved={reload} />)}
       {me.role === "owner" && <PaymentSettings />}
     </div>
   );
@@ -418,6 +476,7 @@ export function Team() {
           </li>
         ))}
       </ul>
+      <InviteForm onDone={reload} />
       <form className="flex flex-wrap items-end gap-3 rounded-xl border p-4" onSubmit={async (e) => {
         e.preventDefault();
         const f = new FormData(e.currentTarget);

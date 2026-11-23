@@ -11,6 +11,7 @@ const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
 
 const RUBROS = [
   { id: "rotiseria", label: "Comidas" },
+  { id: "bar", label: "Bar y carta" },
   { id: "ropa", label: "Ropa" },
   { id: "belleza", label: "Belleza" },
   { id: "gimnasio", label: "Gimnasio" },

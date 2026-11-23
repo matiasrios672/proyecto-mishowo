@@ -44,7 +44,7 @@ Una línea que termina en dos puntos crea una categoría. También podés subir 
     description: "Cuatro diseños, nueve estilos y el color de tu marca.",
     body: `# Elegí un diseño
 
-En la pestaña **Diseño** hay cuatro opciones: Vidriera (fotos grandes), Mostrador (lista compacta), Grilla (tienda) y Servicios. Te recomendamos el que mejor va con tu contenido. Con "Comparar diseños" los ves lado a lado.
+En la pestaña **Diseño** hay cuatro opciones: Vidriera (fotos grandes), Carta (lista con puntos hasta el precio, ideal para bares y restaurantes), Grilla (tienda) y Servicios. Te recomendamos el que mejor va con tu contenido. Con "Comparar diseños" los ves lado a lado.
 
 # Colores y tipografía
 

@@ -5,7 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { AppShell, type NavGroup } from "@/components/brand/AppShell";
 import { logoutFromShell, useUser } from "@/components/auth/authStore";
 import { api } from "@/lib/authClient";
-import { IconBag, IconCalendar, IconCard, IconChart, IconChat, IconHome, IconQr, IconShield, IconSparkle, IconStore, IconTag } from "@/components/marketing/Doodles";
+import { IconBag, IconCalendar, IconCard, IconChart, IconChat, IconCheck, IconHome, IconQr, IconShield, IconSparkle, IconStore, IconTag } from "@/components/marketing/Doodles";
 
 const GROUPS: NavGroup[] = [
   { label: "General", items: [{ href: "/panel/inicio", label: "Inicio", Icon: IconHome, exact: true }] },
@@ -14,6 +14,7 @@ const GROUPS: NavGroup[] = [
     { href: "/panel/pedidos", label: "Pedidos", Icon: IconBag },
     { href: "/panel/cupones", label: "Cupones", Icon: IconTag },
     { href: "/panel/turnos", label: "Turnos", Icon: IconCalendar },
+    { href: "/panel/resenas", label: "Reseñas", Icon: IconCheck },
   ] },
   { label: "Crecer", items: [
     { href: "/panel/estadisticas", label: "Estadísticas", Icon: IconChart },
@@ -28,31 +29,35 @@ const GROUPS: NavGroup[] = [
 
 const ADMIN_ROLES = ["owner", "admin", "support"];
 /** El equipo de MiShowo ve además un acceso a su panel de administración. */
-const groupsFor = (role: string, ordersEnabled: boolean): NavGroup[] => {
+const MODULE_OF: Record<string, string> = { "/panel/pedidos": "orders", "/panel/cupones": "coupons", "/panel/turnos": "appointments", "/panel/resenas": "reviews" };
+const groupsFor = (role: string, ordersEnabled: boolean, modules: Record<string, boolean> | null): NavGroup[] => {
   // Con los pedidos apagados no tiene sentido mostrar Pedidos ni Cupones (los históricos siguen en la base).
-  const base = ordersEnabled ? GROUPS : GROUPS.map((g) => ({ ...g, items: g.items.filter((i) => i.href !== "/panel/pedidos" && i.href !== "/panel/cupones") })).filter((g) => g.items.length > 0);
+  // Los módulos que el plan no incluye tampoco se muestran: se ven en "Plan y pagos".
+  const hidden = (href: string) => (!ordersEnabled && (href === "/panel/pedidos" || href === "/panel/cupones")) || (modules !== null && MODULE_OF[href] !== undefined && modules[MODULE_OF[href]!] === false);
+  const base = GROUPS.map((g) => ({ ...g, items: g.items.filter((i) => !hidden(i.href)) })).filter((g) => g.items.length > 0);
   return ADMIN_ROLES.includes(role) ? [...base, { label: "Equipo MiShowo", items: [{ href: "/admin", label: "Administración", Icon: IconShield }] }] : base;
 };
 
-/** ¿El negocio recibe pedidos? (por defecto sí). Se lee una vez al abrir el panel. */
-function useOrdersEnabled(active: boolean) {
-  const [enabled, setEnabled] = useState(true);
+/** ¿El negocio recibe pedidos? (por defecto sí) y qué módulos incluye su plan. Se lee una vez al abrir el panel. */
+function useNavInfo(active: boolean) {
+  const [info, setInfo] = useState<{ ordersEnabled: boolean; modules: Record<string, boolean> | null }>({ ordersEnabled: true, modules: null });
   useEffect(() => {
     if (!active) return;
     let alive = true;
-    api<{ content: { ordersEnabled?: boolean } | null }>("/me/business").then((r) => { if (alive && r.ok) setEnabled(r.data.content?.ordersEnabled !== false); });
+    api<{ content: { ordersEnabled?: boolean } | null }>("/me/business").then((r) => { if (alive && r.ok) setInfo((i) => ({ ...i, ordersEnabled: r.data.content?.ordersEnabled !== false })); });
+    api<{ current: { modules?: Record<string, boolean> } }>("/me/plan").then((r) => { if (alive && r.ok) setInfo((i) => ({ ...i, modules: r.data.current.modules ?? null })); });
     return () => { alive = false; };
   }, [active]);
-  return enabled;
+  return info;
 }
 
 /** Marco con la barra lateral del panel (para quien ya inició sesión). El editor lo usa en modo angosto y a pantalla completa. */
 export function PanelFrame({ children, compact = false, fullBleed = false }: { children: ReactNode; compact?: boolean; fullBleed?: boolean }) {
   const user = useUser();
-  const ordersEnabled = useOrdersEnabled(!!user);
+  const { ordersEnabled, modules } = useNavInfo(!!user);
   if (!user) return <>{children}</>;
   return (
-    <AppShell groups={groupsFor(user.role, ordersEnabled)} areaLabel="Panel del negocio" userLabel={user.email} onLogout={() => void logoutFromShell()} compact={compact} fullBleed={fullBleed}>
+    <AppShell groups={groupsFor(user.role, ordersEnabled, modules)} areaLabel="Panel del negocio" userLabel={user.email} onLogout={() => void logoutFromShell()} compact={compact} fullBleed={fullBleed}>
       {children}
     </AppShell>
   );
@@ -63,7 +68,7 @@ export function PanelShell({ children }: { children: ReactNode }) {
   const user = useUser();
   const router = useRouter();
   const path = usePathname();
-  const ordersEnabled = useOrdersEnabled(!!user);
+  const { ordersEnabled, modules } = useNavInfo(!!user);
 
   useEffect(() => {
     if (user === null) router.replace(`/ingresar?next=${encodeURIComponent(path)}`);
@@ -72,7 +77,7 @@ export function PanelShell({ children }: { children: ReactNode }) {
   if (!user) return <main className="p-6 text-muted-foreground">Cargando tu panel…</main>;
 
   return (
-    <AppShell groups={groupsFor(user.role, ordersEnabled)} areaLabel="Panel del negocio" userLabel={user.email} onLogout={() => void logoutFromShell()}>
+    <AppShell groups={groupsFor(user.role, ordersEnabled, modules)} areaLabel="Panel del negocio" userLabel={user.email} onLogout={() => void logoutFromShell()}>
       {children}
     </AppShell>
   );

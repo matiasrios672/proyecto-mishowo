@@ -8,7 +8,7 @@ export const metadata: Metadata = { title: "Recuperá tu contraseña", robots: {
 
 export default function Page() {
   return (
-    <AuthShell title="Recuperá tu contraseña" subtitle="Te mandamos un enlace a tu email para elegir una nueva." footer={<Link className="underline" href="/ingresar">Volver a ingresar</Link>}>
+    <AuthShell title="Recuperá tu contraseña" subtitle="Te mandamos un enlace a tu email para elegir una nueva." footer={<Link className="" href="/ingresar">Volver a ingresar</Link>}>
       <Suspense fallback={<p className="text-muted-foreground">Cargando…</p>}><ForgotForm /></Suspense>
     </AuthShell>
   );

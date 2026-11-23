@@ -3,6 +3,8 @@ import type { Db } from "../db/tenant.js";
 import * as s from "../db/schema.js";
 import { audit } from "../audit.js";
 import type { Mailer } from "../lib/mailer.js";
+import { sendTemplate } from "../mail/service.js";
+import { getEmailAutomation } from "../lib/settings.js";
 import type { SiteChanged } from "../lib/revalidate.js";
 
 const dateAr = (d: Date) => d.toLocaleDateString("es-AR", { timeZone: "America/Argentina/Buenos_Aires", day: "numeric", month: "long", year: "numeric" });
@@ -31,7 +33,7 @@ export async function expirePlans(db: Db, mailer: Mailer, notify: SiteChanged, n
     await audit(db, { actorId: null, action: "plan.expired", entity: "business", entityId: id, after: { plan: "gratis" } });
     const email = await ownerEmail(db, res.ownerId);
     if (email) {
-      await mailer.send({ to: email, subject: "Tu plan de MiShowo venció", text: "Tu plan venció y tu página pasó al plan gratuito. Sigue publicada y no perdiste ningún dato.\n\nPodés volver a un plan pago cuando quieras desde la sección de planes." }).catch(() => undefined);
+      await sendTemplate(db, mailer, "plan_expired", email, {});
     }
     notify(res.slug);
   }
@@ -39,7 +41,8 @@ export async function expirePlans(db: Db, mailer: Mailer, notify: SiteChanged, n
 }
 
 /** Avisa una sola vez, unos días antes, que el plan está por vencer (se recuerda para qué vencimiento ya se avisó). */
-export async function remindExpiring(db: Db, mailer: Mailer, now = new Date(), days = 7): Promise<number> {
+export async function remindExpiring(db: Db, mailer: Mailer, now = new Date(), days?: number): Promise<number> {
+  days ??= (await getEmailAutomation(db)).remindDays; // configurable desde /admin/emails
   const limit = new Date(now.getTime() + days * 86_400_000);
   const due = await db.select({ id: s.businesses.id }).from(s.businesses).where(and(
     isNull(s.businesses.deletedAt), ne(s.businesses.planId, "gratis"), gt(s.businesses.planExpiresAt, now), lte(s.businesses.planExpiresAt, limit),
@@ -54,7 +57,7 @@ export async function remindExpiring(db: Db, mailer: Mailer, now = new Date(), d
     const email = await ownerEmail(db, b.ownerId);
     if (!email) continue;
     sent++;
-    await mailer.send({ to: email, subject: "Tu plan de MiShowo está por vencer", text: `Tu plan vence el ${dateAr(b.planExpiresAt)}. Si querés mantenerlo, avisanos tu pago desde la sección de planes antes de esa fecha.\n\nSi no lo renovás, tu página pasa al plan gratuito y sigue publicada.` }).catch(() => undefined);
+    await sendTemplate(db, mailer, "plan_expiring", email, { date: dateAr(b.planExpiresAt) });
   }
   return sent;
 }

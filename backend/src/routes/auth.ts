@@ -6,7 +6,7 @@ import type { Db } from "../db/tenant.js";
 import * as s from "../db/schema.js";
 import type { Mailer } from "../lib/mailer.js";
 import { hashPassword, newToken, sha256, verifyPassword } from "../lib/security.js";
-import { magicEmail, resetEmail, verifyEmail } from "../auth/emails.js";
+import { sendTemplate } from "../mail/service.js";
 import { currentUser, endAllSessions, endSession, requireUser, startSession, strictOriginOk, toPublicUser } from "../auth/session.js";
 
 const email = z.string().trim().toLowerCase().email().max(254);
@@ -42,9 +42,9 @@ export function authRoutes(app: FastifyInstance, db: Db, config: Config, mailer:
     if (!strictOriginOk(config, req)) return reply.code(403).send({ error: "bad_origin" });
   });
 
-  const safeSend = async (m: Parameters<Mailer["send"]>[0]) => {
-    try { await mailer.send(m); } catch (e) { app.log.error({ err: e }, "no se pudo enviar el email"); }
-  };
+  // Los textos salen de las plantillas editables (mail/templates.ts); un fallo de SMTP se registra y no tumba el pedido.
+  const sendT = (key: string, to: string, vars: Record<string, string>) =>
+    sendTemplate(db, mailer, key, to, vars, (e) => app.log.error({ err: e }, "no se pudo enviar el email"));
 
   app.get("/auth/me", async (req) => {
     const u = await currentUser(db, req);
@@ -52,20 +52,22 @@ export function authRoutes(app: FastifyInstance, db: Db, config: Config, mailer:
   });
 
   app.post("/auth/register", limit, async (req, reply) => {
-    const p = z.object({ email, password, name: z.string().trim().max(80).optional() }).safeParse(req.body);
+    const p = z.object({ email, password, name: z.string().trim().max(80).optional(), source: z.string().trim().toLowerCase().max(60).regex(/^[a-z0-9._:\-\/ ]*$/).optional(), ref: z.string().trim().toLowerCase().regex(/^[a-z0-9]{6,12}$/).optional() }).safeParse(req.body);
     if (!p.success) return reply.code(400).send({ error: p.error.issues.some((i) => i.message === "too_short") ? "password_too_short" : "invalid_request" });
     if (p.data.password.toLowerCase() === p.data.email) return reply.code(400).send({ error: "password_is_email" });
 
     const [exists] = await db.select({ id: s.users.id }).from(s.users).where(eq(s.users.email, p.data.email));
     if (exists) return reply.code(409).send({ error: "email_taken" });
 
+    // Código de quien lo invitó: si no existe, se ignora (nunca es motivo para rechazar un registro).
+    const referrer = p.data.ref ? (await db.select({ id: s.users.id }).from(s.users).where(eq(s.users.referralCode, p.data.ref)))[0] : undefined;
     const [user] = await db.insert(s.users).values({
-      email: p.data.email, name: p.data.name || null, passwordHash: await hashPassword(p.data.password),
+      email: p.data.email, name: p.data.name || null, passwordHash: await hashPassword(p.data.password), signupSource: referrer ? "referido" : p.data.source || null, referredBy: referrer?.id ?? null,
     }).onConflictDoNothing().returning();
     if (!user) return reply.code(409).send({ error: "email_taken" }); // carrera entre dos registros
 
     await startSession(db, config, reply, user.id);
-    await safeSend(verifyEmail(user.email, link("/verificar", await issueToken(db, "verify", user.email, user.id))));
+    await sendT("verify", user.email, { link: link("/verificar", await issueToken(db, "verify", user.email, user.id)) });
     return reply.code(201).send({ user: toPublicUser(user) });
   });
 
@@ -91,7 +93,9 @@ export function authRoutes(app: FastifyInstance, db: Db, config: Config, mailer:
     if (!p.success) return reply.code(400).send({ error: "invalid_token" });
     const t = await consumeToken(db, "verify", p.data.token);
     if (!t?.userId) return reply.code(400).send({ error: "invalid_token" });
+    const [was] = await db.select({ at: s.users.emailVerifiedAt, email: s.users.email }).from(s.users).where(eq(s.users.id, t.userId));
     await db.update(s.users).set({ emailVerifiedAt: sql`coalesce(${s.users.emailVerifiedAt}, now())` }).where(eq(s.users.id, t.userId));
+    if (was && !was.at) await sendT("welcome", was.email, { link: `${config.APP_URL}/panel` }); // solo la primera vez
     return { ok: true };
   });
 
@@ -99,7 +103,7 @@ export function authRoutes(app: FastifyInstance, db: Db, config: Config, mailer:
     const user = await requireUser(db, req, reply);
     if (!user) return;
     if (user.emailVerifiedAt) return { ok: true, alreadyVerified: true };
-    await safeSend(verifyEmail(user.email, link("/verificar", await issueToken(db, "verify", user.email, user.id))));
+    await sendT("verify", user.email, { link: link("/verificar", await issueToken(db, "verify", user.email, user.id)) });
     return { ok: true };
   });
 
@@ -108,7 +112,7 @@ export function authRoutes(app: FastifyInstance, db: Db, config: Config, mailer:
     const p = z.object({ email }).safeParse(req.body);
     if (!p.success) return reply.code(400).send({ error: "invalid_request" });
     const [user] = await db.select().from(s.users).where(eq(s.users.email, p.data.email));
-    if (user && !user.blockedAt) await safeSend(resetEmail(user.email, link("/restablecer", await issueToken(db, "reset", user.email, user.id))));
+    if (user && !user.blockedAt) await sendT("reset", user.email, { link: link("/restablecer", await issueToken(db, "reset", user.email, user.id)) });
     return { ok: true };
   });
 
@@ -127,7 +131,7 @@ export function authRoutes(app: FastifyInstance, db: Db, config: Config, mailer:
     const p = z.object({ email }).safeParse(req.body);
     if (!p.success) return reply.code(400).send({ error: "invalid_request" });
     const [user] = await db.select().from(s.users).where(eq(s.users.email, p.data.email));
-    if (!user?.blockedAt) await safeSend(magicEmail(p.data.email, link("/enlace", await issueToken(db, "magic", p.data.email, user?.id ?? null))));
+    if (!user?.blockedAt) await sendT("magic", p.data.email, { link: link("/enlace", await issueToken(db, "magic", p.data.email, user?.id ?? null)) });
     return { ok: true };
   });
 

@@ -6,6 +6,8 @@ import { api } from "@/lib/authClient";
 
 interface Stats {
   days: number;
+  /** true cuando el plan no incluye estadísticas completas y el rango se recortó a 7 días. */
+  limited?: boolean;
   totals: { visits: number; whatsappClicks: number; productViews: number; orders: number; conversion: number };
   series: { day: string; visits: number }[];
   sources: { source: string; visits: number }[];
@@ -58,9 +60,15 @@ export function StatsPanel() {
         </div>
       </div>
 
+      {data?.limited && (
+        <p role="status" className="rounded-xl border border-[#2F6FB0]/30 bg-[#EAF4FC] p-4 text-sm text-[#0E1B2C]" data-testid="stats-limited">
+          Tu plan muestra los últimos 7 días. Con un plan superior ves 30 y 90 días, orígenes y productos más vistos. <a href="/panel/plan" className="font-bold text-[#2F6FB0]">Ver planes</a>
+        </p>
+      )}
+
       {empty && (
         <p className="rounded-xl bg-muted p-4 text-sm" data-testid="stats-empty">
-          Todavía no hay visitas en este período. Compartí tu link por Instagram o WhatsApp, o imprimí tu <Link href="/panel/qr" className="underline underline-offset-4">código QR</Link> y en un rato vas a ver los números acá.
+          Todavía no hay visitas en este período. Compartí tu link por Instagram o WhatsApp, o imprimí tu <Link href="/panel/qr" className="">código QR</Link> y en un rato vas a ver los números acá.
         </p>
       )}
 

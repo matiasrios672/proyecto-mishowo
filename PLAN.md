@@ -113,7 +113,7 @@ Criterio general de aceptación por tarea: typecheck + lint + tests verdes; para
 - [ ] 13.5 Configuración general (Owner): SMTP, admins, feature flags.
 
 ## Épica 14 — Deploy en Coolify
-- [ ] 14.1 `docker-compose.prod.yml` de referencia y recomendación (Dockerfile por app vs Compose).
-- [ ] 14.2 `scripts/cron.js`, `scripts/backup-uploads.sh`.
-- [ ] 14.3 `DEPLOY.md`: Cloudflare, DonWeb, token, resolver wildcard, proyecto/Postgres/apps en Coolify, dominios (incluido `api.`), volumen, scheduled tasks, backups, rollback, límites de memoria.
+- [x] 14.1 `docker-compose.prod.yml` de referencia y recomendación (Dockerfile por app vs Compose).
+- [x] 14.2 Cron con `node dist/cron.js` (tabla en DEPLOY.md) y `scripts/backup.sh`.
+- [x] 14.3 `DEPLOY.md`: Cloudflare, DonWeb, token, resolver wildcard, proyecto/Postgres/apps en Coolify, dominios (incluido `api.`), volumen, scheduled tasks, backups, rollback, límites de memoria.
 - [ ] 14.4 Verificación final con subdominio de prueba y Lighthouse.

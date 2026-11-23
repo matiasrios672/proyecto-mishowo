@@ -11,8 +11,14 @@ export const IconInstagram = ({ className }: P) => (
 export const IconCart = ({ className }: P) => (
   <svg {...base} className={className}><path d="M3 4h2.2l1.6 10.2a1.5 1.5 0 0 0 1.5 1.3h8.1a1.5 1.5 0 0 0 1.5-1.2L19.5 8H6" /><circle cx="9" cy="19.5" r="1.2" /><circle cx="17" cy="19.5" r="1.2" /></svg>
 );
+/**
+ * WhatsApp dibujado a mano sobre una grilla de 24: el círculo está EXACTAMENTE en el centro (12, 12) y la colita queda
+ * adentro del cuadro. Así el ícono se centra por el círculo (lo que ve el ojo) y no por el cuadro que incluye la colita.
+ */
 export const IconWhatsApp = ({ className }: P) => (
   <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden className={className}>
-    <path d="M12.04 2a9.9 9.9 0 0 0-8.5 14.9L2 22l5.2-1.5A9.9 9.9 0 1 0 12.04 2Zm0 1.8a8.1 8.1 0 1 1-4.3 15l-.3-.2-3 .9.9-2.9-.2-.3A8.1 8.1 0 0 1 12.04 3.8Zm-3 3.6c-.2 0-.5.1-.7.4-.3.3-1 1-1 2.5s1.1 2.9 1.2 3.1c.2.2 2.1 3.3 5.2 4.5 2.6 1 3.1.8 3.7.8.6-.1 1.8-.7 2-1.4.3-.7.3-1.3.2-1.4-.1-.1-.3-.2-.6-.4l-1.9-.9c-.3-.1-.5-.1-.7.1l-.9 1.1c-.2.2-.3.2-.6.1-.3-.2-1.2-.4-2.3-1.4-.8-.8-1.4-1.7-1.6-2-.2-.3 0-.4.1-.6l.4-.5c.1-.2.2-.3.3-.5.1-.2 0-.4 0-.5l-.9-2.1c-.2-.6-.5-.5-.7-.5Z" />
+    <path fillRule="evenodd" d="M12 2.4a9.6 9.6 0 1 0 0 19.2 9.6 9.6 0 0 0 0-19.2Zm0 1.9a7.7 7.7 0 1 1 0 15.4 7.7 7.7 0 0 1 0-15.4Z" />
+    <path d="M3.3 21 4.7 16.2l3.2 3.1Z" />
+    <path transform="translate(12 12) scale(.56) translate(-12 -12)" d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z" />
   </svg>
 );

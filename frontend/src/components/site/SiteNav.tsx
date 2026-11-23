@@ -64,7 +64,7 @@ export function SiteNav({ name, links, orderableSlug, whatsappHref, logo, logoSe
           className={`transition-[background-color,border-color,backdrop-filter,box-shadow] duration-300 ${scrolled ? "border-b border-border bg-background/80 shadow-[0_8px_30px_-18px_rgba(0,0,0,0.35)] backdrop-blur-xl" : "border-b border-transparent"}`}
         >
           <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-x-4 gap-y-2 px-5 py-3 @2xl:px-8">
-            <a href="#top" className="flex max-w-[62%] items-center gap-2.5" aria-label={name || "Tu negocio"}>
+            <a href="#top" className="flex max-w-[62%] items-center gap-2.5" aria-label={logo ? name || "Tu negocio" : undefined}>
               <Brand name={name} logo={logo} logoSet={logoSet} size="sm" />
               <span className={`truncate site-display text-lg font-bold leading-none ${logo ? "hidden @xl:inline" : ""}`}>{name || "Tu negocio"}</span>
             </a>

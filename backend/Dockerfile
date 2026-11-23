@@ -27,4 +27,5 @@ USER node
 EXPOSE 4000
 HEALTHCHECK --interval=15s --timeout=3s --start-period=20s --retries=5 \
   CMD wget -qO- http://127.0.0.1:4000/api/health || exit 1
-CMD ["node", "dist/server.js"]
+# Aplica las migraciones pendientes (idempotente) y arranca la API.
+CMD ["sh", "-c", "node dist/migrate.js && node dist/server.js"]

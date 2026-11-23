@@ -191,6 +191,16 @@
 @keyframes mk-drop { from { opacity: 0; transform: translateY(-22px) scale(0.97); } to { opacity: 1; transform: none; } }
 @keyframes mk-reveal { from { opacity: 0; transform: translateY(48px); } to { opacity: 1; transform: none; } }
 
+/* Franjas por rubro: el celular sube y la palabra gigante se desplaza al hacer scroll (sin JS). */
+@keyframes mk-phone-rise { from { transform: translateY(90px) scale(0.93); opacity: 0.2; } to { transform: none; opacity: 1; } }
+@keyframes mk-ghost-drift { from { transform: translateX(-7%); } to { transform: translateX(7%); } }
+@media (prefers-reduced-motion: no-preference) {
+  @supports (animation-timeline: view()) {
+    .mk-phone-rise { animation: mk-phone-rise linear both; animation-timeline: view(); animation-range: entry 0% entry 70%; }
+    .mk-ghost-drift { animation: mk-ghost-drift linear both; animation-timeline: view(); animation-range: entry 0% exit 100%; }
+  }
+}
+
 /* Película de 12 s: el cursor entra, agrega el producto 1 y el 2, toca "Pedir por WhatsApp" y llega el pedido. */
 @keyframes mk-cursor {
   0% { left: 105%; top: 108%; opacity: 0; }
@@ -208,8 +218,8 @@
   70%, 100% { left: 105%; top: 110%; opacity: 0; }
 }
 @keyframes mk-ripple { 0% { transform: translate(-50%, -50%) scale(0.2); opacity: 0.7; } 100% { transform: translate(-50%, -50%) scale(2.2); opacity: 0; } }
-@keyframes mk-add-a { 0%, 16.5% { background-color: #2F6FB0; } 17.5%, 94% { background-color: #1FAF5B; } 100% { background-color: #2F6FB0; } }
-@keyframes mk-add-b { 0%, 32.5% { background-color: #2F6FB0; } 33.5%, 94% { background-color: #1FAF5B; } 100% { background-color: #2F6FB0; } }
+@keyframes mk-add-a { 0%, 16.5% { background-color: #2F6FB0; } 17.5%, 94% { background-color: #15803D; } 100% { background-color: #2F6FB0; } }
+@keyframes mk-add-b { 0%, 32.5% { background-color: #2F6FB0; } 33.5%, 94% { background-color: #15803D; } 100% { background-color: #2F6FB0; } }
 @keyframes mk-show-a { 0%, 16.5% { opacity: 0; } 17.5%, 94% { opacity: 1; } 100% { opacity: 0; } }
 @keyframes mk-show-b { 0%, 32.5% { opacity: 0; } 33.5%, 94% { opacity: 1; } 100% { opacity: 0; } }
 @keyframes mk-hide-a { 0%, 16.5% { opacity: 1; } 17.5%, 94% { opacity: 0; } 100% { opacity: 1; } }
@@ -222,7 +232,7 @@
 
 @media (prefers-reduced-motion: no-preference) {
   .mk-float { animation: mk-float var(--dur, 7s) ease-in-out infinite; animation-delay: var(--delay, 0s); }
-  .mk-blob { animation: mk-blob 18s ease-in-out infinite; }
+  .mk-blob { animation: mk-blob 18s ease-in-out infinite; will-change: transform; }
   .mk-draw { stroke-dashoffset: 1; animation: mk-draw 1.1s 0.6s cubic-bezier(0.6, 0, 0.2, 1) forwards; }
   .mk-marquee-track { animation: mk-marquee 40s linear infinite; }
   .mk-marquee:hover .mk-marquee-track { animation-play-state: paused; }
@@ -280,4 +290,40 @@
   .mk-tabstrip-m::-webkit-scrollbar { display: none; }
 }
 /* Barras de desplazamiento finas y discretas dentro de las pantallas con la marca. */
-.mk-text * { scrollbar-width: thin; scrollbar-color: #B8CCE0 transparent; }
+.mk-text :is(.overflow-y-auto, .overflow-x-auto, .overflow-auto) { scrollbar-width: thin; scrollbar-color: #B8CCE0 transparent; }
+
+/* ───────── Landing premium: brillo que sigue al mouse y micro-animaciones de los beneficios ───────── */
+.mk-spot::before { content: ""; position: absolute; inset: 0; opacity: 0; transition: opacity 0.3s; pointer-events: none; background: radial-gradient(260px circle at var(--mx, 50%) var(--my, 50%), rgb(116 172 223 / 0.28), transparent 70%); }
+.mk-spot:hover::before { opacity: 1; }
+@keyframes mk-bar-grow { from { transform: scaleY(0.15); opacity: 0.3; } to { transform: scaleY(1); opacity: 1; } }
+/* Las barras y burbujas de los beneficios entran una sola vez (sin animaciones atadas al scroll: encarecen el render). */
+@media (prefers-reduced-motion: no-preference) {
+  .mk-bar { transform-origin: bottom; animation: mk-bar-grow 0.8s cubic-bezier(0.3, 1.3, 0.5, 1) both; }
+}
+
+/* ───────── Paneles (cliente y admin): estilo plano. Esquinas casi rectas, sin sombras, módulos separados por una línea fina ───────── */
+.panel-flat { --radius: 2px; }
+.panel-flat :is(button, a, input, select, textarea).rounded-full { border-radius: 2px; }
+.panel-flat [class*="shadow-"]:not([class*="shadow-[inset"]) { box-shadow: none; } /* los indicadores "inset" (menú activo, pestañas) se conservan */
+.panel-flat [class*="bg-gradient"] { background-image: none; background-color: #F7FAFD; }
+
+/* Luces de fondo de la landing: degradé radial estático. (Antes eran círculos con blur() animados: se repintaban en cada cuadro y trababan la página.) */
+.mk-orb { background: radial-gradient(closest-side, var(--orb), transparent); }
+
+@keyframes mk-steps-bar { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+@media (prefers-reduced-motion: no-preference) { .mk-steps-bar { animation: mk-steps-bar linear forwards; } }
+
+/* Tailwind `animate-pulse` corre en bucle y no respeta el movimiento reducido por defecto. */
+@media (prefers-reduced-motion: reduce) { .animate-pulse { animation: none; } }
+
+/* Escenas de "Del celular a tus clientes": entran de a una y se reinician al cambiar de paso. Sin movimiento, quedan terminadas. */
+@keyframes mk-in { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+@keyframes mk-pop { from { opacity: 0; transform: scale(0.8); } to { opacity: 1; transform: none; } }
+@keyframes mk-type { from { clip-path: inset(0 100% 0 0); } to { clip-path: inset(0 0 0 0); } }
+@keyframes mk-blink { 50% { opacity: 0; } }
+@media (prefers-reduced-motion: no-preference) {
+  .mk-in { animation: mk-in 0.6s cubic-bezier(0.2, 0.7, 0.2, 1) both; animation-delay: var(--d, 0ms); }
+  .mk-pop { animation: mk-pop 0.5s cubic-bezier(0.3, 1.4, 0.5, 1) both; animation-delay: var(--d, 0ms); }
+  .mk-type { animation: mk-type 1.2s steps(16, end) both; animation-delay: var(--d, 0ms); }
+  .mk-caret { animation: mk-blink 0.9s steps(1) 6; }
+}

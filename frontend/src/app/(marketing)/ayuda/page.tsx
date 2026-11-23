@@ -24,7 +24,7 @@ export default function HelpIndex() {
           </li>
         ))}
       </ul>
-      <p className="mt-10 text-muted-foreground">¿No encontrás lo que buscás? Escribinos desde el <Link href="/contacto" className="underline underline-offset-4">formulario de contacto</Link>.</p>
+      <p className="mt-10 text-muted-foreground">¿No encontrás lo que buscás? Escribinos desde el <Link href="/contacto" className="">formulario de contacto</Link>.</p>
     </PageWrap>
   );
 }

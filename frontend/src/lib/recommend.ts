@@ -2,7 +2,7 @@ import type { Draft } from "./draft";
 
 export const LAYOUTS = [
   { id: "vidriera", name: "Vidriera", blurb: "Fotos grandes. Ideal para pocos productos que se lucen." },
-  { id: "mostrador", name: "Mostrador", blurb: "Lista compacta. Ideal para catálogos largos o comidas." },
+  { id: "mostrador", name: "Carta", blurb: "Estilo carta de bar: lista con puntos hasta el precio. Ideal para bares, restaurantes, cafeterías y catálogos largos." },
   { id: "grilla", name: "Grilla", blurb: "Tienda de a dos columnas. Ideal para ropa y accesorios." },
   { id: "servicios", name: "Servicios", blurb: "Tarjetas con descripción. Ideal para servicios y turnos." },
 ] as const;
@@ -15,6 +15,7 @@ const SERVICE_INDUSTRIES = new Set(["gimnasio", "oficios", "belleza", "salud", "
 export function recommendLayout(d: Draft): LayoutId {
   const products = d.categories.flatMap((c) => c.products);
   if (SERVICE_INDUSTRIES.has(d.industryId)) return "servicios";
+  if (d.industryId === "bar") return "mostrador"; // la carta es el diseño natural de un bar o restaurante
   if (products.length > 20) return "mostrador";
   const withOptions = products.filter((p) => p.options.length > 0).length;
   if (d.industryId === "ropa" || (products.length >= 4 && withOptions / products.length >= 0.5)) return "grilla";

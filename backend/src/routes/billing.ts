@@ -4,6 +4,8 @@ import { and, asc, count, desc, eq, isNull } from "drizzle-orm";
 import { z } from "zod";
 import type { Db } from "../db/tenant.js";
 import * as s from "../db/schema.js";
+import { planModules } from "../lib/modules.js";
+import { sendTemplate } from "../mail/service.js";
 import type { Mailer } from "../lib/mailer.js";
 import type { StorageProvider } from "../storage/index.js";
 import { sniff } from "../storage/sniff.js";
@@ -47,9 +49,9 @@ export function billingRoutes(app: FastifyInstance, db: Db, storage: StorageProv
     const exp = ctx.biz.planExpiresAt;
     reply.header("Cache-Control", "no-store");
     return {
-      current: current[0] ? { id: current[0].id, name: current[0].name, limits: current[0].limits, features: current[0].features } : { id: ctx.biz.planId, name: ctx.biz.planId, limits: {}, features: [] },
+      current: current[0] ? { id: current[0].id, name: current[0].name, limits: current[0].limits, features: current[0].features, modules: planModules(current[0].limits) } : { id: ctx.biz.planId, name: ctx.biz.planId, limits: {}, features: [], modules: planModules({}) },
       expiresAt: exp, daysLeft: exp ? Math.ceil((exp.getTime() - Date.now()) / 86_400_000) : null,
-      plans: plans.map((p) => ({ id: p.id, name: p.name, priceMonthly: Number(p.priceMonthly), limits: p.limits, features: p.features })),
+      plans: plans.map((p) => ({ id: p.id, name: p.name, priceMonthly: Number(p.priceMonthly), limits: p.limits, features: p.features, modules: planModules(p.limits) })),
       paymentInfo: info, months: MONTHS,
       payments: pays.map(payView),
     };
@@ -70,12 +72,9 @@ export function billingRoutes(app: FastifyInstance, db: Db, storage: StorageProv
     const [pay] = await db.insert(s.payments).values({
       businessId: ctx.biz.id, planId: plan.id, amount, months: p.data.months, method: "transferencia", note: p.data.note || null,
     }).returning();
-    try {
-      await mailer.send({
-        to: ctx.user.email, subject: "Recibimos tu aviso de pago",
-        text: `Recibimos tu aviso de pago del plan ${plan.name} por ${p.data.months} ${p.data.months === 1 ? "mes" : "meses"} ($ ${Number(amount).toLocaleString("es-AR")}).\n\nLo vamos a revisar y activamos tu plan. Te avisamos por email apenas esté confirmado.`,
-      });
-    } catch (e) { app.log.error({ err: e }, "no se pudo enviar el acuse de pago"); }
+    await sendTemplate(db, mailer, "payment_received", ctx.user.email, {
+      plan: plan.name, months: `${p.data.months} ${p.data.months === 1 ? "mes" : "meses"}`, amount: `$ ${Number(amount).toLocaleString("es-AR")}`,
+    }, (e) => app.log.error({ err: e }, "no se pudo enviar el acuse de pago"));
     return reply.code(201).send(payView(pay!));
   });
 

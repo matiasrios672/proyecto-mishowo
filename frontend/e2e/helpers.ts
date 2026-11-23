@@ -32,14 +32,14 @@ export async function mailSubjects(to: string): Promise<string[]> {
   return (list.messages ?? []).map((m: { Subject: string }) => m.Subject);
 }
 
+/** Crea la cuenta desde /crear (primer paso del recorrido) y elige el rubro «Rotisería y comidas». Termina en el editor, con el borrador ya guardado en la cuenta. */
 export async function signUp(page: Page, mail: string) {
   await page.goto("/crear");
-  await page.getByRole("button", { name: /Rotisería y comidas/ }).click();
-  await page.waitForURL("**/editor");
-  await page.getByRole("link", { name: "Guardar mi página" }).click();
+  await page.getByLabel(/^Tu nombre/).fill("Persona de Prueba");
   await page.getByLabel(/^Email/).fill(mail);
   await page.getByLabel(/^Contraseña/).fill(PASS);
   await page.getByRole("button", { name: "Crear mi cuenta" }).click();
+  await page.getByRole("button", { name: /Rotisería y comidas/ }).click();
   await page.waitForURL("**/editor");
   await expect(status(page)).toHaveText("Guardado en tu cuenta", { timeout: 15_000 });
 }

@@ -17,7 +17,7 @@ for (const p of PLANS) {
 }
 console.log(`Planes sembrados: ${PLANS.map((p) => p.id).join(", ")}`);
 if (process.env.SEED_DEMO === '1') {
-  const { users, businesses } = await import('./db/schema.js');
+  const { users, businesses, appointmentSettings } = await import('./db/schema.js');
   const { eq } = await import('drizzle-orm');
   const { tenantScope } = await import('./db/tenant.js');
   const [u] = await db.insert(users).values({ email: 'demo@mishowo.local' })
@@ -63,7 +63,10 @@ if (process.env.SEED_DEMO === '1') {
       whatsapp: '+5491155550000', instagram: '@' + slug.replace(/-/g, ''), deliveryZone: tpl.deliveryZone,
       address: tpl.id === 'gimnasio' || tpl.id === 'salud' ? tpl.deliveryZone : null, hours,
       design: { layout: tpl.layout, theme: tpl.theme, fontPair: tpl.fontPair, brandColor: null, buttonShape: 'redondeado' },
-      settings: { askEventDate: tpl.eventDate, showQuantities: true, whatsappGreeting: 'Hola! Quiero hacer este pedido:' },
+      settings: {
+        askEventDate: tpl.eventDate, showQuantities: true, whatsappGreeting: 'Hola! Quiero hacer este pedido:',
+        installments: { enabled: ['ropa', 'eventos', 'muebles'].includes(tpl.id), count: tpl.id === 'ropa' ? 6 : 3, note: '', minAmount: 0 },
+      },
       status: 'published',
     }).returning();
     const t = tenantScope(db, biz!.id);
@@ -74,6 +77,14 @@ if (process.env.SEED_DEMO === '1') {
         const prod = await t.products.create({ name: p.name, description: p.description, price: String(p.price), categoryId: c.id });
         for (const [i, o] of (p.options ?? []).entries()) await t.options.create(prod.id, { label: o.label, price: o.price ? String(o.price) : null, position: i });
       }
+    }
+    // Turnos de ejemplo en los negocios de servicios: servicios con duración y precio, y dos profesionales.
+    if (tpl.mode === 'servicios') {
+      await db.insert(appointmentSettings).values({
+        businessId: biz!.id, enabled: true, slotMinutes: 30, minNoticeHours: 2, horizonDays: 30,
+        services: tpl.categories.flatMap((c) => c.products).slice(0, 4).map((p, i) => ({ name: p.name.slice(0, 60), minutes: [30, 45, 60, 90][i] ?? 30, price: p.price })),
+        staff: [{ id: 'sofi0001', name: 'Sofi' }, { id: 'lu000002', name: 'Lu' }],
+      }).onConflictDoNothing();
     }
     console.log(`Negocio demo: ${slug}`);
   }

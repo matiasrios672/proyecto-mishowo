@@ -3,6 +3,7 @@ import { and, desc, eq, isNull, sql } from "drizzle-orm";
 import { z } from "zod";
 import type { Db } from "../db/tenant.js";
 import * as s from "../db/schema.js";
+import { modulesForPlan } from "../lib/modules.js";
 import { requireUser } from "../auth/session.js";
 import { CouponError, normalizeCode, previewCoupon } from "../coupons/apply.js";
 
@@ -55,6 +56,7 @@ export function couponPanelRoutes(app: FastifyInstance, db: Db) {
     if (!biz) return;
     const b = couponBody.safeParse(req.body);
     if (!b.success) return reply.code(400).send({ error: "invalid_request" });
+    if (!(await modulesForPlan(db, biz.planId)).coupons) return reply.code(403).send({ error: "plan_not_allowed" });
     const max = await limit(biz.planId);
     if (max !== null) {
       const [{ n } = { n: 0 }] = await db.select({ n: sql<number>`count(*)::int` }).from(s.coupons).where(eq(s.coupons.businessId, biz.id));

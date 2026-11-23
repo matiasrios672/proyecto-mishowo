@@ -54,3 +54,17 @@ export async function putSetting(db: Pick<Db, "insert">, key: string, value: unk
   await db.insert(s.appSettings).values({ key, value: value as never })
     .onConflictDoUpdate({ target: s.appSettings.key, set: { value: value as never, updatedAt: sql`now()` } });
 }
+
+/** Lee un ajuste genérico validándolo con su schema; si falta o está roto devuelve el valor por defecto. */
+export async function getSetting<T extends z.ZodTypeAny>(db: Reader, key: string, schema: T, fallback: z.infer<T>): Promise<z.infer<T>> {
+  const p = schema.safeParse(await raw(db, key));
+  return p.success ? p.data : fallback;
+}
+
+export const EMAIL_AUTOMATION_KEY = "email_automation";
+export const emailAutomationSchema = z.object({ remindDays: z.number().int().min(1).max(30) });
+export const DEFAULT_EMAIL_AUTOMATION = { remindDays: 7 };
+/** Días de anticipación del aviso de vencimiento (se edita en /admin/emails → Automatizaciones). */
+export async function getEmailAutomation(db: Reader): Promise<{ remindDays: number }> {
+  return getSetting(db, EMAIL_AUTOMATION_KEY, emailAutomationSchema, DEFAULT_EMAIL_AUTOMATION);
+}

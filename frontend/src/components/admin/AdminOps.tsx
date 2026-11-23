@@ -60,7 +60,7 @@ export function Reports() {
           <li key={r.id} className="rounded-xl border p-4" data-testid="admin-report">
             <div className="flex flex-wrap items-start justify-between gap-2">
               <div>
-                <p className="font-semibold">{REASON[r.reason] ?? r.reason} · <Link className="underline underline-offset-4" href={`/admin/negocios/${r.business.id}`}>{r.business.name}</Link></p>
+                <p className="font-semibold">{REASON[r.reason] ?? r.reason} · <Link className="" href={`/admin/negocios/${r.business.id}`}>{r.business.name}</Link></p>
                 <p className="text-sm text-muted-foreground">{when(r.createdAt)} · página {r.business.deleted ? "eliminada" : r.business.status === "published" ? "publicada" : r.business.status === "suspended" ? "suspendida" : "en borrador"}</p>
               </div>
               {r.business.status === "published" && <a className="rounded-md border px-3 py-1.5 text-sm" href={siteUrl(r.business.slug)} target="_blank" rel="noopener noreferrer">Ver la página</a>}

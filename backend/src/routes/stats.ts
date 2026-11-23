@@ -5,6 +5,7 @@ import { z } from "zod";
 import type { Db } from "../db/tenant.js";
 import * as s from "../db/schema.js";
 import { requireUser } from "../auth/session.js";
+import { modulesForPlan } from "../lib/modules.js";
 
 const BOT = /bot|crawl|spider|slurp|headless|preview|facebookexternalhit|whatsapp|telegram|curl|wget|python|node-fetch/i;
 // El visitante es un hash de (sal + día + IP + navegador). No se guarda la IP, no hay cookies y mañana el mismo
@@ -77,10 +78,13 @@ export function statsRoutes(app: FastifyInstance, db: Db) {
     if (!user) return;
     const q = rangeQuery.safeParse(req.query);
     if (!q.success) return reply.code(400).send({ error: "invalid_request" });
-    const [biz] = await db.select({ id: s.businesses.id }).from(s.businesses).where(and(eq(s.businesses.ownerId, user.id), isNull(s.businesses.deletedAt)));
+    const [biz] = await db.select({ id: s.businesses.id, planId: s.businesses.planId }).from(s.businesses).where(and(eq(s.businesses.ownerId, user.id), isNull(s.businesses.deletedAt)));
     if (!biz) return reply.code(404).send({ error: "no_business" });
+    // Sin el módulo de estadísticas completas, el rango se recorta a 7 días (el panel avisa y ofrece mejorar el plan).
+    const full = (await modulesForPlan(db, biz.planId)).stats_full;
+    const days = full ? q.data.days : 7;
 
-    const since = new Date(Date.now() - (q.data.days - 1) * 86_400_000).toISOString().slice(0, 10);
+    const since = new Date(Date.now() - (days - 1) * 86_400_000).toISOString().slice(0, 10);
     const base = and(eq(s.siteEvents.businessId, biz.id), gte(s.siteEvents.day, since));
     const [byType, daily, sources, top, orderRow] = await Promise.all([
       db.select({ type: s.siteEvents.type, n: sql<number>`count(*)::int` }).from(s.siteEvents).where(base).groupBy(s.siteEvents.type),
@@ -93,14 +97,14 @@ export function statsRoutes(app: FastifyInstance, db: Db) {
     const count = (t: string) => byType.find((r) => r.type === t)?.n ?? 0;
     const visits = count("visit");
     const dayMap = new Map(daily.map((d) => [String(d.day), d.n]));
-    const series = Array.from({ length: q.data.days }, (_, i) => {
-      const day = new Date(Date.now() - (q.data.days - 1 - i) * 86_400_000).toISOString().slice(0, 10);
+    const series = Array.from({ length: days }, (_, i) => {
+      const day = new Date(Date.now() - (days - 1 - i) * 86_400_000).toISOString().slice(0, 10);
       return { day, visits: dayMap.get(day) ?? 0 };
     });
     const orders = orderRow[0]?.n ?? 0;
     reply.header("Cache-Control", "no-store");
     return {
-      days: q.data.days,
+      days: days, limited: !full,
       totals: { visits, whatsappClicks: count("whatsapp_click"), productViews: count("product_view"), orders, conversion: visits ? Math.round((orders / visits) * 1000) / 10 : 0 },
       series, sources: sources.map((r) => ({ source: r.source ?? "directo", visits: r.n })), topProducts: top.map((r) => ({ id: r.id, name: r.name, views: r.n })),
     };

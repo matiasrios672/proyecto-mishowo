@@ -1,9 +1,11 @@
 /* eslint-disable @next/next/no-img-element -- las fotos ya salen del backend en WebP con srcset propio */
+import { ProductIllustration } from "./illustrations";
 import type { CSSProperties } from "react";
 import type { SiteCategory, SiteModel, SiteProduct } from "@/lib/site";
 import { Brand } from "./Brand";
 import { formatPrice, normalizeSearch, priceLabel } from "@/lib/format";
 import { discountPercent } from "@/lib/draftOps";
+import { installmentLine, type Installments } from "@/lib/installments";
 import { whatsappLink } from "@/lib/whatsapp";
 import { AddToCart } from "./cart/AddToCart";
 import { HoursList } from "./HoursList";
@@ -54,7 +56,7 @@ function Art({ name, image, imageSet, className }: { name: string; image: string
       className={`grid place-items-center overflow-hidden ${className}`}
       style={{ backgroundImage: `linear-gradient(${hash(name) % 360}deg, color-mix(in oklab, var(--primary) 24%, var(--card)), color-mix(in oklab, var(--primary) 7%, var(--card)))` }}
     >
-      <span className="select-none site-display text-[clamp(3rem,16cqw,5.5rem)] leading-none text-primary/30">{name.trim().charAt(0).toUpperCase() || "·"}</span>
+      <ProductIllustration name={name} />
     </div>
   );
 }
@@ -67,8 +69,20 @@ function Thumb({ p, name, dim }: { p: SiteProduct; name: string; dim: boolean })
 
 const Soldout = () => <span className="text-xs font-medium text-destructive">Agotado</span>;
 
-function Card({ p, layout, preview, order, showQuantities, consultHref }: { p: SiteProduct; layout: string; preview: boolean; order?: Orderable; showQuantities: boolean; consultHref?: string | null }) {
+/** Precio más bajo del producto (el "desde" cuando hay variantes). */
+const basePrice = (p: SiteProduct): number | null => {
+  const all = [p.price, ...p.options.map((o) => o.price)].filter((n): n is number => n !== null);
+  return all.length ? Math.min(...all) : null;
+};
+
+function Card({ p, layout, preview, order, showQuantities, consultHref, inst }: { p: SiteProduct; layout: string; preview: boolean; order?: Orderable; showQuantities: boolean; consultHref?: string | null; inst?: Installments }) {
   const name = p.name || "Producto sin nombre";
+  const instText = p.available ? installmentLine(basePrice(p), inst) : null;
+  const instEl = instText && (
+    <p className="mt-1 text-xs font-semibold text-primary" data-testid="installments-line">
+      {p.options.length > 0 && p.options.some((o) => o.price !== null) ? "Desde " : ""}{instText}
+    </p>
+  );
   const ex = preview && p.isExample ? <Example /> : null;
   const search = normalizeSearch(`${name} ${p.description}`);
   const dim = p.available ? "" : "text-muted-foreground";
@@ -85,15 +99,16 @@ function Card({ p, layout, preview, order, showQuantities, consultHref }: { p: S
 
   if (layout === "vidriera")
     return (
-      <li data-search={search} data-product-id={p.id} className={`site-card ${dim}`}>
-        <div className="site-artwrap overflow-hidden rounded-[1.25rem]"><Art name={name} image={p.image} imageSet={p.imageSet} className={`site-art aspect-[16/10] w-full @xl:aspect-[4/3]${artDim}`} /></div>
-        <div className="pt-3.5">
+      <li data-search={search} data-product-id={p.id} className={`site-card flex gap-3.5 @xl:block ${dim}`}>
+        {/* En celular: foto chica a la izquierda y el detalle al lado (se recorre mucho más rápido). En pantallas anchas: tarjeta con foto grande. */}
+        <div className="site-artwrap w-24 shrink-0 self-start overflow-hidden rounded-xl @xl:w-auto @xl:rounded-[1.25rem]"><Art name={name} image={p.image} imageSet={p.imageSet} className={`site-art aspect-square w-full @xl:aspect-[4/3]${artDim}`} /></div>
+        <div className="min-w-0 flex-1 @xl:pt-3.5">
           <div className="flex items-baseline justify-between gap-4">
             <h4 className="site-display text-lg font-semibold leading-snug">{name}{ex}</h4>
             <Price p={p} />
           </div>
           {p.description && <p className="mt-1 max-w-[52ch] text-sm leading-relaxed text-muted-foreground">{p.description}</p>}
-          {opts}{soldout}{add}
+          {opts}{instEl}{soldout}{add}
         </div>
       </li>
     );
@@ -105,7 +120,7 @@ function Card({ p, layout, preview, order, showQuantities, consultHref }: { p: S
         <div className="pt-3">
           <h4 className="text-sm font-semibold leading-snug @2xl:text-base">{name}{ex}</h4>
           <div className="mt-0.5 text-sm"><Price p={p} /></div>
-          {soldout}{add}
+          {instEl}{soldout}{add}
         </div>
       </li>
     );
@@ -120,7 +135,7 @@ function Card({ p, layout, preview, order, showQuantities, consultHref }: { p: S
             <Price p={p} />
           </div>
           {p.description && <p className="mt-1 max-w-[56ch] text-sm leading-relaxed text-muted-foreground">{p.description}</p>}
-          {opts}{soldout}{add}
+          {opts}{instEl}{soldout}{add}
         </div>
       </li>
     );
@@ -135,7 +150,7 @@ function Card({ p, layout, preview, order, showQuantities, consultHref }: { p: S
           <Price p={p} />
         </div>
         {p.description && <p className="mt-0.5 max-w-[56ch] text-sm text-muted-foreground">{p.description}</p>}
-        {opts}{soldout}{add}
+        {opts}{instEl}{soldout}{add}
       </div>
       <Thumb p={p} name={name} dim={!p.available} />
     </li>
@@ -160,9 +175,11 @@ export function Catalog({ site, cats, preview, order }: { site: SiteModel; cats:
       {cats.length === 0 && <p className="py-12 text-muted-foreground">Todavía no hay {services ? "servicios" : "productos"} cargados.</p>}
       {cats.map((c) => (
         <section key={c.id} id={`sec-${slugify(c.name)}`} data-section className="scroll-mt-28 pt-8">
-          <h3 className="mb-5 site-display text-xl font-semibold @4xl:text-2xl">{c.name}</h3>
+          <h3 className={layout === "mostrador"
+            ? "mb-3 border-b-2 border-foreground/80 pb-2 site-display text-lg font-bold uppercase tracking-[0.16em] @4xl:text-xl" // carta de bar: títulos de sección en mayúsculas con regla
+            : "mb-5 site-display text-xl font-semibold @4xl:text-2xl"}>{c.name}</h3>
           <ul className={LIST[layout] ?? LIST.vidriera}>
-            {c.products.map((p) => <Card key={p.id} p={p} layout={layout} preview={preview} order={order} showQuantities={site.showQuantities} consultHref={consultFor(p)} />)}
+            {c.products.map((p) => <Card key={p.id} p={p} layout={layout} preview={preview} order={order} showQuantities={site.showQuantities} consultHref={consultFor(p)} inst={site.installments} />)}
           </ul>
         </section>
       ))}
@@ -229,8 +246,8 @@ export function Hero({ site, preview, items, whatsappHref }: { site: SiteModel; 
           )}
           {site.description && <p className="site-rise mt-4 max-w-[56ch] leading-relaxed" style={rise(260)}>{site.description}</p>}
 
-          <div className="site-rise mt-8 flex flex-wrap gap-3" style={rise(340)}>
-            <a href="#catalog" className={btnPrimary} style={radius}>{services ? "Ver servicios y precios" : site.ordersEnabled ? "Hacer mi pedido" : "Ver el catálogo"}</a>
+          <div className="site-rise mt-8 flex flex-col gap-3 @md:flex-row @md:flex-wrap" style={rise(340)}>
+            <a href="#catalog" className={`${btnPrimary} @md:w-auto`} style={radius}>{services ? "Ver servicios y precios" : site.ordersEnabled ? "Hacer mi pedido" : "Ver el catálogo"}</a>
             {whatsappHref && (
               <a href={whatsappHref} target="_blank" rel="noopener noreferrer" className={btnOutline} style={radius}>
                 <IconWhatsApp className="size-5" /> Escribinos por WhatsApp
@@ -243,7 +260,7 @@ export function Hero({ site, preview, items, whatsappHref }: { site: SiteModel; 
               {site.deliveryZone && <p className="flex items-start gap-2.5"><IconPin className="mt-0.5 size-4 shrink-0 text-primary" />{site.deliveryZone}</p>}
               {showAddress && <p className="flex items-start gap-2.5"><IconPin className="mt-0.5 size-4 shrink-0 text-primary" />{site.address}</p>}
               {ig && (
-                <a className="flex items-center gap-2.5 underline-offset-4 hover:underline" href={`https://instagram.com/${encodeURIComponent(ig)}`} target="_blank" rel="noopener noreferrer">
+                <a className="flex items-center gap-2.5 hover:underline" href={`https://instagram.com/${encodeURIComponent(ig)}`} target="_blank" rel="noopener noreferrer">
                   <IconInstagram className="size-4 shrink-0 text-primary" />@{ig}
                 </a>
               )}
@@ -342,9 +359,9 @@ export function InfoSection({ site, whatsappHref }: { site: SiteModel; whatsappH
             <div className="space-y-3 text-sm">
               {site.deliveryZone && <p className="flex items-start gap-2.5"><IconPin className="mt-0.5 size-4 shrink-0 text-primary" />{site.deliveryZone}</p>}
               {showAddress && <p className="flex items-start gap-2.5"><IconPin className="mt-0.5 size-4 shrink-0 text-primary" />{site.address}</p>}
-              {mapHref && <a className="inline-block underline underline-offset-4" href={mapHref} target="_blank" rel="noopener noreferrer">Ver en el mapa</a>}
+              {mapHref && <a className="inline-block " href={mapHref} target="_blank" rel="noopener noreferrer">Ver en el mapa</a>}
               {ig && (
-                <a className="flex items-center gap-2.5 underline-offset-4 hover:underline" href={`https://instagram.com/${encodeURIComponent(ig)}`} target="_blank" rel="noopener noreferrer">
+                <a className="flex items-center gap-2.5 hover:underline" href={`https://instagram.com/${encodeURIComponent(ig)}`} target="_blank" rel="noopener noreferrer">
                   <IconInstagram className="size-4 shrink-0 text-primary" />@{ig}
                 </a>
               )}

@@ -23,6 +23,8 @@ export interface PublicSite {
   cover?: { src: string; srcSet: string | null } | null;
   logo?: { src: string; srcSet: string | null } | null;
   video?: string | null;
+  /** Módulos habilitados por el plan del negocio (los define el sysadmin). */
+  modules?: Record<string, boolean>;
 }
 
 /** Datos públicos de un negocio. Cacheados por slug; se invalidan con la etiqueta `site:<slug>`. */
@@ -34,6 +36,19 @@ export async function getSite(slug: string): Promise<PublicSite | null> {
   if (res.status === 404) return null;
   if (!res.ok) throw new Error(`API respondió ${res.status}`);
   return (await res.json()) as PublicSite;
+}
+
+/** Promedio y cantidad de reseñas aprobadas (para los datos estructurados). Si el negocio no las tiene, null. */
+export async function getReviewSummary(slug: string): Promise<{ average: number; count: number } | null> {
+  "use cache";
+  cacheLife("minutes");
+  cacheTag(`site:${slug}`);
+  try {
+    const res = await fetch(`${API_URL}/public/sites/${encodeURIComponent(slug)}/reviews`);
+    if (!res.ok) return null;
+    const d = (await res.json()) as { count: number; average: number | null };
+    return d.average !== null && d.count > 0 ? { average: d.average, count: d.count } : null;
+  } catch { return null; }
 }
 
 export interface TemplateSummary { id: string; name: string; blurb: string; mode: "productos" | "servicios"; layout: string; theme: string }

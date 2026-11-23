@@ -106,7 +106,7 @@ test("el precio que se edita en el admin se ve enseguida en la landing", async (
     await form.getByLabel("Precio por mes ($)").fill("12345");
     await form.getByRole("button", { name: /^Guardar/ }).click();
     await expect(form.getByRole("status")).toContainText("Guardado");
-    await a.page.goto(`${BASE}/`);
+    await a.page.goto(`${BASE}/precios`);
     await expect(a.page.locator("#planes")).toContainText("$ 12.345");
   } finally {
     await a.page.goto("/admin/planes");
@@ -115,7 +115,7 @@ test("el precio que se edita en el admin se ve enseguida en la landing", async (
     await again.getByRole("button", { name: /^Guardar/ }).click();
     await expect(again.getByRole("status")).toContainText("Guardado");
   }
-  await a.page.goto(`${BASE}/`);
+  await a.page.goto(`${BASE}/precios`);
   await expect(a.page.locator("#planes")).not.toContainText("$ 12.345");
   await a.context.close();
 });

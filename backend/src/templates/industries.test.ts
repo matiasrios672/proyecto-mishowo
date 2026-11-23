@@ -5,7 +5,7 @@ import { THEME_IDS, LAYOUT_IDS, FONT_PAIR_IDS } from "../lib/design.js";
 describe("plantillas por rubro", () => {
   it("cubre los rubros del spec y los dos de otro rubro", () => {
     const ids = INDUSTRIES.map((i) => i.id);
-    for (const id of ["rotiseria", "ropa", "muebles", "eventos", "gimnasio", "oficios", "belleza", "salud", "otro-productos", "otro-servicios"])
+    for (const id of ["rotiseria", "bar", "ropa", "muebles", "eventos", "gimnasio", "oficios", "belleza", "salud", "otro-productos", "otro-servicios"])
       expect(ids).toContain(id);
     expect(new Set(ids).size).toBe(ids.length);
   });

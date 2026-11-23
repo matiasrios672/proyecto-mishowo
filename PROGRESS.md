@@ -1,5 +1,52 @@
 # PROGRESS — MiShowo (bitácora, lo más nuevo arriba)
 
+## 2026-11-23 (5) — Landing separada en páginas
+- **Home corta:** hero, tira de beneficios, demo interactiva, «¿Qué querés ver?» (6 tarjetas) y cierre. Pasó de varias pantallas de scroll a ~3.400 px en compu.
+- **Cada tema en su página**, con un solo h1, bajada y vuelta a Inicio: /como-funciona, /rubros (franjas por rubro + bares + ejemplos), /cuotas (demo), /funciones (bento) y /precios (planes desde la base + preguntas frecuentes con JSON-LD). Metadatos y sitemap por página.
+- **Navegación:** cabecera con los temas (compu) y **menú nuevo para celular** (antes no había): botón con aria-expanded, Escape, cierra al navegar o tocar afuera. Pie actualizado. NAV_LINKS en un archivo neutro (un arreglo exportado desde un componente cliente no se puede usar en el servidor: rompió el build).
+- Los e2e de landing se movieron a las páginas nuevas (planes y FAQ a /precios, cuotas a /cuotas) y hay pruebas de cada página en 3 anchos, del menú y de la cabecera.
+
+## 2026-11-23 (4) — Recorrido real en Chrome: panel, admin, equipo, pagos; VPS de prueba
+- **Panel del cliente** revisado módulo por módulo en Chrome (compu y celular): sin desbordes. Arreglado: cartel QR con nombre de 2 líneas (el link se pisaba con el pie), «Productos ilimitados» repetido en Plan (panel y landing), botones de fila de 28 px -> 40 px en pantallas táctiles.
+- **Admin con cuenta creada desde cero:** registro -> mail de confirmación -> Owner (admin:promote) -> 2FA (TOTP) -> Equipo: invitación de Soporte y de Admin (mail con link para elegir contraseña, 3 días) -> cada uno elige contraseña y configura su 2FA. Soporte: menú recortado y 403 en pagos, planes, auditoría, equipo y datos de cobro; Admin ve Pagos/Planes/Auditoría pero no Equipo (solo Owner).
+- **Flujo de pago:** clienta elige plan -> ve los datos de transferencia -> sube comprobante (PNG) -> mail de acuse -> Admin ve el comprobante y confirma -> mail «tu plan está activo», plan con vencimiento y auditoría (payment.confirm).
+- **Arreglo:** el resumen del admin mostraba a Soporte ingresos, pagos pendientes y planes: ahora el servidor los oculta (finance=false) y la pantalla también. Test nuevo.
+- **VPS de prueba (dominio temporal):** docker-compose.vps.yml (Traefik v3.6 por HTTP, db, backend, frontend, Mailpit solo local), scripts/vps-up.sh (detecta IP, arma <ip>.sslip.io, genera secretos, levanta y espera la salud), DEPLOY-VPS.md. COOKIE_SECURE nuevo (false solo sin HTTPS). Probado de verdad en esta máquina con localhost como dominio: web, api, subdominio de negocio, CORS, carrito, registro con cookie sin Secure. Bug hallado: Traefik 3.3 no habla con Docker Engine 29 -> v3.6.
+- Datos de cobro cargados en la base local: **ficticios** (TITULAR DE PRUEBA). Hay que cargar los reales desde /admin/planes.
+- Tests: backend 396, frontend 151 unitarios + e2e.
+
+## 2026-11-23 (3) — Landing inspirada en la competencia, cuotas sin interés y deploy listo
+- **Landing:** tomando de Vitrea solo el recurso visual (franjas oscuras por rubro con la palabra gigante detrás de un celular, que se desplaza y sube al hacer scroll; CSS puro con animation-timeline, solo con movimiento permitido) y con la identidad de MiShowo: ropa, comidas/carta y eventos, más una sección «Vendé más ofreciendo cuotas» con demo táctil (3/6/12 cuotas, radios accesibles).
+- **Cuotas sin interés (D-021):** pestaña Pedidos del editor (activar, cantidad, mínimo, aclaración y ejemplo en vivo); línea en cada precio; casilla en el carrito que agrega la frase al mensaje de WhatsApp. Informativo: no hay cobro en MiShowo. Validación Zod en el servidor (2 a 24, aclaración 80, mínimo >= 0) y normalización en el cliente. Seed: ropa, eventos y muebles con cuotas.
+- **Deploy (14.1-14.3):** docker-compose.prod.yml, .env.production.example, DEPLOY.md (Cloudflare wildcard, Coolify, primer Owner, tareas programadas, backups, rollback, verificación), scripts/backup.sh. Dockerfiles: el frontend recibe todas las NEXT_PUBLIC_* al compilar; el backend aplica migraciones al arrancar. Imágenes de producción construidas y verificadas (dist/migrate, cron, admin-cli, seed).
+- Verificado en Chrome: landing en compu y celular (iframe de 390 px, sin desborde), demo de cuotas, página de cliente con cuotas, 1 solo h1, imágenes con alt.
+- Bug de entorno: el backend reiniciado sin FRONTEND_ORIGIN con :3100 daba 403 en el registro desde los e2e.
+- Tests: backend 395, frontend 151 unitarios + 213 e2e (compu y celular; 1 de turnos inestable en paralelo, pasa aislado).
+
+## 2026-11-23 (2) — Cuenta primero, leads, logo, y lo que había quedado a medias
+- **Recorrido de alta:** /crear pide la cuenta antes del rubro; el editor no abre sin sesión (la demo de la landing viaja por el registro con su borrador). Se anota el origen (`utm_source` / sitio de referencia) y el código de quien invitó.
+- **Leads (admin):** embudo en 4 etapas, búsqueda, CSV (Owner/Admin, con protección contra fórmulas), «Escribirle» (mail "Retomar tu página", 1 cada 3 días, nunca a quien se dio de baja) y aviso automático a los 2 días **apagado de fábrica** (`node dist/cron.js nudge-leads`).
+- **Turnos:** servicios con duración y precio, profesionales (cada uno atiende un turno a la vez), email del cliente con acuse, confirmación, cancelación y recordatorio 24 h antes (`node dist/cron.js remind-appointments`, cada hora), recordatorio por WhatsApp desde el panel, navegación por día. Reserva en el servidor con lock por negocio.
+- **Píxeles:** ID de Meta y GA4 en la pestaña SEO, solo con el módulo del plan; el servidor no expone los IDs si el plan no lo incluye y la página solo acepta IDs con formato válido.
+- **Reseñas:** públicas sin cuenta, moderadas por el dueño (aprobar, rechazar, responder), campo trampa + una por conexión por día, estrellas en Google con 3 o más reseñas aprobadas, módulo por plan.
+- **Referidos:** código y link por persona, atribución al registrarse, conteo (invitados, con página, publicados, con plan pago) y ranking en Leads. **El premio por invitar no está automatizado: lo define el dueño.**
+- **Rubros editables desde el admin:** nombre, bajada, frase, tema, diseño, tipografía y visibilidad (los dos «Otro rubro» siempre visibles).
+- **Logo e isotipo** de MiShowo en toda la app, favicon e imágenes para compartir. Remotion fuera; pasos de la landing con escena que cambia sola.
+- Tests: backend 388, frontend 146 unitarios + 195 e2e (compu y celular).
+- Pendiente: consentimiento al registrarse, política de privacidad actualizada, deploy, fotos reales para la demo, edición de colores de temas desde el admin, página del admin para moderar reseñas.
+
+
+## 2026-11-23 — Módulos por plan, emails completos, equipo, QR de marca, carta para bares
+- **Landing:** el explicador de Remotion iba muy rápido y se trababa: ahora dura 1,75 veces más (la coreografía se estira con un reloj propio) y se sacaron los `blur()` animados (se repintaban cada cuadro). Plan gratis destacado (insignia en el hero, tarjeta verde "Empezá acá"), sin subrayados en toda la app, sección "Para bares y restaurantes" con carta + QR de mesa, ilustraciones de producto para páginas sin foto (demo más realista), rubro nuevo **Bar, café y restaurante** y el layout "Mostrador" pasa a llamarse **Carta**.
+- **Compartir:** imagen OG de la landing y por negocio (`/og`) cuando no hay fotos; Twitter card grande siempre.
+- **QR:** cartel con identidad MiShowo (módulos redondeados, ojos azules, marca al centro, botón amarillo, link y pie), PNG de 1080x1528 y la misma imagen al imprimir.
+- **Planes:** el sysadmin prende/apaga módulos por plan desde /admin/planes (D-019). Bug real: guardar un plan borraba `coupons`/`appointments` de los límites.
+- **Emails:** 12 plantillas editables con vista previa en vivo, prueba al propio mail, restaurar original, apagar los automáticos (los de acceso no); días del aviso de vencimiento configurables; comunicados por segmento (ahora o programados) con baja firmada; bandeja de consultas con respuesta por email, búsqueda y paginado; bienvenida automática. Bug real atrapado por los tests: el HTML escrito en una plantilla no se escapaba (inyección en el mail).
+- **Equipo:** el Owner da de alta a empleados por invitación (rol Soporte o Admin).
+- **Paneles:** Resumen del admin con "Para atender" (pagos, consultas, denuncias) y tarjetas por grupo; Inicio del cliente con su link (copiar / WhatsApp).
+- **Turnos:** funcionan por franjas sobre el horario del negocio (capacidad por franja, aviso por email, límite por plan). Falta para un uso serio: servicios con duración y precio, varios profesionales y recordatorio al cliente (ver análisis en la respuesta del día).
+- Tests: backend 359, frontend 146 unitarios + 184 e2e (celular y compu). Pendiente de deploy: agendar `send-campaigns` cada 5 minutos en Coolify.
+
 ## 2026-11-22 — Panel del cliente por módulos, identidad en login/panel/admin, pedidos opcionales
 - **Panel del cliente con barra lateral izquierda** (AppShell compartido con el admin; accesible: salto al contenido, landmarks, aria-current, 44 px, foco visible, menú móvil con Escape). Módulos: Inicio (resumen + checklist con enlaces directos), Catálogo, Pedidos, Cupones, Turnos, Estadísticas, QR, Mi página, Ajustes, Plan. El editor completo y guiado se mantiene para la primera vez y para quien no tiene cuenta (/editor).
 - **Un único editor compartido** por Catálogo / Mi página / Ajustes (vive en el layout): al cambiar de módulo no se desmonta. Antes de salir a otras pantallas, una guarda de navegación espera a que se guarde lo último que se tipeó.

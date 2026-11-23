@@ -9,8 +9,9 @@ import { api, authErrorMessage, safeNext, type PublicUser } from "@/lib/authClie
 import { FormError } from "./AuthShell";
 import { PasswordField } from "./PasswordField";
 import { setUser } from "./authStore";
+import { readRef, readSource } from "@/components/marketing/SourceCapture";
 
-export function RegisterForm() {
+export function RegisterForm({ onDone, nameRequired = false }: { onDone?: () => void; nameRequired?: boolean } = {}) {
   const router = useRouter();
   const next = safeNext(useSearchParams().get("next"));
   const [error, setError] = useState<string | null>(null);
@@ -19,20 +20,21 @@ export function RegisterForm() {
   async function submit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const f = new FormData(e.currentTarget);
+    if (nameRequired && !String(f.get("name") ?? "").trim()) { setError("Contanos tu nombre para armar tu cuenta."); return; }
     setBusy(true);
     setError(null);
     const r = await api<{ user: PublicUser }>("/auth/register", {
-      body: { email: String(f.get("email")), password: String(f.get("password")), name: String(f.get("name") ?? "") || undefined },
+      body: { email: String(f.get("email")), password: String(f.get("password")), name: String(f.get("name") ?? "") || undefined, source: readSource(), ref: readRef() },
     });
     if (!r.ok) { setError(authErrorMessage(r.data.error)); setBusy(false); return; }
     setUser(r.data.user);
-    router.push(next);
+    if (onDone) onDone(); else router.push(next);
   }
 
   return (
     <form onSubmit={submit} className="space-y-4" noValidate>
-      <Field label="Tu nombre (opcional)">
-        {(id) => <TextInput id={id} name="name" autoComplete="name" maxLength={80} />}
+      <Field label={nameRequired ? "Tu nombre" : "Tu nombre (opcional)"} required={nameRequired}>
+        {(id) => <TextInput id={id} name="name" autoComplete="name" maxLength={80} required={nameRequired} />}
       </Field>
       <Field label="Email" required>
         {(id) => <TextInput id={id} name="email" type="email" autoComplete="email" required />}
@@ -41,7 +43,7 @@ export function RegisterForm() {
       <FormError message={error} />
       <Button type="submit" size="lg" className="w-full" disabled={busy}>{busy ? "Creando tu cuenta…" : "Crear mi cuenta"}</Button>
       <p className="text-center text-[15px] text-[#47566A]">
-        ¿Preferís no usar contraseña? <Link className="font-semibold text-[#2F6FB0] underline underline-offset-4" href={`/ingresar?next=${encodeURIComponent(next)}`}>Entrá con un enlace a tu email</Link>
+        ¿Preferís no usar contraseña? <Link className="font-semibold text-[#2F6FB0] " href={`/ingresar?next=${encodeURIComponent(onDone ? "/crear" : next)}`}>Entrá con un enlace a tu email</Link>
       </p>
     </form>
   );

@@ -8,7 +8,7 @@ export const metadata: Metadata = { title: "Creá tu cuenta", robots: { index: f
 
 export default function Page() {
   return (
-    <AuthShell title="Creá tu cuenta" subtitle="Guardá tu página, subí fotos y publicala con tu propio link." footer={<>¿Ya tenés cuenta? <Link className="underline" href="/ingresar">Ingresá</Link></>}>
+    <AuthShell title="Creá tu cuenta" subtitle="Guardá tu página, subí fotos y publicala con tu propio link." footer={<>¿Ya tenés cuenta? <Link className="" href="/ingresar">Ingresá</Link></>}>
       <Suspense fallback={<p className="text-muted-foreground">Cargando…</p>}><RegisterForm /></Suspense>
     </AuthShell>
   );

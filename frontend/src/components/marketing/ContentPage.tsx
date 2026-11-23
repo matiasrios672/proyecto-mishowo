@@ -15,7 +15,7 @@ export function ContentPage({
 }) {
   return (
     <PageWrap>
-      {back && <Link href={back.href} className="mb-6 inline-block text-sm font-medium text-muted-foreground underline-offset-4 hover:underline">← {back.label}</Link>}
+      {back && <Link href={back.href} className="mb-6 inline-block text-sm font-medium text-muted-foreground hover:underline">← {back.label}</Link>}
       <h1 className="mk-display text-[clamp(2.2rem,6vw,3.6rem)] font-extrabold leading-[1.02] tracking-tight [text-wrap:balance]">{title}</h1>
       {intro && <p className="mt-4 max-w-[52ch] text-xl leading-snug text-muted-foreground">{intro}</p>}
       {meta && <p className="mt-3 text-sm text-muted-foreground">{meta}</p>}

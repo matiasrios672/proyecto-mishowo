@@ -144,7 +144,7 @@ export function PublicarTab({ draft, goTab, account }: TabProps) {
             <Button size="lg" disabled className="w-full" aria-describedby="pub-note">Publicar mi página</Button>
             <p id="pub-note" className="text-sm text-muted-foreground">
               Para publicar tu página necesitás una cuenta gratis.{" "}
-              <Link href="/registro?next=/editor" className="font-medium underline underline-offset-4">Crear mi cuenta</Link>
+              <Link href="/registro?next=/editor" className="font-medium ">Crear mi cuenta</Link>
             </p>
           </>
         )}
@@ -152,7 +152,7 @@ export function PublicarTab({ draft, goTab, account }: TabProps) {
         {enabled && published && biz && !changing && (
           <div className="space-y-3 rounded-xl border-2 border-primary p-4" data-testid="published-box">
             <p className="font-semibold">¡Tu página está publicada!</p>
-            <a href={siteUrl(biz.slug)} target="_blank" rel="noopener noreferrer" className="block break-all text-lg font-medium underline underline-offset-4" data-testid="published-link">
+            <a href={siteUrl(biz.slug)} target="_blank" rel="noopener noreferrer" className="block break-all text-lg font-medium " data-testid="published-link">
               {siteHost(biz.slug)}
             </a>
             <div className="flex flex-wrap gap-2">

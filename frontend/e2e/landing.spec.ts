@@ -88,6 +88,20 @@ test.describe("página pública del negocio", () => {
     for (const a of await page.locator("a[href^='https://wa.me/']").all()) await expect(a).toHaveAttribute("href", /^https:\/\/wa\.me\/5491155550000\?text=/);
   });
 
+  test("el botón flotante de WhatsApp existe solo en celular y se sube cuando aparece la barra del pedido", async ({ page }, info) => {
+    await page.goto(url("lupe-empanadas"));
+    const fab = page.getByTestId("floating-whatsapp");
+    if (info.project.name !== "mobile") return void (await expect(fab).toBeHidden());
+    await expect(fab).toBeVisible();
+    await expect(fab).toHaveAttribute("href", /^https:\/\/wa\.me\//);
+    const before = (await fab.boundingBox())!.y;
+    await page.locator("li", { hasText: "Empanada de jamón y queso" }).getByRole("button", { name: /Agregar .* al pedido/ }).click();
+    await expect(page.getByTestId("cart-bar")).toBeVisible();
+    await expect.poll(async () => (await fab.boundingBox())!.y).toBeLessThan(before - 40);
+    const bar = (await page.getByTestId("cart-bar").boundingBox())!;
+    expect((await fab.boundingBox())!.y + 56).toBeLessThanOrEqual(bar.y + 1); // no tapa la barra
+  });
+
   test("en computadora el pedido se abre desde la barra superior y en celular desde la inferior", async ({ page }, info) => {
     await page.goto(url("lupe-empanadas"));
     await page.locator("li", { hasText: "Empanada de jamón y queso" }).getByRole("button", { name: /Agregar .* al pedido/ }).click();

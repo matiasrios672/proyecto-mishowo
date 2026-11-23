@@ -64,9 +64,9 @@ describe("configuración del negocio", () => {
     const body = { enabled: true, slotMinutes: 45, minNoticeHours: 3, capacity: 2, horizonDays: 14, services: ["Corte", "Barba"] };
     const res = await env.call("PUT", "/me/appointments/settings", owner.cookie, body);
     expect(res.statusCode).toBe(200);
-    expect(res.json()).toMatchObject(body);
-    expect((await env.app.inject({ method: "GET", url: "/public/sites/peluqueria/booking" })).json()).toMatchObject({ enabled: true, slotMinutes: 45, horizonDays: 14, services: ["Corte", "Barba"] });
-    for (const bad of [{ slotMinutes: 5 }, { slotMinutes: 500 }, { capacity: 0 }, { capacity: 21 }, { horizonDays: 0 }, { horizonDays: 91 }, { minNoticeHours: -1 }, { services: Array(11).fill("x") }, { enabled: "si" }])
+    expect(res.json()).toMatchObject({ ...body, services: [{ name: "Corte", minutes: null, price: null }, { name: "Barba", minutes: null, price: null }] }); // los servicios viejos (solo nombre) se normalizan
+    expect((await env.app.inject({ method: "GET", url: "/public/sites/peluqueria/booking" })).json()).toMatchObject({ enabled: true, slotMinutes: 45, horizonDays: 14, services: [{ name: "Corte" }, { name: "Barba" }] });
+    for (const bad of [{ slotMinutes: 5 }, { slotMinutes: 500 }, { capacity: 0 }, { capacity: 21 }, { horizonDays: 0 }, { horizonDays: 91 }, { minNoticeHours: -1 }, { services: Array.from({ length: 21 }, (_, i) => `s${i}`) }, { enabled: "si" }])
       expect((await env.call("PUT", "/me/appointments/settings", owner.cookie, { ...body, ...bad })).statusCode, JSON.stringify(bad)).toBe(400);
     expect((await env.call("PUT", "/me/appointments/settings", owner.cookie, body, "http://evil.example")).statusCode).toBe(403);
     expect((await env.call("GET", "/me/appointments/settings")).statusCode).toBe(401);
@@ -89,8 +89,8 @@ describe("reservas públicas", () => {
     const res = await book({ date, time: "10:00", notes: "Primera vez" });
     expect(res.statusCode).toBe(201);
     expect(res.json()).toMatchObject({ date, time: "10:00", status: "pendiente" });
-    expect((await slotsOf(date)).find((x) => x.time === "10:00")).toEqual({ time: "10:00", left: 0 });
-    expect((await slotsOf(date)).find((x) => x.time === "11:00")).toEqual({ time: "11:00", left: 1 });
+    expect((await slotsOf(date)).find((x) => x.time === "10:00")).toMatchObject({ time: "10:00", left: 0 });
+    expect((await slotsOf(date)).find((x) => x.time === "11:00")).toMatchObject({ time: "11:00", left: 1 });
     await new Promise((r) => setTimeout(r, 100));
     const mail = env.mailer.outbox.find((m) => m.subject.startsWith("Nuevo turno"))!;
     expect(mail.to).toBe(owner.email);
@@ -216,5 +216,113 @@ describe("panel de turnos", () => {
     expect((await patch(`/me/appointments/${id}/status`, a.owner.cookie, { status: "otro" })).statusCode).toBe(400);
     expect((await patch("/me/appointments/no-uuid/status", a.owner.cookie, { status: "cancelado" })).statusCode).toBe(400);
     expect((await env.call("GET", "/me/appointments")).statusCode).toBe(401);
+  });
+});
+
+describe("servicios con duración y precio, profesionales y recordatorios", () => {
+  const cfg = { enabled: true, slotMinutes: 30, minNoticeHours: 2, capacity: 1, horizonDays: 30,
+    services: [{ name: "Corte", minutes: 30, price: 8000 }, { name: "Color", minutes: 90, price: 25000 }], staff: [{ id: "lu111111", name: "Lu" }, { id: "jo222222", name: "Jo" }] };
+  async function withCatalog() {
+    const { owner, biz } = await setup({ enabled: false });
+    await conn.db.insert(s.appointmentSettings).values({ businessId: biz.id, ...cfg });
+    return { owner, biz };
+  }
+  const slotsFor = async (date: string, q = "") => (await env.app.inject({ method: "GET", url: `/public/sites/peluqueria/booking/slots?date=${date}${q}` })).json() as { slots: { time: string; left: number; staff: string[] }[]; minutes: number };
+
+  it("la duración del servicio manda: un color de 90 minutos no entra en la última franja del día", async () => {
+    await withCatalog();
+    const date = futureDate(1);
+    const corte = await slotsFor(date, "&service=Corte");
+    const color = await slotsFor(date, "&service=Color");
+    expect(corte.minutes).toBe(30);
+    expect(corte.slots.map((x) => x.time).at(-1)).toBe("12:30"); // 09:00-13:00, de a 30
+    expect(color.slots.map((x) => x.time).at(-1)).toBe("11:30"); // 11:30 + 90 = 13:00
+    expect(color.slots.map((x) => x.time)).not.toContain("12:00");
+    expect((await slotsFor(date, "&service=Inventado")).slots).toBeUndefined();
+  });
+
+  it("con dos profesionales, dos personas reservan la misma hora y la tercera no; «cualquiera» asigna al primero libre", async () => {
+    await withCatalog();
+    const date = futureDate(2);
+    const a = await book({ date, time: "10:00", service: "Corte", customerPhone: "11 1111-1111" });
+    expect(a.statusCode).toBe(201);
+    expect(a.json().staffName).toBe("Lu");
+    const b = await book({ date, time: "10:00", service: "Corte", customerPhone: "11 2222-2222" });
+    expect(b.json().staffName).toBe("Jo");
+    expect((await book({ date, time: "10:00", service: "Corte", customerPhone: "11 3333-3333" })).json().error).toBe("slot_taken");
+    const slot = (await slotsFor(date, "&service=Corte")).slots.find((x) => x.time === "10:00")!;
+    expect(slot).toMatchObject({ left: 0, staff: [] });
+  });
+
+  it("elegir profesional: ocupa solo a esa persona; un servicio largo bloquea las franjas que pisa", async () => {
+    await withCatalog();
+    const date = futureDate(3);
+    expect((await book({ date, time: "09:00", service: "Color", staffId: "jo222222", customerPhone: "11 1111-1111" })).json().staffName).toBe("Jo");
+    const during = (await slotsFor(date, "&service=Corte")).slots;
+    expect(during.find((x) => x.time === "09:30")).toMatchObject({ left: 1, staff: ["lu111111"] }); // Jo sigue en el color hasta las 10:30
+    expect(during.find((x) => x.time === "10:30")).toMatchObject({ left: 2 });
+    expect((await slotsFor(date, "&service=Corte&staff=jo222222")).slots.find((x) => x.time === "09:30")).toMatchObject({ left: 0 });
+    expect((await book({ date, time: "09:30", service: "Corte", staffId: "jo222222", customerPhone: "11 2222-2222" })).json().error).toBe("slot_taken");
+    expect((await book({ date, time: "09:30", service: "Corte", staffId: "nadie", customerPhone: "11 3333-3333" })).json().error).toBe("invalid_staff");
+    const row = (await conn.pool.query("select price, staff_name from appointments order by created_at limit 1")).rows[0];
+    expect(Number(row.price)).toBe(25000);
+    expect(row.staff_name).toBe("Jo");
+  });
+
+  it("dos reservas simultáneas del mismo profesional: una sola gana", async () => {
+    await withCatalog();
+    const date = futureDate(4);
+    const res = await Promise.all([1, 2, 3].map((i) => book({ date, time: "11:00", service: "Corte", staffId: "lu111111", customerPhone: `11 000${i}-0000` })));
+    expect(res.map((r) => r.statusCode).sort()).toEqual([201, 409, 409]);
+  });
+
+  it("el panel guarda servicios y profesionales, les pone id y no deja repetir servicios", async () => {
+    const { owner } = await setup({ enabled: false });
+    const body = { enabled: true, slotMinutes: 30, minNoticeHours: 2, capacity: 1, horizonDays: 30, services: [{ name: "Corte", minutes: 30, price: 8000 }], staff: [{ name: "Lu" }] };
+    const res = await env.call("PUT", "/me/appointments/settings", owner.cookie, body);
+    expect(res.statusCode).toBe(200);
+    expect(res.json().staff[0]).toMatchObject({ name: "Lu" });
+    expect(res.json().staff[0].id).toMatch(/^[a-z0-9]{8}$/);
+    expect((await env.call("PUT", "/me/appointments/settings", owner.cookie, { ...body, services: [{ name: "Corte" }, { name: "corte" }] })).json().error).toBe("duplicate_service");
+    for (const bad of [{ services: [{ name: "X", minutes: 2 }] }, { services: [{ name: "X", price: -5 }] }, { staff: Array(11).fill({ name: "p" }) }])
+      expect((await env.call("PUT", "/me/appointments/settings", owner.cookie, { ...body, ...bad })).statusCode, JSON.stringify(bad)).toBe(400);
+  });
+
+  it("si el cliente deja su email recibe acuse, confirmación y cancelación; sin email no sale nada", async () => {
+    const { owner } = await withCatalog();
+    const date = futureDate(5);
+    env.mailer.outbox.length = 0;
+    const r = await book({ date, time: "10:00", service: "Corte", customerEmail: "Ana@Test.com", customerPhone: "11 1111-1111" });
+    expect(r.statusCode).toBe(201);
+    await new Promise((x) => setTimeout(x, 150));
+    const got = env.mailer.outbox.find((m) => m.to === "ana@test.com")!;
+    expect(got.subject).toBe("Recibimos tu reserva en Peluquería");
+    expect(got.text).toContain("10:00");
+    expect(got.text).toContain("Corte");
+    expect((await patch(`/me/appointments/${r.json().id}/status`, owner.cookie, { status: "confirmado" })).statusCode).toBe(200);
+    await new Promise((x) => setTimeout(x, 150));
+    expect(env.mailer.outbox.map((m) => m.subject)).toContain("Tu turno en Peluquería está confirmado");
+    expect((await patch(`/me/appointments/${r.json().id}/status`, owner.cookie, { status: "cancelado" })).statusCode).toBe(200);
+    await new Promise((x) => setTimeout(x, 150));
+    expect(env.mailer.outbox.map((m) => m.subject)).toContain("Se canceló tu turno en Peluquería");
+    env.mailer.outbox.length = 0;
+    expect((await book({ date, time: "11:00", service: "Corte", customerPhone: "11 5555-5555" })).statusCode).toBe(201); // sin email
+    await new Promise((x) => setTimeout(x, 150));
+    expect(env.mailer.outbox.filter((m) => !m.subject.startsWith("Nuevo turno"))).toHaveLength(0);
+    expect((await book({ date, time: "12:00", service: "Corte", customerEmail: "no-es-un-email", customerPhone: "11 6666-6666" })).statusCode).toBe(400);
+  });
+
+  it("el recordatorio sale una vez, 24 horas antes, solo con email y para turnos vigentes", async () => {
+    const { biz } = await withCatalog();
+    const soon = new Date(Date.now() + 10 * 3600_000), far = new Date(Date.now() + 40 * 3600_000), past = new Date(Date.now() - 3600_000);
+    const mk = (at: Date, over: object = {}) => conn.db.insert(s.appointments).values({ businessId: biz.id, startsAt: at, endsAt: new Date(at.getTime() + 1_800_000), customerName: "Ana", customerPhone: "111111", customerEmail: "ana@test.com", service: "Corte", ...over });
+    await mk(soon); await mk(soon, { customerEmail: null }); await mk(soon, { status: "cancelado" }); await mk(far); await mk(past);
+    env.mailer.outbox.length = 0;
+    const { remindAppointments } = await import("../appointments/notify.js");
+    const [a, b] = await Promise.all([remindAppointments(conn.db, env.mailer), remindAppointments(conn.db, env.mailer)]);
+    expect(a + b).toBe(1);
+    expect(env.mailer.outbox).toHaveLength(1);
+    expect(env.mailer.outbox[0]).toMatchObject({ to: "ana@test.com", subject: "Mañana tenés turno en Peluquería" });
+    expect(await remindAppointments(conn.db, env.mailer)).toBe(0); // no se repite
   });
 });

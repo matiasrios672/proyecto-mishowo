@@ -1,6 +1,7 @@
 import type { FastifyReply, FastifyRequest } from "fastify";
 import type { Config } from "../config.js";
 import type { Db } from "../db/tenant.js";
+import { can, type AreaKey, type Level } from "../lib/permissions.js";
 import { ADMIN_ROLES, currentSession, isAdminRole, type SessionRow, type SessionUser } from "../auth/session.js";
 
 export type AdminRole = (typeof ADMIN_ROLES)[number];
@@ -33,5 +34,13 @@ export async function requireAdmin(db: Db, config: Config, req: FastifyRequest, 
     return null;
   }
   if (!(allow as readonly string[]).includes(ctx.user.role)) { reply.code(403).send({ error: "forbidden_role" }); return null; }
+  return ctx;
+}
+
+/** Igual que requireAdmin, pero exige un permiso por área (ver o gestionar) en vez de un rol. El Owner siempre pasa. */
+export async function requirePerm(db: Db, config: Config, req: FastifyRequest, reply: FastifyReply, area: AreaKey, level: Level = "view"): Promise<AdminCtx | null> {
+  const ctx = await requireAdmin(db, config, req, reply);
+  if (!ctx) return null;
+  if (!can(ctx.user, area, level)) { reply.code(403).send({ error: "forbidden_role", area, level }); return null; }
   return ctx;
 }

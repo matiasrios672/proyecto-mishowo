@@ -38,6 +38,38 @@ export const INDUSTRIES: IndustryTemplate[] = [
     ],
   },
   {
+    id: "bar", name: "Bar, café y restaurante", blurb: "Tu carta digital con QR para la mesa", mode: "productos",
+    layout: "mostrador", theme: "terracota", fontPair: "calida",
+    businessName: "Bar La Esquina", tagline: "Cocina de bodegón, cerveza tirada y buena música",
+    description: "Minutas, pizzas y picadas para compartir. Escaneá el QR de la mesa, mirá la carta y pedí sin esperar. También hacemos pedidos para llevar.",
+    deliveryZone: "Salón, vereda y retiro en el local. Delivery en un radio de 15 cuadras", eventDate: false,
+    categories: [
+      { name: "Para picar", products: [
+        { name: "Picada para dos", description: "Jamón crudo, salame, quesos, aceitunas y pan casero.", price: 14800 },
+        { name: "Rabas con alioli", description: "Crocantes, con limón.", price: 11500 },
+        { name: "Provoleta a la parrilla", description: "Con orégano y ají molido.", price: 7900 },
+      ] },
+      { name: "Platos", products: [
+        { name: "Milanesa napolitana con papas", description: "De ternera, jamón, queso y salsa de la casa.", price: 13900 },
+        { name: "Hamburguesa de la esquina", description: "Doble carne, cheddar, panceta y papas rústicas.", price: 12400 },
+        { name: "Ravioles de ricota", description: "Con salsa a elección: fileto, mixta o crema.", price: 10800, options: [{ label: "Fileto" }, { label: "Mixta", price: 11500 }, { label: "Crema", price: 11200 }] },
+      ] },
+      { name: "Pizzas", products: [
+        { name: "Muzzarella", description: "Salsa de tomate, muzzarella y aceitunas.", price: 9800 },
+        { name: "Fugazzeta rellena", description: "Cebolla, muzzarella y jamón.", price: 12600 },
+      ] },
+      { name: "Postres", products: [
+        { name: "Flan casero con dulce de leche", description: "Con crema.", price: 5200 },
+        { name: "Volcán de chocolate", description: "Con helado de crema americana.", price: 6900 },
+      ] },
+      { name: "Bebidas y tragos", products: [
+        { name: "Cerveza tirada", description: "Rubia, roja o negra.", price: 4800, options: [{ label: "Pinta" }, { label: "Jarra", price: 9200 }] },
+        { name: "Fernet con cola", description: "El clásico, con Coca-Cola.", price: 5600 },
+        { name: "Limonada con menta y jengibre", description: "Natural, exprimida en el momento.", price: 3900 },
+      ] },
+    ],
+  },
+  {
     id: "ropa", name: "Tienda de ropa", blurb: "Indumentaria y accesorios", mode: "productos",
     layout: "grilla", theme: "rosa", fontPair: "moderna",
     businessName: "Luna Indumentaria", tagline: "Ropa cómoda para todos los días",

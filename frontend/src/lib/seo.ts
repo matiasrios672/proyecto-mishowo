@@ -5,7 +5,7 @@ const DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"
 const MAX_OFFERS = 20;
 
 /** Datos estructurados (schema.org) para que Google entienda el negocio: LocalBusiness con su catálogo. */
-export function localBusinessJsonLd(site: SiteModel, url: string, image?: string | null): Record<string, unknown> {
+export function localBusinessJsonLd(site: SiteModel, url: string, image?: string | null, rating?: { average: number; count: number } | null): Record<string, unknown> {
   const phone = site.whatsapp.replace(/\D/g, "");
   const offers = site.categories.flatMap((c) => c.products)
     .filter((p) => p.name.trim() && p.price !== null && p.price >= 0 && !p.isExample)
@@ -28,6 +28,8 @@ export function localBusinessJsonLd(site: SiteModel, url: string, image?: string
     ...(phone ? { telephone: `+${phone}` } : {}),
     ...(site.address ? { address: { "@type": "PostalAddress", streetAddress: site.address, addressCountry: "AR" } } : {}),
     ...(hours.length ? { openingHoursSpecification: hours } : {}),
+    // Estrellas en Google: solo con reseñas aprobadas reales y un mínimo de 3, para no mostrar un promedio de una sola persona.
+    ...(rating && rating.count >= 3 ? { aggregateRating: { "@type": "AggregateRating", ratingValue: rating.average, reviewCount: rating.count, bestRating: 5, worstRating: 1 } } : {}),
     ...(offers.length ? { hasOfferCatalog: { "@type": "OfferCatalog", name: "Catálogo", itemListElement: offers } } : {}),
   };
 }

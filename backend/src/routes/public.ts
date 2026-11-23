@@ -5,6 +5,7 @@ import type { Db } from "../db/tenant.js";
 import * as s from "../db/schema.js";
 import type { Config } from "../config.js";
 import { mediaUrls } from "../media/urls.js";
+import { modulesForPlan } from "../lib/modules.js";
 
 const slugParam = z.object({ slug: z.string().min(2).max(30).regex(/^[a-z0-9-]+$/) });
 
@@ -31,14 +32,19 @@ export function publicRoutes(app: FastifyInstance, db: Db, config: Pick<Config, 
     const video = (await db.select().from(s.media).where(and(eq(s.media.businessId, biz.id), eq(s.media.kind, "video"), isNull(s.media.productId))).limit(1))[0];
 
     reply.header("Cache-Control", "public, max-age=30, stale-while-revalidate=120");
+    const modules = await modulesForPlan(db, biz.planId);
+    // Los IDs de medición solo salen si el plan incluye el módulo: si no, ni se exponen.
+    const publicSettings = Object.fromEntries(Object.entries((biz.settings ?? {}) as Record<string, unknown>).filter(([k]) => k !== "metaPixelId" && k !== "gaId"));
+    const settings = modules.pixels ? biz.settings : publicSettings;
     return {
       status: "published",
       business: {
         slug: biz.slug, name: biz.name, industry: biz.industry, description: biz.description,
         tagline: biz.tagline, whatsapp: biz.whatsapp, instagram: biz.instagram, address: biz.address,
-        deliveryZone: biz.deliveryZone, hours: biz.hours, design: biz.design, settings: biz.settings,
+        deliveryZone: biz.deliveryZone, hours: biz.hours, design: biz.design, settings,
         planId: biz.planId,
       },
+      modules,
       cover: firstImage.get(null) ?? null,
       logo: logoRow ? mediaUrls(config, logoRow.path, "image") : null,
       video: video ? mediaUrls(config, video.path, video.kind).src : null,

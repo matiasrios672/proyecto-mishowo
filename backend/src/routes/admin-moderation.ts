@@ -5,12 +5,10 @@ import type { Config } from "../config.js";
 import type { Db } from "../db/tenant.js";
 import * as s from "../db/schema.js";
 import { audit } from "../audit.js";
-import { requireAdmin } from "../admin/guard.js";
-import { ADMIN_ROLES } from "../auth/session.js";
+import { requirePerm } from "../admin/guard.js";
 import type { SiteChanged } from "../lib/revalidate.js";
 
 const PAGE = 25;
-const MANAGE = ["owner", "admin"] as const; // Soporte mira y deja notas; no despublica ni suspende
 const uuid = z.string().uuid();
 const STATUSES = ["nuevo", "revisado", "accion_tomada"] as const;
 const ACTIONS = ["note", "dismiss", "unpublish", "suspend"] as const;
@@ -18,7 +16,7 @@ const ACTIONS = ["note", "dismiss", "unpublish", "suspend"] as const;
 /** Cola de moderación de denuncias. Todo queda en la auditoría inmutable; la nota se guarda ahí (después de la acción). */
 export function adminModerationRoutes(app: FastifyInstance, db: Db, config: Config, notify: SiteChanged) {
   app.get("/admin/reports", async (req, reply) => {
-    const ctx = await requireAdmin(db, config, req, reply);
+    const ctx = await requirePerm(db, config, req, reply, "denuncias","view");
     if (!ctx) return;
     const q = z.object({ status: z.enum([...STATUSES, "todas"]).default("nuevo"), page: z.coerce.number().int().min(1).max(10_000).default(1) }).safeParse(req.query);
     if (!q.success) return reply.code(400).send({ error: "invalid_request" });
@@ -53,7 +51,7 @@ export function adminModerationRoutes(app: FastifyInstance, db: Db, config: Conf
     const parsed = body.safeParse(req.body);
     if (!parsed.success || !uuid.safeParse(req.params.id).success) return reply.code(400).send({ error: "invalid_request" });
     const { action, note } = parsed.data;
-    const ctx = await requireAdmin(db, config, req, reply, action === "note" ? ADMIN_ROLES : MANAGE);
+    const ctx = await requirePerm(db, config, req, reply, "denuncias", action === "note" ? "view" : "manage");
     if (!ctx) return;
     if (action === "note" && !note) return reply.code(400).send({ error: "note_required" });
 
@@ -97,7 +95,7 @@ export function adminModerationRoutes(app: FastifyInstance, db: Db, config: Conf
 
   /** Cantidad de denuncias abiertas, para las alertas. */
   app.get("/admin/reports/open-count", async (req, reply) => {
-    const ctx = await requireAdmin(db, config, req, reply);
+    const ctx = await requirePerm(db, config, req, reply, "denuncias","view");
     if (!ctx) return;
     const [row] = await db.select({ n: sql<number>`count(*)::int` }).from(s.reports).innerJoin(s.businesses, and(eq(s.businesses.id, s.reports.businessId), isNull(s.businesses.deletedAt))).where(eq(s.reports.status, "nuevo"));
     return { open: row?.n ?? 0 };

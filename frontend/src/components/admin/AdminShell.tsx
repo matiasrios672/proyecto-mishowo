@@ -6,7 +6,7 @@ import { usePathname, useRouter } from "next/navigation";
 import QRCode from "qrcode";
 import { Wordmark } from "@/components/brand/Wordmark";
 import { AppShell, type NavGroup, type NavItem } from "@/components/brand/AppShell";
-import { IconCard, IconEdit, IconFlag, IconHome, IconServer, IconShield, IconStore, IconTag, IconUsers } from "@/components/marketing/Doodles";
+import { IconCard, IconChat, IconEdit, IconFlag, IconHome, IconMail, IconSparkle, IconServer, IconShield, IconStore, IconTag, IconUsers } from "@/components/marketing/Doodles";
 import { Button } from "@/components/ui/button";
 import { Field, TextInput } from "@/components/ui/fields";
 import { api } from "@/lib/authClient";
@@ -22,11 +22,15 @@ const ADMIN_GROUPS: { label: string; items: { href: string; label: string; Icon:
     { href: "/admin", label: "Resumen", Icon: IconHome, exact: true },
     { href: "/admin/pagos", label: "Pagos", Icon: IconCard, roles: ["owner", "admin"] },
     { href: "/admin/negocios", label: "Negocios", Icon: IconStore },
+    { href: "/admin/leads", label: "Leads", Icon: IconSparkle },
     { href: "/admin/usuarios", label: "Usuarios", Icon: IconUsers },
   ] },
   { label: "Moderación y contenido", items: [
+    { href: "/admin/consultas", label: "Consultas", Icon: IconChat },
     { href: "/admin/denuncias", label: "Denuncias", Icon: IconFlag },
+    { href: "/admin/emails", label: "Emails", Icon: IconMail },
     { href: "/admin/contenido", label: "Contenido", Icon: IconEdit },
+    { href: "/admin/rubros", label: "Rubros", Icon: IconStore },
     { href: "/admin/planes", label: "Planes", Icon: IconTag, roles: ["owner", "admin"] },
   ] },
   { label: "Sistema", items: [
@@ -101,7 +105,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
   useEffect(() => { if (me === "anon") router.replace(`/ingresar?next=${encodeURIComponent(path)}`); }, [me, path, router]);
 
   if (me === null || me === "anon") return <main className="p-6 text-muted-foreground">Cargando…</main>;
-  if (me === "denied") return <Box><h1 className="text-2xl font-bold">No tenés acceso</h1><p className="text-muted-foreground">Esta sección es solo para el equipo de MiShowo.</p><Link href="/" className="underline">Volver al inicio</Link></Box>;
+  if (me === "denied") return <Box><h1 className="text-2xl font-bold">No tenés acceso</h1><p className="text-muted-foreground">Esta sección es solo para el equipo de MiShowo.</p><Link href="/" className="">Volver al inicio</Link></Box>;
   if (!me.totpEnabled) return <Setup2fa onDone={() => setTick((n) => n + 1)} />;
   if (!me.verified)
     return (

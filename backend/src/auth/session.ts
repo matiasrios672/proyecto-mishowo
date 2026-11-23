@@ -19,7 +19,8 @@ function cookieOptions(config: Config, maxAgeSec: number) {
   return {
     httpOnly: true,
     sameSite: "lax" as const,
-    secure: config.NODE_ENV === "production",
+    // Auto: segura en producción. Con un dominio temporal sin HTTPS (VPS de prueba) se apaga con COOKIE_SECURE=false.
+    secure: config.COOKIE_SECURE === "auto" ? config.NODE_ENV === "production" : config.COOKIE_SECURE === "true",
     path: "/",
     maxAge: maxAgeSec,
     ...(config.COOKIE_DOMAIN ? { domain: config.COOKIE_DOMAIN } : {}),

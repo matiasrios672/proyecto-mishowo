@@ -63,7 +63,7 @@ export function LoginForm() {
           <Button type="submit" size="lg" className="w-full" disabled={busy}>
             {busy ? "Un momento…" : mode === "password" ? "Ingresar" : "Enviarme el enlace"}
           </Button>
-          {mode === "password" && <p className="text-center text-[15px]"><Link className="font-semibold text-[#2F6FB0] underline underline-offset-4" href="/recuperar">Olvidé mi contraseña</Link></p>}
+          {mode === "password" && <p className="text-center text-[15px]"><Link className="font-semibold text-[#2F6FB0] " href="/recuperar">Olvidé mi contraseña</Link></p>}
         </form>
       )}
       </div>

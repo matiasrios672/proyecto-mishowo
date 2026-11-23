@@ -100,7 +100,7 @@ export function PlanPanel() {
               <p className="mt-1 text-2xl font-bold">{p.priceMonthly === 0 ? "Gratis" : <>{formatPrice(p.priceMonthly)}<span className="text-sm font-normal text-muted-foreground"> /mes</span></>}</p>
               <ul className="my-3 flex-1 space-y-1 text-sm text-muted-foreground">
                 <li>{p.limits.products ? `Hasta ${p.limits.products} productos` : "Productos ilimitados"}</li>
-                {p.features.map((f) => <li key={f}>{f}</li>)}
+                {p.features.filter((f) => f.trim().toLowerCase() !== (p.limits.products ? `hasta ${p.limits.products} productos` : "productos ilimitados")).map((f) => <li key={f}>{f}</li>)}
               </ul>
               {p.priceMonthly > 0 && (
                 <Button size="sm" variant={choice === p.id ? "default" : "outline"} aria-pressed={choice === p.id} onClick={() => { setChoice(p.id); setSent(false); }}>
@@ -128,7 +128,7 @@ export function PlanPanel() {
               <dl className="space-y-1">
                 {([["Titular", info.holder], ["Alias", info.alias], ["CBU", info.cbu], ["Banco", info.bank]] as const).filter(([, v]) => v).map(([k, v]) => (
                   <div key={k} className="flex items-center gap-2"><dt className="w-16 text-muted-foreground">{k}</dt><dd className="font-medium">{v}</dd>
-                    <button type="button" className="text-xs underline" onClick={() => void copy(k, v)}>{copied === k ? "¡Copiado!" : "Copiar"}</button></div>
+                    <button type="button" className="text-xs " onClick={() => void copy(k, v)}>{copied === k ? "¡Copiado!" : "Copiar"}</button></div>
                 ))}
               </dl>
             ) : <p>Todavía no cargamos los datos de transferencia. Escribinos desde la página de contacto y te los pasamos.</p>}
@@ -160,7 +160,7 @@ export function PlanPanel() {
                 {p.status === "pendiente" && !p.hasReceipt && (
                   <label className="mt-2 block text-xs">Sumar comprobante: <input type="file" accept="image/png,image/jpeg,image/webp,application/pdf" onChange={(e) => { const f = e.target.files?.[0]; if (f) void addReceipt(p.id, f); }} /></label>
                 )}
-                {p.hasReceipt && <a className="mt-1 inline-block text-xs underline" href={`${API_URL}/me/payments/${p.id}/receipt`} target="_blank" rel="noopener noreferrer">Ver comprobante</a>}
+                {p.hasReceipt && <a className="mt-1 inline-block text-xs " href={`${API_URL}/me/payments/${p.id}/receipt`} target="_blank" rel="noopener noreferrer">Ver comprobante</a>}
               </li>
             ))}
           </ul>

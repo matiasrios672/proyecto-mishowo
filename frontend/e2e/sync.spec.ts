@@ -13,15 +13,15 @@ async function newDevice(browser: Browser) {
   return { context, page: await context.newPage() };
 }
 
-async function startDraft(page: Page, rubro = /Rotisería y comidas/) {
-  await page.goto("/crear");
-  await page.getByRole("button", { name: rubro }).click();
-  await page.waitForURL("**/editor");
+async function startDraft(page: Page, rubro?: string) {
+  await page.goto("/");
+  if (rubro) await page.getByTestId("live-demo").getByRole("button", { name: rubro }).click();
+  await page.getByRole("button", { name: "Usar este diseño para mi página" }).click(); // la demo de la landing deja un borrador y pide la cuenta
+  await page.waitForURL("**/registro**");
 }
 
 async function signUp(page: Page, mail: string) {
   await startDraft(page);
-  await page.getByRole("link", { name: "Guardar mi página" }).click();
   await page.getByLabel(/^Email/).fill(mail);
   await page.getByLabel(/^Contraseña/).fill(PASS);
   await page.getByRole("button", { name: "Crear mi cuenta" }).click();
@@ -64,7 +64,7 @@ test.describe("guardado en la cuenta", () => {
     await rename(page, "Mi negocio privado");
 
     await signOutFromShell(page);
-    await expect(page.getByRole("heading", { name: /Todavía no elegiste un rubro/ })).toBeVisible();
+    await expect(page.getByTestId("crear-account")).toBeVisible();
     const left = await page.evaluate(() => Object.keys(window.localStorage).filter((k) => k.startsWith("mishowo:draft") || k.startsWith("mishowo:sync")));
     expect(left).toEqual([]); // nada del negocio queda en el navegador
 
@@ -156,7 +156,7 @@ test.describe("guardado en la cuenta", () => {
     await rename(a.page, "Página guardada");
 
     const b = await newDevice(browser);
-    await startDraft(b.page, /Tienda de ropa/); // empieza otro borrador sin cuenta
+    await startDraft(b.page, "Ropa"); // empieza otro borrador sin cuenta
     await signIn(b.page, mail);
     await expect(b.page.getByRole("heading", { name: "Ya tenés una página guardada" })).toBeVisible();
     await b.page.getByRole("button", { name: "Usar la página de mi cuenta" }).click();

@@ -62,7 +62,7 @@ export function NegocioTab({ draft, update }: TabProps) {
           {(id) => <TextInput id={id} autoComplete="street-address" value={draft.address} onChange={(e) => update((d) => ({ ...d, address: e.target.value }), "address")} />}
         </Field>
         {mapLink && (
-          <a href={mapLink} target="_blank" rel="noopener noreferrer" className="text-sm underline">Ver la dirección en el mapa</a>
+          <a href={mapLink} target="_blank" rel="noopener noreferrer" className="text-sm ">Ver la dirección en el mapa</a>
         )}
       </Section>
 

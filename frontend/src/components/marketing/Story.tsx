@@ -6,14 +6,14 @@ import {
 
 const wrap = "mx-auto w-full max-w-6xl px-5 sm:px-8";
 const at = (i: number) => ({ "--i": i }) as CSSProperties;
-const glass = "border border-white/80 bg-white/60 shadow-[0_30px_60px_-30px_rgba(47,111,176,0.4)] backdrop-blur-xl";
+const glass = "border border-white/80 bg-white/80 shadow-[0_30px_60px_-30px_rgba(47,111,176,0.4)]";
 
 /** Luces translúcidas de fondo (reemplazan al sol de la versión anterior). */
 export function Glow({ className = "" }: { className?: string }) {
   return (
     <div aria-hidden className={`pointer-events-none absolute inset-0 -z-10 overflow-hidden ${className}`}>
-      <div className="mk-blob absolute -left-24 top-10 size-96 rounded-full bg-[#74ACDF]/35 blur-3xl" />
-      <div className="mk-blob absolute -right-24 bottom-0 size-[28rem] rounded-full bg-[#2F6FB0]/20 blur-3xl" style={{ animationDelay: "-8s" }} />
+      <div className="mk-orb absolute -left-24 top-10 size-96 rounded-full" style={{ "--orb": "rgb(116 172 223 / 0.52)" } as React.CSSProperties} />
+      <div className="mk-orb absolute -right-24 bottom-0 size-[28rem] rounded-full" style={{ "--orb": "rgb(47 111 176 / 0.30)" } as React.CSSProperties} />
     </div>
   );
 }
@@ -106,7 +106,7 @@ export function Story() {
                 <div className={`${row} flex-col items-start gap-1`} style={at(2)}>
                   <span className="flex items-center gap-2"><span className="size-8 rounded-full bg-gradient-to-br from-[#E9759B] to-[#F6B40E]" /><span className="text-sm font-extrabold text-[#0E1B2C]">@lupe.empanadas</span></span>
                   <span className="text-xs text-[#0E1B2C]/70">Empanadas caseras. Pedí por acá 👇</span>
-                  <span className="text-xs font-bold text-[#2F6FB0] underline">lupe.mishowo.com</span>
+                  <span className="text-xs font-bold text-[#2F6FB0] ">lupe.mishowo.com</span>
                 </div>
                 <div className={`${row} justify-center`} style={at(3)}><IconQr className="size-16 text-[#0E1B2C]" /></div>
               </div>
@@ -144,7 +144,7 @@ export function Compare() {
           <div className={`relative rounded-3xl p-7 ${glass} bg-gradient-to-br from-[#74ACDF]/25 to-white/70`}>
             <p className="mk-display text-xl font-extrabold text-[#2F6FB0]">Con MiShowo</p>
             <ul className="mt-5 space-y-4">
-              {con.map((t) => <li key={t} className="flex gap-3 font-medium text-[#0E1B2C]"><IconCheck className="mt-0.5 size-5 shrink-0 text-emerald-600" />{t}</li>)}
+              {con.map((t) => <li key={t} className="flex gap-3 font-medium text-[#0E1B2C]"><IconCheck className="mt-0.5 size-5 shrink-0 text-emerald-700" />{t}</li>)}
             </ul>
             <Link href="/crear" className="mt-7 inline-flex items-center justify-center rounded-xl bg-[#2F6FB0] px-6 py-3.5 font-bold text-white transition-transform hover:bg-[#2A649F] active:scale-95 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring">Creá tu página gratis</Link>
           </div>

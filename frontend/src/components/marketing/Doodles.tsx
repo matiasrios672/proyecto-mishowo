@@ -118,3 +118,6 @@ export const IconEye = ({ className }: IconProps) => (
 export const IconEyeOff = ({ className }: IconProps) => (
   <Svg className={className}><path d="M3 3l18 18M10.600 5.100A10 10 0 0 1 12 5c6.500 0 10 7 10 7a17 17 0 0 1-3.200 4M6.300 6.300A17 17 0 0 0 2 12s3.500 7 10 7a9.700 9.700 0 0 0 4.200-.9M9.900 9.900a3 3 0 0 0 4.200 4.200" /></Svg>
 );
+export const IconMail = ({ className }: IconProps) => (
+  <Svg className={className}><rect {...tint} x="3" y="5.500" width="18" height="13" rx="2.500" /><path d="M3.500 7.500 12 13l8.500-5.500M5.500 5.500h13A2.500 2.500 0 0 1 21 8v8a2.500 2.500 0 0 1-2.500 2.500h-13A2.500 2.500 0 0 1 3 16V8a2.500 2.500 0 0 1 2.500-2.500Z" /></Svg>
+);

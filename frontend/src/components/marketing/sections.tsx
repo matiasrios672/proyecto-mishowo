@@ -6,7 +6,6 @@ import { API_URL } from "@/lib/api";
 import { formatPrice } from "@/lib/format";
 import { LiveDemo } from "./LiveDemo";
 import { HeroStage } from "./HeroStage";
-import { Underline } from "./Doodles";
 import { Glow } from "./Story";
 import { DEFAULT_FAQ, type FaqItem } from "@/content/faq";
 import { getSiteConfig } from "@/lib/siteConfig";
@@ -36,19 +35,22 @@ export function Hero() {
     <section className="relative isolate overflow-hidden bg-gradient-to-b from-[#DCEBF8] to-[#EAF4FC]">
       <Glow />
       <div aria-hidden className="mk-grid pointer-events-none absolute inset-0 -z-10" />
-      <div className={`${wrap} grid items-center gap-4 pb-10 pt-12 lg:grid-cols-[1.05fr_1fr] lg:gap-8 lg:pb-16 lg:pt-16`}>
+      <div className={`${wrap} grid items-center gap-4 pb-10 pt-12 lg:grid-cols-[1fr_1.1fr] lg:gap-12 lg:pb-16 lg:pt-16`}>
         <div>
+          <p className="site-rise mb-6 inline-flex items-center gap-2 rounded-full bg-[#15803D] px-4 py-2 text-sm font-extrabold text-white shadow-[0_12px_30px_-12px_rgba(21,128,61,0.8)]" data-testid="free-badge">
+            <span aria-hidden className="size-2 rounded-full bg-white" />Plan gratis para siempre · sin tarjeta
+          </p>
           <h1 className="mk-display site-rise text-[clamp(3rem,7.4vw,5.6rem)] font-extrabold leading-[0.92] tracking-tight text-[#0E1B2C]">
             <span className="block">Tu negocio,</span>{" "}
-            <span className="relative block w-fit text-primary">en un link.<Underline className="absolute -bottom-2 left-0 h-3.5 w-full" /></span>
+            <span className="relative block w-fit text-primary">en un link.</span>
           </h1>
           <p className="site-rise mt-8 max-w-[34ch] text-xl leading-snug text-[#0E1B2C]/80 sm:text-2xl" style={{ "--d": "120ms" } as React.CSSProperties}>
-            Armá la página de tu negocio desde el celular. Tus clientes eligen y te piden por WhatsApp.
+            Armá la página de tu negocio desde el celular. Tus clientes eligen y te piden por WhatsApp, sin comisión por venta.
           </p>
           <div className="site-rise mt-9 flex flex-wrap items-center gap-4" style={{ "--d": "240ms" } as React.CSSProperties}>
             <Link href="/crear" className={ctaSol}>Creá tu página gratis</Link>
             <a href="#probalo" className={ctaGhost}>Probalo ahora</a>
-            <p className="basis-full text-sm font-medium text-[#0E1B2C]/70">Sin tarjeta. Sin instalar nada.</p>
+            <p className="basis-full text-sm font-medium text-[#0E1B2C]/70">Empezás en 5 minutos. Sin instalar nada.</p>
           </div>
         </div>
         <HeroStage />
@@ -179,14 +181,15 @@ async function PlansList() {
   return (
     <ul className="mt-12 grid gap-6 md:grid-cols-3">
       {plans.map((p) => (
-        <li key={p.id} className="flex flex-col rounded-3xl border-2 border-border bg-white p-7">
+        <li key={p.id} className={`relative flex flex-col rounded-3xl border-2 bg-white p-7 ${p.priceMonthly === 0 ? "border-[#15803D] shadow-[0_30px_60px_-30px_rgba(21,128,61,0.55)] md:-translate-y-2" : "border-border"}`}>
+          {p.priceMonthly === 0 && <span className="absolute -top-3.5 left-7 rounded-full bg-[#15803D] px-3.5 py-1 text-xs font-extrabold uppercase tracking-wide text-white">Empezá acá · gratis</span>}
           <h3 className="mk-display text-2xl font-bold">{p.name}</h3>
           <p className="mk-display mt-3 text-4xl font-extrabold tracking-tight">
-            {formatPrice(p.priceMonthly) || "$ 0"}<span className="text-base font-semibold text-muted-foreground"> /mes</span>
+            {p.priceMonthly === 0 ? "Gratis" : formatPrice(p.priceMonthly)}<span className="text-base font-semibold text-muted-foreground">{p.priceMonthly === 0 ? " para siempre" : " /mes"}</span>
           </p>
           <ul className="mt-6 flex-1 space-y-2.5 text-[0.95rem]">
             <li className="flex gap-2.5"><Check />{p.limits.products ? `Hasta ${p.limits.products} productos` : "Productos ilimitados"}</li>
-            {p.features.map((f) => <li key={f} className="flex gap-2.5"><Check />{f}</li>)}
+            {p.features.filter((f) => f.trim().toLowerCase() !== (p.limits.products ? `hasta ${p.limits.products} productos` : "productos ilimitados")).map((f) => <li key={f} className="flex gap-2.5"><Check />{f}</li>)}
           </ul>
           <Link href={p.priceMonthly === 0 ? "/crear" : `/registro?next=${encodeURIComponent("/planes")}`} className={`mt-8 ${p.priceMonthly === 0 ? ctaSol : ctaGhost}`}>
             {p.priceMonthly === 0 ? "Empezar gratis" : `Elegir ${p.name}`}
@@ -212,35 +215,6 @@ export function Plans({ fallback }: { fallback: React.ReactNode }) {
 }
 export { PlansList };
 
-const QUOTES = [
-  { q: "Antes me escribían por Instagram y se me perdían los pedidos. Ahora llegan ordenados y sé qué preparar.", who: "Dueña de una rotisería" },
-  { q: "Armé la página desde el celular mientras esperaba un cliente. Esa misma tarde ya la estaba compartiendo.", who: "Vendedora de ropa" },
-  { q: "Mis alumnos ven los planes y los horarios sin preguntarme nada. Me ahorra un montón de mensajes.", who: "Profe de entrenamiento" },
-];
-
-export function Testimonials() {
-  return (
-    <section aria-labelledby="test-title" className="bg-[#EAF4FC]">
-      <div className={`${wrap} py-16 sm:py-24`}>
-        <h2 id="test-title" className="mk-display max-w-[22ch] text-4xl font-extrabold leading-tight tracking-tight sm:text-5xl">Lo que cuentan quienes ya venden con su link</h2>
-        <p className="mt-3 text-sm font-medium text-muted-foreground">Testimonios de ejemplo: los vamos a reemplazar por los de clientes reales.</p>
-        <ul className="mt-10 grid gap-10 md:grid-cols-3">
-          {QUOTES.map((x) => (
-            <li key={x.who}>
-              <blockquote className="mk-display text-2xl font-semibold leading-snug">“{x.q}”</blockquote>
-              <p className="mt-4 flex items-center gap-2 text-sm text-muted-foreground">
-                {x.who}
-                <span className="rounded-full border border-dashed border-muted-foreground/60 px-2 py-0.5 text-xs">Ejemplo</span>
-              </p>
-            </li>
-          ))}
-        </ul>
-      </div>
-    </section>
-  );
-}
-
-/** Preguntas frecuentes: las del admin si cargó alguna; si no, las de siempre. Mientras llegan (o si falla la API) se ven las de siempre. */
 export function FaqSection() {
   return (
     <Suspense fallback={<FaqList items={DEFAULT_FAQ} />}>
@@ -272,28 +246,12 @@ function FaqList({ items }: { items: FaqItem[] }) {
   );
 }
 
-export function Soon() {
-  const items = ["Crear tu página contándonos tu idea", "Armar el catálogo a partir de fotos", "Generador de posteos para Instagram", "Mejorar las fotos de tus productos", "Cobros online y envíos"];
-  return (
-    <section aria-labelledby="soon-title" className="border-y border-border bg-muted/50">
-      <div className={`${wrap} py-14 sm:py-20`}>
-        <h2 id="soon-title" className="mk-display text-3xl font-extrabold tracking-tight sm:text-4xl">Próximamente</h2>
-        <ul className="mt-6 flex flex-wrap gap-3">
-          {items.map((i) => (
-            <li key={i} className="rounded-full border border-border bg-white px-4 py-2 text-sm font-medium">{i}</li>
-          ))}
-        </ul>
-      </div>
-    </section>
-  );
-}
-
 export function FinalCta() {
   return (
     <section aria-labelledby="final-title" className="relative isolate overflow-hidden bg-[#0E1B2C] text-white">
       <div aria-hidden className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
-        <div className="mk-blob absolute -right-20 -top-20 size-[30rem] rounded-full bg-[#74ACDF]/30 blur-3xl" />
-        <div className="mk-blob absolute -bottom-32 left-10 size-96 rounded-full bg-[#2F6FB0]/30 blur-3xl" style={{ animationDelay: "-7s" }} />
+        <div className="mk-orb absolute -right-20 -top-20 size-[30rem] rounded-full" style={{ "--orb": "rgb(116 172 223 / 0.45)" } as React.CSSProperties} />
+        <div className="mk-orb absolute -bottom-32 left-10 size-96 rounded-full" style={{ "--orb": "rgb(47 111 176 / 0.45)" } as React.CSSProperties} />
       </div>
       <div className={`${wrap} py-24 sm:py-32`}>
         <h2 id="final-title" className="mk-display max-w-[12ch] text-5xl font-extrabold leading-[0.98] tracking-tight sm:text-7xl">Creá tu página gratis</h2>

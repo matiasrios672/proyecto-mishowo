@@ -5,7 +5,7 @@ import { HELP } from "@/content/help";
 const base = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const pages = ["", "/crear", "/blog", "/ayuda", "/contacto", "/terminos", "/privacidad", "/cancelacion", "/arrepentimiento"];
+  const pages = ["", "/como-funciona", "/rubros", "/cuotas", "/funciones", "/precios", "/crear", "/blog", "/ayuda", "/contacto", "/terminos", "/privacidad", "/cancelacion", "/arrepentimiento"];
   return [
     ...pages.map((p) => ({ url: `${base}${p}`, changeFrequency: "weekly" as const, priority: p === "" ? 1 : 0.6 })),
     ...BLOG.map((a) => ({ url: `${base}/blog/${a.slug}`, lastModified: a.date, priority: 0.7 })),

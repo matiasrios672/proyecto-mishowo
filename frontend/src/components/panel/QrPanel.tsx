@@ -2,7 +2,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import QRCode from "qrcode";
+import { POSTER_H, POSTER_W, renderQrPoster } from "@/lib/qrPoster";
 import { Button } from "@/components/ui/button";
 import { api } from "@/lib/authClient";
 import { siteUrl } from "@/lib/siteUrl";
@@ -24,9 +24,9 @@ export function QrPanel() {
   useEffect(() => {
     if (!url) return;
     let alive = true;
-    QRCode.toDataURL(url, { errorCorrectionLevel: "M", margin: 2, width: 1024, color: { dark: "#0E1B2C", light: "#FFFFFF" } }).then((d) => { if (alive) setPng(d); });
+    renderQrPoster({ url, name: biz?.name ?? "", display: siteUrl(biz?.slug ?? "").replace(/^https?:\/\//, "") }).then((d) => { if (alive) setPng(d); });
     return () => { alive = false; };
-  }, [url]);
+  }, [url, biz]);
 
   if (biz === undefined) return <p className="text-muted-foreground">Cargando…</p>;
   if (!biz) return <p className="rounded-xl border border-dashed p-6 text-center">Primero creá tu página en el editor.</p>;
@@ -40,11 +40,8 @@ export function QrPanel() {
         {!published && <p role="status" className="mt-3 rounded-lg bg-muted p-3 text-sm">Tu página todavía no está publicada. El QR ya funciona, pero va a mostrar un error hasta que la publiques.</p>}
       </div>
 
-      <div className="mx-auto max-w-sm rounded-2xl border bg-white p-6 text-center text-[#0E1B2C] print:border-0" data-testid="qr-poster">
-        <p className="text-xl font-bold">{biz.name}</p>
-        {png ? <img src={png} alt={`Código QR que abre ${siteUrl(biz.slug)}`} width={320} height={320} className="mx-auto my-3 size-72" data-testid="qr-image" /> : <div className="mx-auto my-3 size-72" />}
-        <p className="font-medium">Escaneá y mirá nuestros productos</p>
-        <p className="mt-1 break-all text-sm opacity-70">{siteUrl(biz.slug).replace(/^https?:\/\//, "")}</p>
+      <div className="mx-auto max-w-sm print:max-w-none" data-testid="qr-poster">
+        {png ? <img src={png} alt={`Cartel de ${biz.name} con el código QR que abre ${siteUrl(biz.slug)}`} width={POSTER_W} height={POSTER_H} className="h-auto w-full rounded-2xl border shadow-lg print:rounded-none print:border-0 print:shadow-none" data-testid="qr-image" /> : <div className="aspect-[1080/1528] w-full animate-pulse rounded-2xl bg-muted" />}
       </div>
 
       <div className="flex flex-wrap justify-center gap-3 print:hidden">

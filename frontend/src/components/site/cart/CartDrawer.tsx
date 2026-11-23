@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { emptyCart, removeItem, setQuantity, totals } from "@/lib/cart";
 import { formatPrice } from "@/lib/format";
+import { installmentValue, qualifies, type Installments } from "@/lib/installments";
 import { buildOrderMessage, orderErrorMessage } from "@/lib/orderMessage";
 import { whatsappLink } from "@/lib/whatsapp";
 import { useCart, writeCart } from "./cartStore";
@@ -12,6 +13,7 @@ const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
 interface Props {
   slug: string; businessName: string; whatsapp: string; greeting: string;
   showQuantities: boolean; askEventDate: boolean;
+  installments?: Installments;
 }
 
 type Status =
@@ -34,7 +36,7 @@ function source(): string | null {
   }
 }
 
-export function CartDrawer({ slug, businessName, whatsapp, greeting, showQuantities, askEventDate }: Props) {
+export function CartDrawer({ slug, businessName, whatsapp, greeting, showQuantities, askEventDate, installments }: Props) {
   const cart = useCart(slug);
   const { count, total, hasUnpriced } = totals(cart);
   const [open, setOpen] = useState(false);
@@ -43,6 +45,7 @@ export function CartDrawer({ slug, businessName, whatsapp, greeting, showQuantit
   const [notes, setNotes] = useState("");
   const [eventDate, setEventDate] = useState("");
   const [phone, setPhone] = useState("");
+  const [wantInst, setWantInst] = useState(false);
   const [couponOpen, setCouponOpen] = useState(false);
   const [couponInput, setCouponInput] = useState("");
   const [coupon, setCoupon] = useState<{ code: string; discount: number } | null>(null);
@@ -135,6 +138,7 @@ export function CartDrawer({ slug, businessName, whatsapp, greeting, showQuantit
         greeting, number: data.number, items: data.items, total: data.total,
         customerName: data.customerName, notes: data.notes, eventDate: data.eventDate,
         couponCode: data.couponCode, discount: data.discount,
+        installments: instFor(data.total),
       });
       const link = whatsappLink(whatsapp, text) ?? "";
       writeCart(slug, emptyCart());
@@ -145,10 +149,15 @@ export function CartDrawer({ slug, businessName, whatsapp, greeting, showQuantit
     }
   }
 
+  // Cuotas: solo si el negocio las ofrece, el total alcanza el mínimo y el cliente tildó la casilla.
+  const instFor = (amount: number) => (wantInst && qualifies(installments, amount) ? { count: installments.count, amount: installmentValue(amount, installments.count) } : null);
+  const finalTotal = Math.max(0, total - discount);
+  const instOffer = !hasUnpriced && qualifies(installments, finalTotal) ? installments : null;
+
   // Plan B sin conexión: se manda el pedido igual por WhatsApp (no queda registrado en el panel).
   const fallbackLink = whatsappLink(
     whatsapp,
-    buildOrderMessage({ greeting, items: cart.items, total, hasUnpriced, customerName: name, notes, eventDate: eventDate || null }),
+    buildOrderMessage({ greeting, items: cart.items, total, hasUnpriced, customerName: name, notes, eventDate: eventDate || null, installments: instFor(Math.max(0, total - discount)) }),
   );
 
   if (count === 0 && !open) return null;
@@ -181,7 +190,7 @@ export function CartDrawer({ slug, businessName, whatsapp, greeting, showQuantit
                 {status.link && (
                   <a href={status.link} target="_blank" rel="noopener noreferrer" className={`inline-block ${primary}`} style={radius}>Abrir WhatsApp</a>
                 )}
-                <div><button type="button" onClick={close} className="text-sm underline">Seguir mirando</button></div>
+                <div><button type="button" onClick={close} className="text-sm ">Seguir mirando</button></div>
               </div>
             ) : (
               <>
@@ -232,7 +241,7 @@ export function CartDrawer({ slug, businessName, whatsapp, greeting, showQuantit
                       <div className="flex items-center justify-between rounded-lg bg-muted px-3 py-2 text-sm" data-testid="coupon-applied">
                         <span>Cupón <strong>{coupon.code}</strong> aplicado</span>
                         <span className="flex items-center gap-3"><span className="font-semibold">-{formatPrice(discount)}</span>
-                          <button type="button" className="underline" onClick={() => { setCoupon(null); setCouponInput(""); setCouponMsg(null); }}>Sacar</button></span>
+                          <button type="button" className="" onClick={() => { setCoupon(null); setCouponInput(""); setCouponMsg(null); }}>Sacar</button></span>
                       </div>
                     ) : couponOpen ? (
                       <div className="space-y-1.5">
@@ -244,20 +253,29 @@ export function CartDrawer({ slug, businessName, whatsapp, greeting, showQuantit
                         {couponMsg && <p role="alert" className="text-sm text-destructive" data-testid="coupon-error">{couponMsg}</p>}
                       </div>
                     ) : (
-                      <button type="button" className="text-sm underline" onClick={() => setCouponOpen(true)} data-testid="coupon-toggle">Tengo un cupón</button>
+                      <button type="button" className="text-sm " onClick={() => setCouponOpen(true)} data-testid="coupon-toggle">Tengo un cupón</button>
                     )}
 
                     <div className="flex items-baseline justify-between border-t pt-3">
                       <span className="font-medium">Total</span>
                       <span className="text-lg font-bold" data-testid="cart-total">{formatPrice(Math.max(0, total - discount))}{hasUnpriced ? " + a consultar" : ""}</span>
                     </div>
+                    {instOffer && (
+                      <label className="flex cursor-pointer items-start gap-2.5 rounded-lg border border-primary/30 bg-primary/5 p-3 text-sm" data-testid="installments-option">
+                        <input type="checkbox" className="mt-0.5 size-5 shrink-0 accent-[var(--primary)]" checked={wantInst} onChange={(e) => setWantInst(e.target.checked)} />
+                        <span>
+                          <span className="block font-semibold">Quiero pagar en {instOffer.count} cuotas sin interés</span>
+                          <span className="block text-muted-foreground">{instOffer.count} x {formatPrice(installmentValue(finalTotal, instOffer.count))}{instOffer.note ? `. ${instOffer.note}` : ""}. Lo coordinás con {businessName}.</span>
+                        </span>
+                      </label>
+                    )}
                     <p className="text-xs text-muted-foreground">El pago y la entrega los coordinás directamente con {businessName}.</p>
 
                     {status.kind === "error" && (
                       <div role="alert" className="space-y-2 rounded-lg bg-destructive/10 p-3 text-sm text-destructive">
                         <p>{status.message}</p>
                         {status.offline && fallbackLink && (
-                          <a href={fallbackLink} target="_blank" rel="noopener noreferrer" className="inline-block underline">Enviar igual por WhatsApp (no queda registrado en su panel)</a>
+                          <a href={fallbackLink} target="_blank" rel="noopener noreferrer" className="inline-block ">Enviar igual por WhatsApp (no queda registrado en su panel)</a>
                         )}
                       </div>
                     )}

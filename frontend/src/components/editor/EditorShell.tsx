@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { DRAFT_KEY, contentToDraft, loadDraft, saveDraft, type Draft } from "@/lib/draft";
 import { fetchServerBusiness, getSyncMarker, setSyncMarker, type ServerState } from "@/lib/serverSync";
 import { Button } from "@/components/ui/button";
@@ -43,6 +44,7 @@ const NoDraft = () => (
 /** Decide con qué arranca el editor: el borrador de este dispositivo, o la página guardada en la cuenta. */
 export function EditorShell({ module = "all" }: { module?: EditorModule }) {
   const user = useUser();
+  const router = useRouter();
   const raw = useSyncExternalStore(subscribe, readRaw, () => LOADING);
   // El editor usa este valor solo al montarse y desde ahí es dueño del estado (guarda por su cuenta).
   const local = useMemo(
@@ -50,8 +52,14 @@ export function EditorShell({ module = "all" }: { module?: EditorModule }) {
     [raw],
   );
 
-  if (user === undefined || local === undefined) return <main className="p-6 text-muted-foreground">Cargando tu borrador…</main>;
-  if (user === null) return local ? <Editor key="local" initial={local} module={module} /> : <NoDraft />;
+  // Para diseñar hace falta cuenta: así el avance queda guardado y podemos acompañar a quien no termina.
+  // Con un borrador de la demo de la landing, se pasa por el registro y el borrador viaja a la cuenta; sin borrador, se vuelve al inicio del recorrido.
+  const signedOut = user === null && local !== undefined;
+  useEffect(() => {
+    if (signedOut) router.replace(local ? `/registro?next=${encodeURIComponent("/editor")}` : "/crear");
+  }, [signedOut, local, router]);
+
+  if (user === undefined || local === undefined || user === null) return <main className="p-6 text-muted-foreground">{user === null ? "Un momento, te llevamos a crear tu cuenta…" : "Cargando tu borrador…"}</main>;
   // Con sesión, el editor vive dentro del mismo panel del negocio (barra lateral angosta, a pantalla completa).
   const account = <AccountEditor user={user} local={local} module={module} />;
   // Los módulos del panel ya traen su barra lateral; el editor completo la lleva angosta.

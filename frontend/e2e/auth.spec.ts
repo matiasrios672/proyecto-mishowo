@@ -22,14 +22,12 @@ async function tokenFromMail(to: string, count = 1): Promise<string> {
 }
 
 async function startDraft(page: Page) {
-  await page.goto("/crear");
-  await page.getByRole("button", { name: /Rotisería y comidas/ }).click();
-  await page.waitForURL("**/editor");
+  await page.goto("/");
+  await page.getByRole("button", { name: "Usar este diseño para mi página" }).click(); // la demo de la landing deja un borrador y pide la cuenta
+  await page.waitForURL("**/registro**");
 }
 
 async function register(page: Page, email: string) {
-  await page.getByRole("link", { name: "Guardar mi página" }).click();
-  await page.waitForURL("**/registro**");
   await page.getByLabel("Tu nombre (opcional)").fill("Ana");
   await page.getByLabel(/^Email/).fill(email);
   await page.getByLabel(/^Contraseña/).fill(PASS);
@@ -66,7 +64,7 @@ test.describe("cuentas", () => {
     await startDraft(page);
     await register(page, email);
     await signOutFromShell(page);
-    await expect(page.getByRole("heading", { name: /Todavía no elegiste un rubro/ })).toBeVisible(); // sin sesión y sin borrador: no queda nada de la cuenta
+    await expect(page.getByTestId("crear-account")).toBeVisible(); // sin sesión y sin borrador: vuelve al inicio del recorrido, sin rastro de la cuenta
 
     await page.goto("/registro");
     await page.getByLabel(/^Email/).fill(email);
@@ -101,7 +99,7 @@ test.describe("cuentas", () => {
     await expect(page.getByTestId("account")).toContainText(email);
     await signOutFromShell(page);
     await page.reload(); // y el cierre es real, no solo visual
-    await expect(page.getByRole("heading", { name: /Todavía no elegiste un rubro/ })).toBeVisible();
+    await expect(page.getByTestId("crear-account")).toBeVisible();
   });
 
   test("recuperar la contraseña con el enlace del mail", async ({ page }, info) => {
@@ -143,8 +141,9 @@ test.describe("cuentas", () => {
     await page.goto(`/enlace?token=${encodeURIComponent(token)}`);
     await page.getByRole("button", { name: "Entrar a MiShowo" }).click(); // exige un clic: un escáner de links no lo gasta
     await page.waitForURL(/\/(editor|panel\/inicio)/);
-    await page.goto("/editor");
-    await startDraft(page);
+    await page.goto("/crear");
+    await page.getByRole("button", { name: /Rotisería y comidas/ }).click();
+    await page.waitForURL("**/editor");
     await expect(page.getByTestId("account")).toContainText(email);
     await expect(page.getByTestId("verify-banner")).toHaveCount(0); // el enlace prueba que el email es suyo
   });

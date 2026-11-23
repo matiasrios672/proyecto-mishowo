@@ -21,13 +21,13 @@ export const weekdayIndex = (date: string) => (new Date(`${date}T12:00:00-03:00`
 export const addDays = (date: string, n: number) => new Date(toInstant(date, "12:00").getTime() + n * 86_400_000 - 0).toISOString().slice(0, 10);
 
 /** Franjas ("HH:MM") de un día: desde la apertura, cada `slotMinutes`, mientras la franja termine antes del cierre. */
-export function daySlots(date: string, hours: unknown, slotMinutes: number): string[] {
+export function daySlots(date: string, hours: unknown, slotMinutes: number, duration = slotMinutes): string[] {
   if (!Array.isArray(hours) || hours.length !== 7) return [];
   const h = hours[weekdayIndex(date)] as DayHours | undefined;
   if (!h || !h.open || !isTime(h.from) || !isTime(h.to)) return [];
   const from = toMin(h.from), to = toMin(h.to);
   if (to <= from) return []; // cierre pasada la medianoche: no se ofrecen turnos
   const out: string[] = [];
-  for (let m = from; m + slotMinutes <= to; m += slotMinutes) out.push(fmt(m));
+  for (let m = from; m + duration <= to; m += slotMinutes) out.push(fmt(m)); // la grilla avanza de a `slotMinutes`; el turno dura `duration`
   return out;
 }

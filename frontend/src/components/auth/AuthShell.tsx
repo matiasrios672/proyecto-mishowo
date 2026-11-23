@@ -47,7 +47,7 @@ export function AuthShell({ title, subtitle, children, footer }: { title: string
               <h1 className="mk-display text-3xl font-extrabold tracking-tight text-[#0E1B2C]">{title}</h1>
               {subtitle && <p className="mt-2 text-base leading-relaxed text-[#47566A]">{subtitle}</p>}
               <div className="mt-7">{children}</div>
-              {footer && <div className="mt-7 border-t border-[#D6E4F2] pt-5 text-[15px] text-[#47566A] [&_a]:font-semibold [&_a]:text-[#2F6FB0] [&_a]:underline [&_a]:underline-offset-4">{footer}</div>}
+              {footer && <div className="mt-7 border-t border-[#D6E4F2] pt-5 text-[15px] text-[#47566A] [&_a]:font-semibold [&_a]:text-[#2F6FB0]-offset-4">{footer}</div>}
             </div>
           </main>
         </div>
