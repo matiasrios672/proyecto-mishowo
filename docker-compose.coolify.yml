@@ -1,12 +1,11 @@
-# MiShowo en Coolify (Docker Compose build pack) con dominio provisorio sslip.io y SIN HTTPS.
+# MiShowo en Coolify (Docker Compose build pack).
 # Coolify genera los secretos solo (variables SERVICE_PASSWORD_* / SERVICE_BASE64_*): no hay que escribir ninguno.
 # Variables que se cargan a mano en Coolify (no son secretas):
-#   ROOT_DOMAIN  dominio base de la plataforma y de cada negocio (slug.ROOT_DOMAIN). Ej.: mishowo.201.32.129.244.sslip.io
-#   API_HOST     dominio de la API. Ej.: api-mishowo.201.32.129.244.sslip.io (NO debe ser un subdominio de ROOT_DOMAIN:
-#                el wildcard *.ROOT_DOMAIN del frontend lo taparía)
-#   MAIL_HOST    dominio de Mailpit (los mails de prueba). Ej.: mail-mishowo.201.32.129.244.sslip.io
-# Dominios en la UI de Coolify (puerto entre paréntesis; el comodín de los negocios va por una etiqueta de Traefik, abajo):
-#   frontend (3000): http://ROOT_DOMAIN     backend (4000): http://API_HOST     mailpit (8025): http://MAIL_HOST
+#   ROOT_DOMAIN  dominio de la plataforma y base de cada negocio (slug.ROOT_DOMAIN). Hoy: mishowo.bitenv.site
+#   API_HOST     dominio de la API (misma "site" que ROOT_DOMAIN para que las cookies de sesión viajen). Hoy: api.mishowo.bitenv.site
+# DNS (DonWeb): un registro A comodín  *.mishowo  ->  IP del servidor  (cubre api., mail. y cada negocio) y el A de  mishowo.
+# Dominios en la UI de Coolify:  frontend (3000) https://ROOT_DOMAIN   backend (4000) https://API_HOST   mailpit (8025) https://mail.ROOT_DOMAIN
+# Los negocios (slug.ROOT_DOMAIN) se sirven por HTTP con la etiqueta de Traefik de abajo: un certificado comodín exige validar por DNS.
 services:
   db:
     image: postgres:17-alpine
@@ -39,11 +38,10 @@ services:
     environment:
       NODE_ENV: production
       DATABASE_URL: postgres://mishowo:${SERVICE_PASSWORD_POSTGRES}@db:5432/mishowo
-      FRONTEND_ORIGIN: http://${ROOT_DOMAIN}
+      FRONTEND_ORIGIN: https://${ROOT_DOMAIN},http://${ROOT_DOMAIN}
       ROOT_DOMAIN: ${ROOT_DOMAIN}
-      COOKIE_SECURE: "false" # sin HTTPS la cookie "Secure" no viajaría y nadie podría iniciar sesión
-      APP_URL: http://${ROOT_DOMAIN}
-      API_PUBLIC_URL: http://${API_HOST}
+      APP_URL: https://${ROOT_DOMAIN}
+      API_PUBLIC_URL: https://${API_HOST}
       FRONTEND_INTERNAL_URL: http://frontend:3000
       REVALIDATE_SECRET: ${SERVICE_PASSWORD_REVALIDATE}
       ADMIN_SECRET_KEY: ${SERVICE_BASE64_ADMINKEY}
@@ -58,10 +56,10 @@ services:
     build:
       context: ./frontend
       args:
-        NEXT_PUBLIC_API_URL: http://${API_HOST}
-        NEXT_PUBLIC_SITE_URL: http://${ROOT_DOMAIN}
+        NEXT_PUBLIC_API_URL: https://${API_HOST}
+        NEXT_PUBLIC_SITE_URL: https://${ROOT_DOMAIN}
         NEXT_PUBLIC_ROOT_DOMAIN: ${ROOT_DOMAIN}
-        NEXT_PUBLIC_ROOT_SCHEME: http
+        NEXT_PUBLIC_ROOT_SCHEME: http # los negocios van por http (sin certificado comodín)
         NEXT_PUBLIC_LEGAL_ENTITY: MiShowo
     restart: unless-stopped
     depends_on:
@@ -73,10 +71,11 @@ services:
       REVALIDATE_SECRET: ${SERVICE_PASSWORD_REVALIDATE}
     labels:
       # Coolify no acepta comodines en su campo de dominios: cada negocio (slug.ROOT_DOMAIN) se enruta con esta regla propia.
-      # Solo coincide con subdominios de ROOT_DOMAIN: api-..., mail-... y el dominio raíz siguen por sus rutas normales.
-      - traefik.enable=true
       # Coolify escapa $ y no expande variables en las etiquetas: el dominio va escrito acá (si cambia ROOT_DOMAIN, cambiarlo también en esta línea).
-      - traefik.http.routers.mishowo-tenants.rule=HostRegexp(`^[a-z0-9-]+\.mishowo\.201\.32\.129\.244\.sslip\.io`)
+      # Prioridad baja a propósito: api., mail. y el dominio raíz tienen rutas explícitas y tienen que ganar sobre este comodín.
+      - traefik.enable=true
+      - traefik.http.routers.mishowo-tenants.rule=HostRegexp(`^[a-z0-9-]+\.mishowo\.bitenv\.site`)
+      - traefik.http.routers.mishowo-tenants.priority=1
       - traefik.http.routers.mishowo-tenants.entryPoints=http
       - traefik.http.routers.mishowo-tenants.service=mishowo-tenants
       - traefik.http.services.mishowo-tenants.loadbalancer.server.port=3000
