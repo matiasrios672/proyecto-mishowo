@@ -37,9 +37,6 @@ export function Hero() {
       <div aria-hidden className="mk-grid pointer-events-none absolute inset-0 -z-10" />
       <div className={`${wrap} grid items-center gap-4 pb-10 pt-12 lg:grid-cols-[1fr_1.1fr] lg:gap-12 lg:pb-16 lg:pt-16`}>
         <div>
-          <p className="site-rise mb-6 inline-flex items-center gap-2 rounded-full bg-[#15803D] px-4 py-2 text-sm font-extrabold text-white shadow-[0_12px_30px_-12px_rgba(21,128,61,0.8)]" data-testid="free-badge">
-            <span aria-hidden className="size-2 rounded-full bg-white" />Plan gratis para siempre · sin tarjeta
-          </p>
           <h1 className="mk-display site-rise text-[clamp(3rem,7.4vw,5.6rem)] font-extrabold leading-[0.92] tracking-tight text-[#0E1B2C]">
             <span className="block">Tu negocio,</span>{" "}
             <span className="relative block w-fit text-primary">en un link.</span>
@@ -49,7 +46,7 @@ export function Hero() {
           </p>
           <div className="site-rise mt-9 flex flex-wrap items-center gap-4" style={{ "--d": "240ms" } as React.CSSProperties}>
             <Link href="/crear" className={ctaSol}>Creá tu página gratis</Link>
-            <a href="#probalo" className={ctaGhost}>Probalo ahora</a>
+            <a href="#elegi-tu-rubro" className={ctaGhost}>Elegí tu rubro</a>
             <p className="basis-full text-sm font-medium text-[#0E1B2C]/70">Empezás en 5 minutos. Sin instalar nada.</p>
           </div>
         </div>

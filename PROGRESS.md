@@ -1,5 +1,10 @@
 # PROGRESS — MiShowo (bitácora, lo más nuevo arriba)
 
+## 2026-11-23 (8) — 2FA en Coolify, home con planes y vitrina de rubros
+- **2FA:** la clave que genera Coolify (SERVICE_BASE64_*) no decodificaba a 32 bytes y /admin/2fa/setup daba 500. Ahora ADMIN_SECRET_KEY acepta un secreto largo (32+ caracteres) y deriva la clave AES-256 con SHA-256; una clave base64 de 32 bytes se usa igual que antes. Un secreto corto sigue rechazado. Tests nuevos.
+- **Home:** sin el cartelito «Plan gratis para siempre · sin tarjeta» del hero; los planes (desde la base) vuelven a la home; la demo «Probalo vos mismo» pasó a /probar (link en el pie); en su lugar, la vitrina de rubros: seis pestañas (Ropa, Comidas y bares, Eventos, Muebles y deco, Belleza y salud, Oficios y servicios), un rubro grande a la vez con el celular de su ejemplo, y los tres pasos arriba. Pestañas accesibles (flechas, Inicio y Fin).
+- Cuenta de prueba en el despliegue provisorio: matias.prueba@mishowo.test (Owner).
+
 ## 2026-11-23 (7) — Subido a GitHub y desplegado en Coolify con dominio provisorio
 - **GitHub:** github.com/matiasrios672/proyecto-mishowo (público), rama main.
 - **Coolify** (coolify.bitenv.site, proyecto MiShowo > production, recurso Docker Compose con docker-compose.coolify.yml): servicios db, mailpit, backend y frontend. Secretos generados por Coolify (SERVICE_PASSWORD_* y SERVICE_BASE64_ADMINKEY). Variables a mano: ROOT_DOMAIN y API_HOST.

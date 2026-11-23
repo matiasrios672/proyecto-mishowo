@@ -14,7 +14,7 @@ async function newDevice(browser: Browser) {
 }
 
 async function startDraft(page: Page, rubro?: string) {
-  await page.goto("/");
+  await page.goto("/probar");
   if (rubro) await page.getByTestId("live-demo").getByRole("button", { name: rubro }).click();
   await page.getByRole("button", { name: "Usar este diseño para mi página" }).click(); // la demo de la landing deja un borrador y pide la cuenta
   await page.waitForURL("**/registro**");

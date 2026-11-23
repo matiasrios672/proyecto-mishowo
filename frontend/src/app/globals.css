@@ -192,9 +192,11 @@
 @keyframes mk-reveal { from { opacity: 0; transform: translateY(48px); } to { opacity: 1; transform: none; } }
 
 /* Franjas por rubro: el celular sube y la palabra gigante se desplaza al hacer scroll (sin JS). */
+@keyframes mk-stage-in { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: none; } }
 @keyframes mk-phone-rise { from { transform: translateY(90px) scale(0.93); opacity: 0.2; } to { transform: none; opacity: 1; } }
 @keyframes mk-ghost-drift { from { transform: translateX(-7%); } to { transform: translateX(7%); } }
 @media (prefers-reduced-motion: no-preference) {
+  .mk-stage-in { animation: mk-stage-in 0.45s cubic-bezier(0.2, 0.7, 0.2, 1) both; }
   @supports (animation-timeline: view()) {
     .mk-phone-rise { animation: mk-phone-rise linear both; animation-timeline: view(); animation-range: entry 0% entry 70%; }
     .mk-ghost-drift { animation: mk-ghost-drift linear both; animation-timeline: view(); animation-range: entry 0% exit 100%; }

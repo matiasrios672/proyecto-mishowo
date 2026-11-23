@@ -22,7 +22,7 @@ async function tokenFromMail(to: string, count = 1): Promise<string> {
 }
 
 async function startDraft(page: Page) {
-  await page.goto("/");
+  await page.goto("/probar");
   await page.getByRole("button", { name: "Usar este diseño para mi página" }).click(); // la demo de la landing deja un borrador y pide la cuenta
   await page.waitForURL("**/registro**");
 }

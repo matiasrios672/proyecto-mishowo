@@ -38,7 +38,7 @@ export function MarketingFooter() {
             <a href={`https://wa.me/${SUPPORT_WHATSAPP.replace(/\D/g, "")}`} className="mt-4 inline-block text-sm font-semibold " target="_blank" rel="noopener noreferrer">Soporte por WhatsApp</a>
           )}
         </div>
-        <FooterCol title="Producto" links={[["Cómo funciona", "/como-funciona"], ["Rubros y ejemplos", "/rubros"], ["Cuotas sin interés", "/cuotas"], ["Funciones", "/funciones"], ["Precios y preguntas", "/precios"]]} />
+        <FooterCol title="Producto" links={[["Cómo funciona", "/como-funciona"], ["Rubros y ejemplos", "/rubros"], ["Cuotas sin interés", "/cuotas"], ["Funciones", "/funciones"], ["Precios y preguntas", "/precios"], ["Probar la demo", "/probar"]]} />
         <FooterCol title="Recursos" links={[["Centro de ayuda", "/ayuda"], ["Blog", "/blog"], ["Contacto", "/contacto"], ["Crear mi página", "/crear"]]} />
         <FooterCol title="Legales" links={[["Términos y condiciones", "/terminos"], ["Política de privacidad", "/privacidad"], ["Política de cancelación", "/cancelacion"], ["Botón de arrepentimiento", "/arrepentimiento"]]} />
       </div>

@@ -1,5 +1,7 @@
+import { Suspense } from "react";
 import type { Metadata } from "next";
-import { DemoSection, FinalCta, Hero } from "@/components/marketing/sections";
+import { FinalCta, Hero, Plans, PlansList } from "@/components/marketing/sections";
+import { RubroStage } from "@/components/marketing/RubroStage";
 import { TrustStrip } from "@/components/marketing/Story";
 import { ExploreGrid } from "@/components/marketing/Explore";
 import { StickyCta } from "@/components/marketing/StickyCta";
@@ -23,14 +25,21 @@ const jsonLd = {
   ],
 };
 
-/** Home corta: el mensaje, la demo para probar y un menú para elegir qué ver. Cada tema vive en su página. */
+/** Home corta: el mensaje, los rubros (con su ejemplo), los planes y un menú para elegir qué ver. Cada tema vive en su página. */
 export default function Home() {
   return (
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }} />
       <Hero />
       <TrustStrip />
-      <DemoSection />
+      <RubroStage />
+      <Plans
+        fallback={
+          <Suspense fallback={<p className="mt-10 text-muted-foreground">Cargando planes…</p>}>
+            <PlansList />
+          </Suspense>
+        }
+      />
       <ExploreGrid />
       <FinalCta />
       <StickyCta />

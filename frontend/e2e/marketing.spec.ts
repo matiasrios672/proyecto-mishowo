@@ -13,10 +13,16 @@ test.describe("landing de MiShowo", () => {
       expect(await noOverflow(page), `@${width}`).toBe(true);
     }
     // La home es corta: la demo y el menú para elegir qué ver. El resto vive en su propia página.
-    for (const name of ["Probalo vos mismo, ahora", "¿Qué querés ver?", "Creá tu página gratis"])
+    for (const name of ["Elegí tu rubro", "Empezá gratis, crecé cuando lo necesites", "¿Qué querés ver?", "Creá tu página gratis"])
       await expect(page.getByRole("heading", { name, exact: true })).toBeVisible();
-    await expect(page.getByRole("heading", { name: "Preguntas frecuentes" })).toHaveCount(0);
-    await expect(page.locator("#planes")).toHaveCount(0);
+    await expect(page.getByRole("heading", { name: "Preguntas frecuentes" })).toHaveCount(0); // las preguntas viven en /precios
+    await expect(page.getByTestId("live-demo")).toHaveCount(0); // la demo vive en /probar, no en la home
+    await expect(page.getByTestId("free-badge")).toHaveCount(0); // sin el cartelito de «plan gratis, sin tarjeta» en el hero
+    await expect(page.getByText("Plan gratis para siempre · sin tarjeta")).toHaveCount(0);
+    const plans = page.locator("#planes"); // los planes sí se muestran en la home, desde la base de datos
+    await expect(plans.getByRole("heading", { name: "Gratis", exact: true })).toBeVisible();
+    await expect(plans.getByRole("heading", { name: "Emprende", exact: true })).toBeVisible();
+    await expect(plans.getByRole("heading", { name: "Pro", exact: true })).toBeVisible();
   });
 
   test("el hero ilustrado: celular que arma la página, dibujos y sin video", async ({ page }) => {
@@ -52,8 +58,8 @@ test.describe("landing de MiShowo", () => {
     await expect(plans.getByRole("link", { name: "Elegir Pro" })).toHaveAttribute("href", /\/registro\?next=/);
   });
 
-  test("demo interactiva: el nombre, el rubro y el estilo cambian la vista previa real", async ({ page }) => {
-    await page.goto("/");
+  test("demo interactiva (en /probar): el nombre, el rubro y el estilo cambian la vista previa real", async ({ page }) => {
+    await page.goto("/probar");
     const demo = page.getByTestId("live-demo");
     const preview = demo.locator("[data-site-layout]");
     await expect(preview).toBeVisible();
@@ -72,7 +78,7 @@ test.describe("landing de MiShowo", () => {
   });
 
   test("'Usar este diseño' lleva al editor con ese negocio ya cargado", async ({ page }) => {
-    await page.goto("/");
+    await page.goto("/probar");
     const demo = page.getByTestId("live-demo");
     await demo.getByLabel("¿Cómo se llama tu negocio?").fill("Mi Panadería");
     await demo.getByRole("button", { name: "Belleza" }).click();
@@ -126,6 +132,7 @@ test.describe("páginas de la web (la home es corta y cada tema tiene la suya)",
     ["/cuotas", "Cuotas sin interés"],
     ["/funciones", "Todo lo que incluye"],
     ["/precios", "Precios"],
+    ["/probar", "Probalo vos mismo"],
   ] as const;
 
   for (const [path, title] of PAGES) {
@@ -144,10 +151,45 @@ test.describe("páginas de la web (la home es corta y cada tema tiene la suya)",
     });
   }
 
+  test("la home muestra una vitrina de seis rubros: uno grande a la vez, con pestañas accesibles", async ({ page }) => {
+    await page.goto("/");
+    await expect(page.getByTestId("home-steps").getByRole("listitem")).toHaveCount(3);
+    const tabs = page.getByRole("tablist", { name: "Rubros" }).getByRole("tab");
+    await expect(tabs).toHaveCount(6);
+    await expect(tabs.first()).toHaveAttribute("aria-selected", "true");
+    const title = page.getByTestId("rubro-title");
+    await expect(title).toContainText("tienda de ropa");
+
+    // elegir otro rubro cambia el título, el ejemplo y el celular
+    await page.getByRole("tab", { name: "Comidas y bares" }).click();
+    await expect(title).toHaveText("Tu carta, al día en cada mesa");
+    const example = page.getByRole("link", { name: /^Ver el ejemplo de Comidas y bares/ });
+    await expect(example).toHaveAttribute("target", "_blank");
+    await expect(example).toHaveAttribute("rel", /noopener/);
+    await expect(example).toHaveAttribute("href", /lupe-empanadas\./);
+    await expect(page.getByTestId("rubro-panel").getByRole("link", { name: "Crear mi página" })).toHaveAttribute("href", "/crear");
+
+    // teclado: flechas, Fin e Inicio (patrón de pestañas)
+    await page.getByRole("tab", { name: "Comidas y bares" }).focus();
+    await page.keyboard.press("ArrowRight");
+    await expect(page.getByRole("tab", { name: "Eventos" })).toHaveAttribute("aria-selected", "true");
+    await expect(page.getByRole("tab", { name: "Eventos" })).toBeFocused();
+    await page.keyboard.press("End");
+    await expect(page.getByRole("tab", { name: "Oficios y servicios" })).toHaveAttribute("aria-selected", "true");
+    await expect(page.getByRole("link", { name: /^Ver el ejemplo/ })).toHaveCount(0); // oficios no tiene ejemplo publicado
+    await page.keyboard.press("Home");
+    await expect(tabs.first()).toHaveAttribute("aria-selected", "true");
+
+    // el segundo botón del hero baja a la vitrina y no hay desborde
+    await page.getByRole("link", { name: "Elegí tu rubro" }).first().click();
+    await expect(page).toHaveURL(/#elegi-tu-rubro$/);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+  });
+
   test("la home enlaza a cada tema desde «¿Qué querés ver?»", async ({ page }) => {
     await page.goto("/");
     const grid = page.locator("#explorar");
-    for (const [path] of PAGES) await expect(grid.locator(`a[href="${path}"]`)).toBeVisible();
+    for (const [path] of PAGES.filter(([p]) => p !== "/probar")) await expect(grid.locator(`a[href="${path}"]`)).toBeVisible(); // la demo no es una tarjeta: vive en el pie
     await grid.getByRole("link", { name: /Cuotas sin interés/ }).click();
     await expect(page).toHaveURL(/\/cuotas$/);
   });

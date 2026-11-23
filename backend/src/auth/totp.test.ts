@@ -76,4 +76,12 @@ describe("cifrado del secreto en reposo", () => {
     expect(() => decryptSecret("basura", KEY)).toThrow();
     expect(() => encryptSecret("x", Buffer.alloc(8).toString("base64"))).toThrow(/32 bytes/);
   });
+
+  it("acepta un secreto largo que no es una clave base64 de 32 bytes (lo deriva con SHA-256) y es estable", () => {
+    const long = "k3Zq9xW1vB7nLm4TpR8sYc2HdF6gJa5Qe0UoXiN"; // 39 caracteres: no decodifica a 32 bytes
+    const enc = encryptSecret("JBSWY3DPEHPK3PXP", long);
+    expect(decryptSecret(enc, long)).toBe("JBSWY3DPEHPK3PXP");
+    expect(() => decryptSecret(enc, long + "x")).toThrow(); // otro secreto, otra clave
+    expect(() => encryptSecret("x", "demasiado-corto")).toThrow(/32 bytes/); // un secreto corto no se acepta
+  });
 });
