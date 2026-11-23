@@ -5,8 +5,8 @@
 #   API_HOST     dominio de la API. Ej.: api-mishowo.201.32.129.244.sslip.io (NO debe ser un subdominio de ROOT_DOMAIN:
 #                el wildcard *.ROOT_DOMAIN del frontend lo taparía)
 #   MAIL_HOST    dominio de Mailpit (los mails de prueba). Ej.: mail-mishowo.201.32.129.244.sslip.io
-# Dominios en la UI de Coolify (puerto entre paréntesis):
-#   frontend (3000): http://ROOT_DOMAIN,http://*.ROOT_DOMAIN     backend (4000): http://API_HOST     mailpit (8025): http://MAIL_HOST
+# Dominios en la UI de Coolify (puerto entre paréntesis; el comodín de los negocios va por una etiqueta de Traefik, abajo):
+#   frontend (3000): http://ROOT_DOMAIN     backend (4000): http://API_HOST     mailpit (8025): http://MAIL_HOST
 services:
   db:
     image: postgres:17-alpine
@@ -71,6 +71,14 @@ services:
       API_URL: http://backend:4000
       ROOT_DOMAIN: ${ROOT_DOMAIN}
       REVALIDATE_SECRET: ${SERVICE_PASSWORD_REVALIDATE}
+    labels:
+      # Coolify no acepta comodines en su campo de dominios: cada negocio (slug.ROOT_DOMAIN) se enruta con esta regla propia.
+      # Solo coincide con subdominios de ROOT_DOMAIN: api-..., mail-... y el dominio raíz siguen por sus rutas normales.
+      - traefik.enable=true
+      - traefik.http.routers.mishowo-tenants.rule=HostRegexp(`^[a-z0-9-]+\.${ROOT_DOMAIN}$$`)
+      - traefik.http.routers.mishowo-tenants.entryPoints=http
+      - traefik.http.routers.mishowo-tenants.service=mishowo-tenants
+      - traefik.http.services.mishowo-tenants.loadbalancer.server.port=3000
 
 volumes:
   pgdata:
