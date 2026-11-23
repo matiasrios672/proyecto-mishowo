@@ -152,7 +152,7 @@ test("Soporte no ve ni puede usar pagos, planes ni moderación", async ({ browse
   await expect(nav.getByRole("link", { name: "Negocios" })).toBeVisible();
   for (const hidden of ["Pagos", "Planes", "Auditoría", "Equipo"]) await expect(nav.getByRole("link", { name: hidden })).toHaveCount(0);
   await a.page.goto("/admin/pagos");
-  await expect(a.page.locator("p[role=alert]:visible")).toContainText("Tu rol no permite esta acción");
+  await expect(a.page.locator("p[role=alert]:visible")).toContainText("No tenés permiso para esta acción");
   await a.context.close();
 });
 

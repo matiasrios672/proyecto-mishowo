@@ -57,7 +57,7 @@ const GROUPS: Record<string, string> = { cuenta: "Cuenta y acceso", planes: "Pla
 
 function Templates() {
   const me = useAdmin();
-  const canEdit = me.role !== "support";
+  const canEdit = me.can("emails", "manage");
   const { data, error, reload } = useLoad<{ templates: Tpl[] }>("/admin/emails/templates");
   const [sel, setSel] = useState<string>("verify");
   const groups = useMemo(() => {
@@ -171,7 +171,7 @@ function TemplateEditor({ tpl, canEdit, onSaved }: { tpl: Tpl; canEdit: boolean;
             <Button variant="outline" onClick={() => void test()}>Mandarme una prueba</Button>
             {canEdit && tpl.customized && <Button variant="ghost" onClick={() => void restore()}>Volver al original</Button>}
           </div>
-          {!canEdit && <p className="text-xs text-muted-foreground">Soporte puede ver y probar las plantillas, pero no editarlas.</p>}
+          {!canEdit && <p className="text-xs text-muted-foreground">Con tus permisos podés ver y probar las plantillas, pero no editarlas.</p>}
         </div>
         <div className="min-w-0">
           <p className="mb-1.5 text-xs font-medium text-muted-foreground">Vista previa (con datos de ejemplo)</p>
@@ -192,7 +192,7 @@ const toIso = (local: string) => (local ? new Date(local).toISOString() : null);
 
 function Campaigns() {
   const me = useAdmin();
-  const canEdit = me.role !== "support";
+  const canEdit = me.can("emails", "manage");
   const camps = useLoad<{ campaigns: Campaign[] }>("/admin/emails/campaigns");
   const segs = useLoad<{ segments: Segment[] }>("/admin/emails/segments");
   const [status, setStatus] = useState<{ kind: "ok" | "error"; text: string } | null>(null);
@@ -281,7 +281,7 @@ function Automation() {
   const { data, error, reload } = useLoad<{ remindDays: number }>("/admin/emails/automation");
   const tpls = useLoad<{ templates: Tpl[] }>("/admin/emails/templates");
   const [status, setStatus] = useState<{ kind: "ok" | "error"; text: string } | null>(null);
-  const canEdit = me.role !== "support";
+  const canEdit = me.can("emails", "manage");
   const automatic = tpls.data?.templates.filter((t) => t.group === "planes" || t.group === "turnos" || t.key === "welcome" || t.key === "lead_nudge") ?? [];
   async function toggle(t: Tpl) {
     const r = await api(`/admin/emails/templates/${t.key}`, { method: "PUT", body: { subject: t.subject, body: t.body, enabled: !t.enabled } });
@@ -399,34 +399,5 @@ export function Consultas() {
       </ul>
       {data && <Pager page={page} total={data.total} size={data.pageSize} onPage={setPage} />}
     </div>
-  );
-}
-
-// ───────────── Alta de integrantes (en Equipo) ─────────────
-export function InviteForm({ onDone }: { onDone: () => void }) {
-  const [status, setStatus] = useState<{ kind: "ok" | "error"; text: string } | null>(null);
-  return (
-    <form className="space-y-3 rounded-xl border p-4" data-testid="invite-form" onSubmit={async (e) => {
-      e.preventDefault();
-      const form = e.currentTarget;
-      const f = new FormData(form);
-      const r = await api<{ emailSent: boolean }>("/admin/admins/invite", { body: { name: String(f.get("name")), email: String(f.get("email")), role: String(f.get("role")) } });
-      if (r.ok) { setStatus({ kind: "ok", text: r.data.emailSent ? "Listo: le llegó un mail para elegir su contraseña." : "Se creó la cuenta, pero el mail de invitación está apagado o falló. Pedile que use «Olvidé mi contraseña»." }); form.reset(); onDone(); }
-      else setStatus({ kind: "error", text: err(r.data.error) });
-    }}>
-      <div>
-        <h2 className="font-semibold">Sumar a una persona nueva al equipo</h2>
-        <p className="text-sm text-muted-foreground">Le creamos la cuenta y le mandamos un mail para que elija su contraseña. Al entrar al panel va a tener que configurar la verificación en dos pasos.</p>
-      </div>
-      <div className="grid gap-3 sm:grid-cols-3">
-        <Field label="Nombre" required>{(id) => <TextInput id={id} name="name" required minLength={2} maxLength={80} />}</Field>
-        <Field label="Email" required>{(id) => <TextInput id={id} name="email" type="email" required />}</Field>
-        <Field label="Rol" hint="Soporte atiende consultas y denuncias; Admin además maneja planes y pagos.">
-          {(id, d) => <Select id={id} aria-describedby={d} name="role"><option value="support">Soporte</option><option value="admin">Admin</option></Select>}
-        </Field>
-      </div>
-      {status && <p role={status.kind === "error" ? "alert" : "status"} className={`rounded-lg p-3 text-sm ${status.kind === "error" ? "bg-destructive/10 text-destructive" : "bg-[#EAF4FC]"}`}>{status.text}</p>}
-      <Button type="submit">Invitar</Button>
-    </form>
   );
 }

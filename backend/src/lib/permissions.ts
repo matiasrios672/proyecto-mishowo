@@ -35,7 +35,7 @@ export const PRESETS: Record<"admin" | "support", Permissions> = {
   support: { negocios: "view", usuarios: "view", leads: "view", consultas: "manage", denuncias: "view", emails: "view", contenido: "view", rubros: "view", sistema: "view" },
 };
 
-export const permissionsSchema = z.record(z.enum(KEYS), z.enum(["view", "manage"]));
+export const permissionsSchema = z.partialRecord(z.enum(KEYS), z.enum(["view", "manage"]));
 
 /** Limpia lo que venga de la base o del navegador: solo áreas conocidas y niveles válidos. */
 export function normalizePermissions(raw: unknown): Permissions | null {

@@ -205,7 +205,7 @@ export function adminRoutes(app: FastifyInstance, db: Db, config: Config, mailer
     const days = Array.isArray(row.b.hours) ? (row.b.hours as { open?: boolean }[]).filter((x) => x?.open).length : 0;
     // Solo lectura: se ve lo mismo que vería el negocio, sin sesión del usuario (no hay "entrar como").
     const view = { design: row.b.design, whatsappSet: !!row.b.whatsapp, instagramSet: !!row.b.instagram, addressSet: !!row.b.address, openDays: days, announcement: typeof st.announcement === "string" ? st.announcement : "", showQuantities: st.showQuantities !== false, askEventDate: st.askEventDate === true, ...overview.rows[0] };
-    return { business: b, view, owner: row.owner, counts: counts.rows[0], payments: payments.map((p) => ({ id: p.id, planId: p.planId, months: p.months, amount: Number(p.amount), status: p.status, createdAt: p.createdAt })), history };
+    return { business: b, view, owner: row.owner, counts: counts.rows[0], payments: !can(ctx.user, "pagos", "view") ? [] : payments.map((p) => ({ id: p.id, planId: p.planId, months: p.months, amount: Number(p.amount), status: p.status, createdAt: p.createdAt })), history };
   });
 
   const bizAction = (path: string, perm: readonly [AreaKey, Level], run: (tx: Parameters<Parameters<Db["transaction"]>[0]>[0], biz: typeof s.businesses.$inferSelect, body: unknown, ctx: NonNullable<Awaited<ReturnType<typeof requireAdmin>>>) => Promise<{ action: string; after: Partial<typeof s.businesses.$inferSelect>; error?: undefined } | { error: string; status: number }>, method: "POST" | "PUT" | "DELETE" = "POST") => {

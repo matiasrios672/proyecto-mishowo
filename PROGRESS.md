@@ -1,5 +1,11 @@
 # PROGRESS — MiShowo (bitácora, lo más nuevo arriba)
 
+## 2026-11-23 (6) — Permisos del equipo por área (D-022)
+- **Backend:** 12 áreas x 3 niveles (sin acceso / ver / gestionar), plantillas Soporte y Admin con los permisos de los roles de antes, columna users.permissions (migración 0015), guardia requirePerm en todas las rutas del admin, /admin/me devuelve los permisos efectivos, PUT /admin/admins/:id/permissions (solo Owner, auditado, rige de inmediato), alta e invitación con permisos opcionales. Cambiar el plan de un negocio pide también permiso de planes; sin ver pagos no hay ingresos en el resumen ni pagos en la ficha.
+- **Pantalla de Equipo:** lista con el resumen de cada persona, botón Permisos con matriz accesible (radios por área, descripción del nivel elegido, plantilla y aviso de permisos a medida), alta de persona nueva o de cuenta existente con la matriz. El menú y los botones del admin siguen los permisos (Soporte/Admin/a medida).
+- Bug hallado por los tests: en Zod 4 un record con claves enum las exige todas (partialRecord).
+- Tests: backend 411, frontend 151 unitarios + e2e (nuevo: permisos a medida de punta a punta).
+
 ## 2026-11-23 (5) — Landing separada en páginas
 - **Home corta:** hero, tira de beneficios, demo interactiva, «¿Qué querés ver?» (6 tarjetas) y cierre. Pasó de varias pantallas de scroll a ~3.400 px en compu.
 - **Cada tema en su página**, con un solo h1, bajada y vuelta a Inicio: /como-funciona, /rubros (franjas por rubro + bares + ejemplos), /cuotas (demo), /funciones (bento) y /precios (planes desde la base + preguntas frecuentes con JSON-LD). Metadatos y sitemap por página.

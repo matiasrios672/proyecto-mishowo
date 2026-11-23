@@ -12,31 +12,35 @@ import { Field, TextInput } from "@/components/ui/fields";
 import { api } from "@/lib/authClient";
 import { logout } from "@/components/auth/authStore";
 
+import { allows, type AreaKey, type Level, type Permissions } from "@/lib/permissions";
+
 export type AdminRole = "owner" | "admin" | "support";
-interface Me { user: { id: string; email: string; role: AdminRole }; totpEnabled: boolean; verified: boolean }
-const Ctx = createContext<Me["user"] | null>(null);
+interface Me { user: { id: string; email: string; role: AdminRole }; permissions: Permissions; totpEnabled: boolean; verified: boolean }
+/** La persona del equipo y lo que puede hacer: `can(area, "manage")` para botones, `can(area)` para ver. El Owner puede todo. */
+export type AdminUser = Me["user"] & { permissions: Permissions; can: (area: AreaKey, level?: Level) => boolean };
+const Ctx = createContext<AdminUser | null>(null);
 export const useAdmin = () => useContext(Ctx)!;
 
-const ADMIN_GROUPS: { label: string; items: { href: string; label: string; Icon: NavItem["Icon"]; exact?: boolean; roles?: AdminRole[] }[] }[] = [
+const ADMIN_GROUPS: { label: string; items: { href: string; label: string; Icon: NavItem["Icon"]; exact?: boolean; area?: AreaKey; ownerOnly?: boolean }[] }[] = [
   { label: "General", items: [
     { href: "/admin", label: "Resumen", Icon: IconHome, exact: true },
-    { href: "/admin/pagos", label: "Pagos", Icon: IconCard, roles: ["owner", "admin"] },
-    { href: "/admin/negocios", label: "Negocios", Icon: IconStore },
-    { href: "/admin/leads", label: "Leads", Icon: IconSparkle },
-    { href: "/admin/usuarios", label: "Usuarios", Icon: IconUsers },
+    { href: "/admin/pagos", label: "Pagos", Icon: IconCard, area: "pagos" },
+    { href: "/admin/negocios", label: "Negocios", Icon: IconStore, area: "negocios" },
+    { href: "/admin/leads", label: "Leads", Icon: IconSparkle, area: "leads" },
+    { href: "/admin/usuarios", label: "Usuarios", Icon: IconUsers, area: "usuarios" },
   ] },
   { label: "Moderación y contenido", items: [
-    { href: "/admin/consultas", label: "Consultas", Icon: IconChat },
-    { href: "/admin/denuncias", label: "Denuncias", Icon: IconFlag },
-    { href: "/admin/emails", label: "Emails", Icon: IconMail },
-    { href: "/admin/contenido", label: "Contenido", Icon: IconEdit },
-    { href: "/admin/rubros", label: "Rubros", Icon: IconStore },
-    { href: "/admin/planes", label: "Planes", Icon: IconTag, roles: ["owner", "admin"] },
+    { href: "/admin/consultas", label: "Consultas", Icon: IconChat, area: "consultas" },
+    { href: "/admin/denuncias", label: "Denuncias", Icon: IconFlag, area: "denuncias" },
+    { href: "/admin/emails", label: "Emails", Icon: IconMail, area: "emails" },
+    { href: "/admin/contenido", label: "Contenido", Icon: IconEdit, area: "contenido" },
+    { href: "/admin/rubros", label: "Rubros", Icon: IconStore, area: "rubros" },
+    { href: "/admin/planes", label: "Planes", Icon: IconTag, area: "planes" },
   ] },
   { label: "Sistema", items: [
-    { href: "/admin/sistema", label: "Estado", Icon: IconServer },
-    { href: "/admin/auditoria", label: "Auditoría", Icon: IconShield, roles: ["owner", "admin"] },
-    { href: "/admin/admins", label: "Equipo", Icon: IconUsers, roles: ["owner"] },
+    { href: "/admin/sistema", label: "Estado", Icon: IconServer, area: "sistema" },
+    { href: "/admin/auditoria", label: "Auditoría", Icon: IconShield, area: "auditoria" },
+    { href: "/admin/admins", label: "Equipo", Icon: IconUsers, ownerOnly: true },
   ] },
 ];
 
@@ -122,10 +126,11 @@ export function AdminShell({ children }: { children: ReactNode }) {
 
   const role = me.user.role;
   const roleLabel = role === "owner" ? "Owner" : role === "admin" ? "Admin" : "Soporte";
-  const can = (roles?: AdminRole[]) => !roles || roles.includes(role);
-  const groups: NavGroup[] = ADMIN_GROUPS.map((g) => ({ label: g.label, items: g.items.filter((n) => can(n.roles)).map(({ href, label, Icon, exact }) => ({ href, label, Icon, exact })) })).filter((g) => g.items.length > 0);
+  const can = (area?: AreaKey, level: Level = "view") => role === "owner" || !area || allows(me.permissions, area, level);
+  const admin: AdminUser = { ...me.user, permissions: me.permissions, can };
+  const groups: NavGroup[] = ADMIN_GROUPS.map((g) => ({ label: g.label, items: g.items.filter((n) => (n.ownerOnly ? role === "owner" : can(n.area))).map(({ href, label, Icon, exact }) => ({ href, label, Icon, exact })) })).filter((g) => g.items.length > 0);
   return (
-    <Ctx.Provider value={me.user}>
+    <Ctx.Provider value={admin}>
       <AppShell groups={groups} areaLabel="Administración" homeHref="/admin" userLabel={`${me.user.email} · ${roleLabel}`} onLogout={async () => { await logout(); router.replace("/ingresar"); }}>
         {children}
       </AppShell>

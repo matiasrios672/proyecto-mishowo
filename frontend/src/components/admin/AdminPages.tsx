@@ -7,14 +7,13 @@ import { Field, Select, TextArea, TextInput } from "@/components/ui/fields";
 import { API_URL, api } from "@/lib/authClient";
 import { siteUrl } from "@/lib/siteUrl";
 import { ErrorBox, Money, Pager, useAdmin, when } from "./AdminShell";
-import { InviteForm } from "./AdminMail";
 
 const th = "px-3 py-2 text-left text-xs font-medium text-muted-foreground";
 const td = "px-3 py-2 align-top text-sm";
 const table = "w-full min-w-[640px] border-collapse";
 const wrap = "overflow-x-auto rounded-xl border";
 const E: Record<string, string> = {
-  forbidden_role: "Tu rol no permite esta acción.", not_pending: "Ese pago ya estaba resuelto.", invalid_request: "Revisá los datos: algo no está bien escrito.",
+  forbidden_role: "No tenés permiso para esta acción.", not_pending: "Ese pago ya estaba resuelto.", invalid_request: "Revisá los datos: algo no está bien escrito.",
   already_suspended: "Ya estaba suspendido.", not_suspended: "No está suspendido.", not_published: "No está publicado.", days_required: "Para un plan pago hay que indicar cuántos días.",
   cannot_target_self: "No podés hacerlo sobre tu propia cuenta.", user_not_found: "Esa persona todavía no tiene cuenta: pedile que se registre primero.", is_owner: "No se puede cambiar a un Owner.",
   already_resolved: "Otra persona ya resolvió esta denuncia.", note_required: "Escribí la nota antes de guardarla.", business_gone: "El negocio ya no existe.", gratis_must_stay_free: "El plan gratuito tiene que seguir activo y costar $ 0.", invalid_plan: "Ese plan no sirve para esto.", network: "No pudimos conectarnos.",
@@ -120,6 +119,8 @@ export function Dashboard() {
 // ───────────── Pagos ─────────────
 interface Pay { id: string; businessId: string; businessName: string; slug: string; ownerEmail: string; planId: string; months: number; amount: number; status: string; note: string | null; rejectReason: string | null; hasReceipt: boolean; createdAt: string }
 export function Payments() {
+  const me = useAdmin();
+  const manage = me.can("pagos", "manage");
   const [status, setStatus] = useState("pendiente");
   const { data, error, reload } = useLoad<{ payments: Pay[] }>(`/admin/payments?status=${status}`);
   const [err, setErr] = useState<string | null>(null);
@@ -140,7 +141,7 @@ export function Payments() {
     <div className="space-y-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-2xl font-bold">Pagos</h1>
-        <Button variant="outline" onClick={() => setManual((v) => !v)} aria-expanded={manual}>Registrar un pago manual</Button>
+        {manage && <Button variant="outline" onClick={() => setManual((v) => !v)} aria-expanded={manual}>Registrar un pago manual</Button>}
       </div>
       {manual && <ManualPayment onDone={() => { setManual(false); reload(); }} />}
       <div role="tablist" aria-label="Estado" className="flex gap-1">
@@ -162,7 +163,7 @@ export function Payments() {
             {p.rejectReason && <p className="mt-2 text-sm text-destructive">Motivo del rechazo: {p.rejectReason}</p>}
             <div className="mt-3 flex flex-wrap items-center gap-2">
               {p.hasReceipt ? <a className="rounded-md border px-3 py-1.5 text-sm" href={`${API_URL}/admin/payments/${p.id}/receipt`} target="_blank" rel="noopener noreferrer">Ver comprobante</a> : <span className="text-sm text-muted-foreground">Sin comprobante</span>}
-              {p.status === "pendiente" && (rejecting === p.id ? (
+              {manage && p.status === "pendiente" && (rejecting === p.id ? (
                 <span className="flex flex-wrap items-center gap-2">
                   <TextInput aria-label="Motivo del rechazo" placeholder="Motivo (se lo mandamos por email)" value={reason} onChange={(e) => setReason(e.target.value)} className="w-72" />
                   <Button size="sm" variant="destructive" disabled={busy === p.id || reason.trim().length < 3} onClick={() => void act(p.id, "reject")}>Rechazar</Button>
@@ -252,7 +253,8 @@ export function BusinessDetail({ id }: { id: string }) {
   const [note, setNote] = useState<string | null>(null);
   const [confirmDel, setConfirmDel] = useState(false);
   const [days, setDays] = useState(30), [planId, setPlanId] = useState("emprende");
-  const manage = me.role !== "support";
+  const manage = me.can("negocios", "manage");
+  const canPlan = me.can("planes", "manage");
   if (!data) return <ErrorBox error={error ?? "Cargando…"} />;
   const b = data.business;
   async function act(path: string, method: "POST" | "PUT" | "DELETE" = "POST", body: object = {}) {
@@ -291,13 +293,13 @@ export function BusinessDetail({ id }: { id: string }) {
             {b.status === "published" && <Button size="sm" variant="outline" onClick={() => void act("/unpublish")}>Despublicar</Button>}
             {confirmDel ? <span className="flex items-center gap-2 text-sm">¿Eliminar este negocio?<Button size="sm" variant="destructive" onClick={() => void act("", "DELETE")}>Sí, eliminar</Button><Button size="sm" variant="ghost" onClick={() => setConfirmDel(false)}>No</Button></span> : <Button size="sm" variant="ghost" onClick={() => setConfirmDel(true)}>Eliminar</Button>}
           </div>
-          <div className="flex flex-wrap items-end gap-2">
+          {canPlan && <div className="flex flex-wrap items-end gap-2">
             <Field label="Cambiar plan">{(i) => <Select id={i} value={planId} onChange={(e) => setPlanId(e.target.value)}><option value="emprende">Emprende</option><option value="pro">Pro</option><option value="gratis">Gratis</option></Select>}</Field>
             <Field label="Días">{(i) => <TextInput id={i} type="number" min={1} max={3650} value={days} onChange={(e) => setDays(Number(e.target.value))} className="w-24" />}</Field>
             <Button size="sm" variant="outline" onClick={() => void act("/plan", "POST", { planId, ...(planId !== "gratis" ? { days } : {}) })}>Aplicar plan</Button>
-          </div>
+          </div>}
         </section>
-      ) : <p className="text-sm text-muted-foreground">Tu rol (Soporte) permite ver y dejar notas, no cambiar planes ni moderar.</p>}
+      ) : <p className="text-sm text-muted-foreground">Tus permisos te dejan ver y dejar notas, no moderar este negocio.</p>}
 
       <section><h2 className="mb-2 font-semibold">Pagos</h2>{data.payments.length === 0 ? <p className="text-sm text-muted-foreground">Sin pagos.</p> : <ul className="space-y-1 text-sm">{data.payments.map((p) => <li key={p.id}>{p.planId} · {p.months} m · {Money(p.amount)} · {p.status} · {when(p.createdAt)}</li>)}</ul>}</section>
       <section><h2 className="mb-2 font-semibold">Historial</h2>{data.history.length === 0 ? <p className="text-sm text-muted-foreground">Sin movimientos.</p> : <ul className="space-y-1 text-sm">{data.history.map((h) => <li key={h.id}>{when(h.createdAt)} · {h.action}</li>)}</ul>}</section>
@@ -332,7 +334,7 @@ export function Users() {
               <tr key={u.id} className="border-t" data-testid="admin-user">
                 <td className={td}>{u.email}{u.name && <div className="text-xs text-muted-foreground">{u.name}</div>}</td><td className={td}>{u.role}</td>
                 <td className={td}>{u.emailVerifiedAt ? "Sí" : "No"}</td><td className={td}>{when(u.lastLoginAt)}</td><td className={td}>{u.blockedAt ? <span className="text-destructive">Bloqueado</span> : "Activo"}</td>
-                <td className={td}>{me.role !== "support" && u.id !== me.id && <Button size="sm" variant="outline" onClick={() => void toggle(u)}>{u.blockedAt ? "Desbloquear" : "Bloquear"}</Button>}</td>
+                <td className={td}>{me.can("usuarios", "manage") && u.id !== me.id && <Button size="sm" variant="outline" onClick={() => void toggle(u)}>{u.blockedAt ? "Desbloquear" : "Bloquear"}</Button>}</td>
               </tr>
             ))}
           </tbody>
@@ -346,7 +348,7 @@ export function Users() {
 // ───────────── Planes y ajustes ─────────────
 interface ModuleDef { key: string; label: string; description: string }
 interface PlanRow { id: string; name: string; priceMonthly: number; limits: { products: number | null; photosPerProduct: number; whatsappNumbers: number; uploadMb: number; coupons?: number | null }; modules: Record<string, boolean>; features: string[]; active: boolean }
-function PlanEditor({ plan, modules, onSaved }: { plan: PlanRow; modules: ModuleDef[]; onSaved: () => void }) {
+function PlanEditor({ plan, modules, onSaved, canEdit }: { plan: PlanRow; modules: ModuleDef[]; onSaved: () => void; canEdit: boolean }) {
   const [err, setErr] = useState<string | null>(null);
   const [ok, setOk] = useState(false);
   const free = plan.id === "gratis";
@@ -366,6 +368,7 @@ function PlanEditor({ plan, modules, onSaved }: { plan: PlanRow; modules: Module
       } });
       if (r.ok) { setErr(null); setOk(true); onSaved(); } else { setOk(false); setErr(msg(r.data.error)); }
     }}>
+      <fieldset disabled={!canEdit} className="contents">
       <h3 className="font-semibold sm:col-span-3">{plan.name} <span className="text-xs font-normal text-muted-foreground">({plan.id})</span></h3>
       <Field label="Nombre">{(id) => <TextInput id={id} name="name" defaultValue={plan.name} required />}</Field>
       <Field label="Precio por mes ($)">{(id) => <TextInput id={id} name="price" type="number" min={0} step="0.01" defaultValue={plan.priceMonthly} required />}</Field>
@@ -387,7 +390,8 @@ function PlanEditor({ plan, modules, onSaved }: { plan: PlanRow; modules: Module
       </fieldset>
       <div className="sm:col-span-2"><Field label="Beneficios (uno por línea)">{(id) => <TextArea id={id} name="features" rows={4} defaultValue={plan.features.join("\n")} />}</Field></div>
       <label className="flex items-center gap-2 self-end text-sm"><input type="checkbox" name="active" defaultChecked={plan.active} disabled={free} /> Activo (se muestra y se puede contratar)</label>
-      <div className="sm:col-span-3"><ErrorBox error={err} />{ok && <p role="status" className="mb-2 text-sm">Guardado. Ya se ve en la landing y en los avisos de pago.</p>}<Button type="submit" size="sm">Guardar {plan.name}</Button></div>
+      <div className="sm:col-span-3"><ErrorBox error={err} />{ok && <p role="status" className="mb-2 text-sm">Guardado. Ya se ve en la landing y en los avisos de pago.</p>}{canEdit ? <Button type="submit" size="sm">Guardar {plan.name}</Button> : <p className="text-sm text-muted-foreground">Con tus permisos podés ver los planes, no editarlos.</p>}</div>
+      </fieldset>
     </form>
   );
 }
@@ -400,7 +404,7 @@ export function Plans() {
       <h1 className="text-2xl font-bold">Planes y precios</h1>
       <p className="max-w-[60ch] text-muted-foreground">Los precios y límites que cargues acá se aplican enseguida: en la landing, en los avisos de pago y en los límites de cada negocio.</p>
       <ErrorBox error={error} />
-      {data?.plans.map((p) => <PlanEditor key={p.id} plan={p} modules={data.modules} onSaved={reload} />)}
+      {data?.plans.map((p) => <PlanEditor key={p.id} plan={p} modules={data.modules} onSaved={reload} canEdit={me.can("planes", "manage")} />)}
       {me.role === "owner" && <PaymentSettings />}
     </div>
   );
@@ -455,38 +459,6 @@ export function Audit() {
         </table>
       </div>
       <nav className="flex items-center gap-2 text-sm"><Button size="sm" variant="outline" disabled={page <= 1} onClick={() => setPage(page - 1)}>Anterior</Button><span>Página {page}</span><Button size="sm" variant="outline" disabled={(data?.entries.length ?? 0) < 50} onClick={() => setPage(page + 1)}>Siguiente</Button></nav>
-    </div>
-  );
-}
-
-// ───────────── Equipo (solo Owner) ─────────────
-export function Team() {
-  const me = useAdmin();
-  const { data, error, reload } = useLoad<{ admins: { id: string; email: string; role: string; totpEnabled: boolean; lastLoginAt: string | null }[] }>("/admin/admins");
-  const [err, setErr] = useState<string | null>(null);
-  return (
-    <div className="space-y-6">
-      <h1 className="text-2xl font-bold">Equipo</h1>
-      <ErrorBox error={error ?? err} />
-      <ul className="divide-y rounded-xl border" data-testid="team">
-        {data?.admins.map((a) => (
-          <li key={a.id} className="flex flex-wrap items-center justify-between gap-2 p-3 text-sm">
-            <span><strong>{a.email}</strong> · {a.role === "owner" ? "Owner" : a.role === "admin" ? "Admin" : "Soporte"} · 2FA {a.totpEnabled ? "activo" : "pendiente"} · último ingreso {when(a.lastLoginAt)}</span>
-            {a.role !== "owner" && a.id !== me.id && <Button size="sm" variant="ghost" onClick={async () => { const r = await api(`/admin/admins/${a.id}`, { method: "DELETE" }); if (r.ok) reload(); else setErr(msg(r.data.error)); }}>Quitar acceso</Button>}
-          </li>
-        ))}
-      </ul>
-      <InviteForm onDone={reload} />
-      <form className="flex flex-wrap items-end gap-3 rounded-xl border p-4" onSubmit={async (e) => {
-        e.preventDefault();
-        const f = new FormData(e.currentTarget);
-        const r = await api("/admin/admins", { body: { email: String(f.get("email")), role: String(f.get("role")) } });
-        if (r.ok) { setErr(null); (e.target as HTMLFormElement).reset(); reload(); } else setErr(msg(r.data.error));
-      }}>
-        <Field label="Email de una cuenta existente">{(id) => <TextInput id={id} name="email" type="email" required className="w-72" />}</Field>
-        <Field label="Rol">{(id) => <Select id={id} name="role"><option value="support">Soporte</option><option value="admin">Admin</option></Select>}</Field>
-        <Button type="submit">Dar acceso</Button>
-      </form>
     </div>
   );
 }

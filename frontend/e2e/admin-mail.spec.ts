@@ -135,9 +135,9 @@ test("el Owner suma a alguien al equipo: le llega la invitación, elige su contr
   await makeAdmin(owner.page, `${uniq("owner-team", info.project.name)}@test.com`, "owner");
   await owner.page.getByRole("link", { name: "Equipo", exact: true }).click();
   const form = owner.page.getByTestId("invite-form");
-  await form.getByLabel(/^Nombre/).fill("Sofi Ramos");
-  await form.getByLabel(/^Email/).fill(staff);
-  await form.getByLabel("Rol").selectOption("support");
+  await form.getByRole("textbox", { name: /^Nombre/ }).fill("Sofi Ramos");
+  await form.getByRole("textbox", { name: /^Email/ }).fill(staff);
+  await form.getByLabel("Plantilla").selectOption("support");
   await form.getByRole("button", { name: "Invitar" }).click();
   await expect(form.getByRole("status")).toContainText("le llegó un mail");
 
@@ -153,6 +153,64 @@ test("el Owner suma a alguien al equipo: le llega la invitación, elige su contr
   await page.getByRole("button", { name: "Ingresar", exact: true }).click();
   await page.waitForURL("**/admin**");
   await expect(page.getByTestId("setup-start")).toBeVisible(); // lo primero que le pide es configurar el 2FA
+});
+
+test("el Owner da permisos a medida: la persona ve solo lo suyo y el cambio rige sin volver a ingresar", async ({ browser }, info) => {
+  test.setTimeout(180_000);
+  const staff = `${uniq("permisos", info.project.name)}@test.com`;
+  const owner = await newPage(browser);
+  await makeAdmin(owner.page, `${uniq("owner-perm", info.project.name)}@test.com`, "owner");
+  await owner.page.getByRole("link", { name: "Equipo", exact: true }).click();
+
+  // Alta con permisos a medida: plantilla Soporte, pero con Pagos en «Ver» y sin Consultas.
+  const form = owner.page.getByTestId("invite-form");
+  await form.getByRole("textbox", { name: /^Nombre/ }).fill("Pedro Pagos");
+  await form.getByRole("textbox", { name: /^Email/ }).fill(staff);
+  await expect(form.getByTestId("permissions-state")).toContainText("Son los de la plantilla");
+  await form.getByLabel("Pagos: Ver", { exact: true }).check();
+  await form.getByLabel("Consultas: Sin acceso", { exact: true }).check();
+  await expect(form.getByTestId("permissions-state")).toContainText("Permisos personalizados");
+  await form.getByRole("button", { name: "Invitar" }).click();
+  await expect(form.getByRole("status")).toContainText("le llegó un mail");
+  const row = owner.page.getByTestId("team-member").filter({ hasText: staff });
+  await expect(row).toContainText("permisos a medida");
+  await expect(row).toContainText("Ve: ");
+
+  // La persona elige su contraseña, configura el 2FA y ve solo lo que se le dio.
+  const token = await tokenFromMail(staff);
+  const { page } = await newPage(browser);
+  await page.goto(`/restablecer?token=${encodeURIComponent(token)}`);
+  await page.getByLabel(/^Contraseña nueva/).fill(PASS);
+  await page.getByRole("button", { name: "Guardar contraseña" }).click();
+  await expect(page.getByRole("link", { name: "Ingresar" })).toBeVisible();
+  await page.goto("/ingresar");
+  await page.getByLabel(/^Email/).fill(staff);
+  await page.getByLabel(/^Contraseña/).fill(PASS);
+  await page.getByRole("button", { name: "Ingresar", exact: true }).click();
+  await page.waitForURL("**/admin**");
+  await page.getByTestId("setup-start").click();
+  const secret = (await page.getByTestId("totp-secret").textContent())!.trim();
+  await page.getByLabel(/^Código de 6 dígitos/).fill(totpNow(secret));
+  await page.getByRole("button", { name: "Activar" }).click();
+  const nav = page.getByRole("navigation", { name: "Administración" });
+  await expect(nav).toBeVisible();
+  await expect(nav.getByRole("link", { name: "Pagos", exact: true })).toBeVisible();
+  await expect(nav.getByRole("link", { name: "Negocios", exact: true })).toBeVisible();
+  for (const hidden of ["Consultas", "Planes", "Auditoría", "Equipo"]) await expect(nav.getByRole("link", { name: hidden, exact: true })).toHaveCount(0);
+  await nav.getByRole("link", { name: "Pagos", exact: true }).click();
+  await expect(page.getByRole("heading", { name: "Pagos", exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Registrar un pago manual" })).toHaveCount(0); // solo puede ver
+  expect((await page.request.get("http://localhost:4000/admin/contact")).status()).toBe(403); // el servidor también se lo niega (no es solo el menú)
+
+  // El Owner le sube Pagos a «Gestionar»: rige al recargar, sin cerrar sesión.
+  await row.getByRole("button", { name: "Permisos" }).click();
+  await row.getByLabel("Pagos: Gestionar", { exact: true }).check();
+  await row.getByRole("button", { name: "Guardar permisos" }).click();
+  await expect(row.getByRole("status")).toContainText("Guardado");
+  await expect(row).toContainText("Gestiona: Pagos");
+  await page.reload();
+  await expect(page.getByRole("button", { name: "Registrar un pago manual" })).toBeVisible();
+  await expect(page.getByRole("navigation", { name: "Administración" }).getByRole("link", { name: "Consultas", exact: true })).toHaveCount(0);
 });
 
 test("la página de baja de novedades explica qué pasa y no deja entrar con un enlace roto", async ({ page }) => {

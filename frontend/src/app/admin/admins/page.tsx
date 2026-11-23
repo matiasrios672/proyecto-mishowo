@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Team } from "@/components/admin/AdminPages";
+import { Team } from "@/components/admin/AdminTeam";
 
 export const metadata: Metadata = { title: "Equipo" };
 

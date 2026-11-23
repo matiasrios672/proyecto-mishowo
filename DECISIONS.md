@@ -137,3 +137,9 @@ Formato: ID · fecha · decisión · motivo · consecuencias. Las más nuevas ar
 - **Decisión:** el negocio activa «cuotas sin interés» (2 a 24, compra mínima y aclaración opcionales) en Pedidos. La página muestra «N cuotas sin interés de $X» en cada precio y el carrito ofrece «Quiero pagar en cuotas»; eso se suma al mensaje de WhatsApp. MiShowo no cobra ni procesa nada: el negocio cobra por su medio (posnet, MP propio, banco). Se guarda en `settings.installments` (sin migración).
 - **Por qué:** entrega el valor comercial (cuotas visibles) sin custodiar dinero ni cumplir normas de procesadores de pago.
 - **Cómo cambiarlo:** si algún día se integra una pasarela, `installments` pasa a ser la configuración que se envía al checkout.
+
+## D-022 · 2026-11-23 · Permisos por área para el equipo
+- **Contexto:** los roles fijos (Soporte/Admin) no alcanzan: el sysadmin quiere dar a cada persona solo lo que necesita (por ejemplo, solo pagos).
+- **Decisión:** 12 áreas (negocios, usuarios, pagos, planes, leads, consultas, denuncias, emails, contenido, rubros, sistema, auditoría) con tres niveles: sin acceso, ver y gestionar (gestionar incluye ver). Soporte y Admin pasan a ser plantillas con los mismos permisos que tenían los roles. El Owner puede ajustar cada persona (`users.permissions`, null = plantilla) desde Equipo; rige de inmediato porque se lee en cada pedido. Solo el Owner administra el equipo y los datos de cobro: no se delega. Cambiar el plan de un negocio pide permiso de planes (además del de negocios). Quien no ve pagos no ve ingresos en el resumen ni los pagos en la ficha del negocio.
+- **Por qué:** mínimo privilegio sin tocar el código de cada ruta cuando cambian las necesidades.
+- **Cómo cambiarlo:** el catálogo vive en `backend/src/lib/permissions.ts` (el frontend lo recibe del servidor); una área nueva se agrega ahí y en la ruta que la use con `requirePerm`.

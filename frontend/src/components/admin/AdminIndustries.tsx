@@ -18,7 +18,7 @@ const FONT_LABEL: Record<string, string> = { clasica: "Clásica", moderna: "Mode
 /** Rubros que se ofrecen al crear una página: nombre, bajada, estilo inicial y cuáles se muestran. El contenido de ejemplo de cada rubro no se edita acá. */
 export function Industries() {
   const me = useAdmin();
-  const canEdit = me.role !== "support";
+  const canEdit = me.can("rubros", "manage");
   const { data, error, reload } = useLoad<Data>("/admin/industries");
   return (
     <div className="space-y-6">

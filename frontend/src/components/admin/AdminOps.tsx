@@ -23,7 +23,7 @@ interface ReportList { page: number; pageSize: number; total: number; counts: Re
 
 export function Reports() {
   const me = useAdmin();
-  const manage = me.role !== "support";
+  const manage = me.can("denuncias", "manage");
   const [status, setStatus] = useState("nuevo");
   const [page, setPage] = useState(1);
   const { data, error, reload } = useLoad<ReportList>(`/admin/reports?status=${status}&page=${page}`);
@@ -109,7 +109,7 @@ export function System() {
   const [text, setText] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
   if (!data) return <ErrorBox error={error ?? "Cargando…"} />;
-  const manage = me.role !== "support";
+  const manage = me.can("sistema", "manage");
   const m = data.maintenance;
 
   async function setMaintenance(enabled: boolean) {
@@ -159,13 +159,13 @@ interface Cms { faq: { q: string; a: string }[]; banner: { enabled: boolean; tex
 
 export function Content() {
   const me = useAdmin();
-  const manage = me.role !== "support";
+  const manage = me.can("contenido", "manage");
   return (
     <div className="space-y-10">
       <h1 className="text-2xl font-bold">Contenido</h1>
       <Banner manage={manage} />
       <Faq manage={manage} />
-      <Reserved manage={manage} />
+      <Reserved manage={me.can("sistema", "manage")} />
     </div>
   );
 }

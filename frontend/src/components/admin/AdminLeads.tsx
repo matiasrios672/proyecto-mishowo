@@ -43,7 +43,7 @@ function TopReferrers() {
 
 export function Leads() {
   const me = useAdmin();
-  const manage = me.role !== "support";
+  const manage = me.can("leads", "manage");
   const [stage, setStage] = useState<Stage | "">("");
   const [page, setPage] = useState(1);
   const [q, setQ] = useState("");
