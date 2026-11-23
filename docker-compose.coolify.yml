@@ -1,0 +1,77 @@
+# MiShowo en Coolify (Docker Compose build pack) con dominio provisorio sslip.io y SIN HTTPS.
+# Coolify genera los secretos solo (variables SERVICE_PASSWORD_* / SERVICE_BASE64_*): no hay que escribir ninguno.
+# Variables que se cargan a mano en Coolify (no son secretas):
+#   ROOT_DOMAIN  dominio base de la plataforma y de cada negocio (slug.ROOT_DOMAIN). Ej.: mishowo.201.32.129.244.sslip.io
+#   API_HOST     dominio de la API. Ej.: api-mishowo.201.32.129.244.sslip.io (NO debe ser un subdominio de ROOT_DOMAIN:
+#                el wildcard *.ROOT_DOMAIN del frontend lo taparía)
+#   MAIL_HOST    dominio de Mailpit (los mails de prueba). Ej.: mail-mishowo.201.32.129.244.sslip.io
+# Dominios en la UI de Coolify (puerto entre paréntesis):
+#   frontend (3000): http://ROOT_DOMAIN,http://*.ROOT_DOMAIN     backend (4000): http://API_HOST     mailpit (8025): http://MAIL_HOST
+services:
+  db:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: mishowo
+      POSTGRES_PASSWORD: ${SERVICE_PASSWORD_POSTGRES}
+      POSTGRES_DB: mishowo
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U mishowo"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+
+  mailpit:
+    image: axllent/mailpit:latest
+    restart: unless-stopped
+    environment:
+      # La bandeja con todos los mails (incluidos los links de acceso) pide usuario y clave: admin / SERVICE_PASSWORD_MAILPIT.
+      MP_UI_AUTH: admin:${SERVICE_PASSWORD_MAILPIT}
+
+  backend:
+    build: ./backend
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgres://mishowo:${SERVICE_PASSWORD_POSTGRES}@db:5432/mishowo
+      FRONTEND_ORIGIN: http://${ROOT_DOMAIN}
+      ROOT_DOMAIN: ${ROOT_DOMAIN}
+      COOKIE_SECURE: "false" # sin HTTPS la cookie "Secure" no viajaría y nadie podría iniciar sesión
+      APP_URL: http://${ROOT_DOMAIN}
+      API_PUBLIC_URL: http://${API_HOST}
+      FRONTEND_INTERNAL_URL: http://frontend:3000
+      REVALIDATE_SECRET: ${SERVICE_PASSWORD_REVALIDATE}
+      ADMIN_SECRET_KEY: ${SERVICE_BASE64_ADMINKEY}
+      SMTP_HOST: mailpit
+      SMTP_PORT: "1025"
+      MAIL_FROM: MiShowo <no-reply@mishowo.com>
+      UPLOADS_DIR: /app/uploads
+    volumes:
+      - uploads:/app/uploads
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        NEXT_PUBLIC_API_URL: http://${API_HOST}
+        NEXT_PUBLIC_SITE_URL: http://${ROOT_DOMAIN}
+        NEXT_PUBLIC_ROOT_DOMAIN: ${ROOT_DOMAIN}
+        NEXT_PUBLIC_ROOT_SCHEME: http
+        NEXT_PUBLIC_LEGAL_ENTITY: MiShowo
+    restart: unless-stopped
+    depends_on:
+      backend:
+        condition: service_healthy
+    environment:
+      API_URL: http://backend:4000
+      ROOT_DOMAIN: ${ROOT_DOMAIN}
+      REVALIDATE_SECRET: ${SERVICE_PASSWORD_REVALIDATE}
+
+volumes:
+  pgdata:
+  uploads:
