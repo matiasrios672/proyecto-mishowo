@@ -16,7 +16,7 @@ const PRODUCTS = [
  */
 export function HeroStage() {
   return (
-    <div className="relative mx-auto w-full max-w-[34rem] pb-16 sm:pb-6 lg:max-w-none">
+    <div className="relative mx-auto w-full max-w-[34rem] lg:max-w-none">
       <div
         role="img"
         aria-label="Vista de la página de un negocio: nombre, estado abierto, productos con foto y precio, y el botón Pedir por WhatsApp."
@@ -53,11 +53,6 @@ export function HeroStage() {
             <span className="flex items-center gap-2"><IconChat className="size-5" />Pedir por WhatsApp</span>
           </div>
         </div>
-      </div>
-
-      <div aria-hidden className="absolute -bottom-1 right-3 flex items-center gap-3 rounded-xl border border-[#0E1B2C]/8 bg-white px-4 py-3 shadow-[0_20px_40px_-20px_rgba(14,27,44,0.4)] sm:right-6">
-        <span className="grid size-9 place-items-center rounded-full bg-[#15803D]/12"><span className="size-2.5 rounded-full bg-[#15803D]" /></span>
-        <span className="text-left"><span className="block text-sm font-extrabold leading-tight text-[#0E1B2C]">¡Pedido nuevo #12!</span><span className="block text-xs text-[#0E1B2C]/65">Empanadas y pizza · $ 24.300</span></span>
       </div>
     </div>
   );

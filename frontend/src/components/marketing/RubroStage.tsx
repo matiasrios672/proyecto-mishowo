@@ -111,7 +111,7 @@ export function RubroStage() {
         <div className="mk-orb absolute -right-24 bottom-0 size-[30rem] rounded-full" style={{ "--orb": "rgb(255 176 0 / 0.14)" } as React.CSSProperties} />
       </div>
       <div className="mx-auto w-full max-w-6xl px-5 sm:px-8">
-        <div className="text-center">
+        <div className="text-center" data-fx="up">
           <h2 id="rubro-title" className="mk-display mx-auto max-w-[20ch] text-4xl font-extrabold leading-[1.02] tracking-tight sm:text-6xl">Páginas hechas para negocios como el tuyo</h2>
           <p className="mx-auto mt-4 max-w-[46ch] text-lg text-white/75">Elegí tu rubro y mirá cómo queda: catálogo, colores y botón de WhatsApp ya armados.</p>
         </div>

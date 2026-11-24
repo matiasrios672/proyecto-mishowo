@@ -5,6 +5,7 @@ import type { TemplateInput } from "@/lib/draft";
 import { API_URL } from "@/lib/api";
 import { formatPrice } from "@/lib/format";
 import { LiveDemo } from "./LiveDemo";
+import { FaqItems } from "./FaqItems";
 import { HeroStage } from "./HeroStage";
 import { Glow } from "./Story";
 import { DEFAULT_FAQ, type FaqItem } from "@/content/faq";
@@ -51,7 +52,7 @@ export function Hero() {
             <p className="basis-full text-sm font-medium text-[#0E1B2C]/70">Gratis para empezar, listo en 5 minutos. Sin instalar nada.</p>
           </div>
         </div>
-        <HeroStage />
+        <div className="mk-parallax"><HeroStage /></div>
       </div>
     </section>
   );
@@ -177,9 +178,9 @@ async function PlansList() {
     return <p className="mt-10 text-lg text-muted-foreground">Escribinos y te contamos los planes. Podés empezar gratis ahora mismo.</p>;
 
   return (
-    <ul className="mt-12 grid gap-6 md:grid-cols-3">
+    <ul className="mt-12 grid gap-6 md:grid-cols-3" data-fx-stagger>
       {plans.map((p) => (
-        <li key={p.id} className={`relative flex flex-col rounded-3xl border-2 bg-white p-7 ${p.priceMonthly === 0 ? "border-[#15803D] shadow-[0_30px_60px_-30px_rgba(21,128,61,0.55)] md:-translate-y-2" : "border-border"}`}>
+        <li key={p.id} data-fx="zoom" className={`relative flex flex-col rounded-3xl border-2 bg-white p-7 ${p.priceMonthly === 0 ? "border-[#15803D] shadow-[0_30px_60px_-30px_rgba(21,128,61,0.55)] md:-translate-y-2" : "border-border"}`}>
           <h3 className="mk-display text-2xl font-bold">{p.name}</h3>
           {p.priceMonthly === 0 && <p className="mt-1 text-sm font-semibold text-[#15803D]">Para empezar hoy, sin tarjeta</p>}
           <p className="mk-display mt-3 text-4xl font-extrabold tracking-tight">
@@ -205,7 +206,7 @@ const Check = () => (
 export function Plans({ fallback }: { fallback: React.ReactNode }) {
   return (
     <section id="planes" aria-labelledby="plans-title" className={`${wrap} scroll-mt-20 py-16 sm:py-24`}>
-      <h2 id="plans-title" className="mk-display max-w-[22ch] text-4xl font-extrabold leading-tight tracking-tight sm:text-5xl">Empezá gratis, crecé cuando lo necesites</h2>
+      <h2 id="plans-title" data-fx="up" className="mk-display max-w-[22ch] text-4xl font-extrabold leading-tight tracking-tight sm:text-5xl">Empezá gratis, crecé cuando lo necesites</h2>
       <p className="mt-4 max-w-[52ch] text-lg text-muted-foreground">Tu página que vende y crece con vos. Pagás con transferencia y cambiás de plan cuando quieras.</p>
       {fallback}
     </section>
@@ -213,33 +214,23 @@ export function Plans({ fallback }: { fallback: React.ReactNode }) {
 }
 export { PlansList };
 
-export function FaqSection() {
+export function FaqSection({ limit }: { limit?: number } = {}) {
   return (
-    <Suspense fallback={<FaqList items={DEFAULT_FAQ} />}>
-      <FaqDynamic />
+    <Suspense fallback={<FaqList items={DEFAULT_FAQ} initial={limit} />}>
+      <FaqDynamic limit={limit} />
     </Suspense>
   );
 }
 
-async function FaqDynamic() {
-  return <FaqList items={(await getSiteConfig()).faq} />;
+async function FaqDynamic({ limit }: { limit?: number }) {
+  return <FaqList items={(await getSiteConfig()).faq} initial={limit} />;
 }
 
-function FaqList({ items }: { items: FaqItem[] }) {
+function FaqList({ items, initial }: { items: FaqItem[]; initial?: number }) {
   return (
     <section id="preguntas" aria-labelledby="faq-title" className={`${wrap} scroll-mt-20 py-16 sm:py-24`}>
-      <h2 id="faq-title" className="mk-display text-4xl font-extrabold leading-tight tracking-tight sm:text-5xl">Preguntas frecuentes</h2>
-      <div className="mt-10 max-w-3xl divide-y divide-border border-y border-border">
-        {items.map((f) => (
-          <details key={f.q} className="group py-5">
-            <summary className="mk-display flex cursor-pointer list-none items-center justify-between gap-4 text-xl font-bold focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring">
-              {f.q}
-              <span aria-hidden className="text-2xl font-normal transition-transform group-open:rotate-45">+</span>
-            </summary>
-            <p className="mt-3 max-w-[60ch] leading-relaxed text-muted-foreground">{f.a}</p>
-          </details>
-        ))}
-      </div>
+      <h2 id="faq-title" data-fx="up" className="mk-display text-4xl font-extrabold leading-tight tracking-tight sm:text-5xl">Preguntas frecuentes</h2>
+      <FaqItems items={items} initial={initial} />
     </section>
   );
 }
@@ -252,9 +243,10 @@ export function FinalCta() {
         <div className="mk-orb absolute -bottom-32 left-10 size-96 rounded-full" style={{ "--orb": "rgb(255 176 0 / 0.20)" } as React.CSSProperties} />
       </div>
       <div className={`${wrap} py-24 sm:py-32`}>
-        <h2 id="final-title" className="mk-display max-w-[14ch] text-5xl font-extrabold leading-[0.98] tracking-tight sm:text-7xl">Que te encuentren y te pidan.</h2>
-        <p className="mt-5 max-w-[38ch] text-xl text-white/80">En 5 minutos tenés tu página y tu link listos para la bio de Instagram, el estado de WhatsApp y un QR para el local.</p>
+        <h2 id="final-title" data-fx="up" className="mk-display max-w-[14ch] text-5xl font-extrabold leading-[0.98] tracking-tight sm:text-7xl">Que te encuentren y te pidan.</h2>
+        <p data-fx="up" style={{ "--fx-d": "100ms" } as React.CSSProperties} className="mt-5 max-w-[38ch] text-xl text-white/80">En 5 minutos tenés tu página y tu link listos para la bio de Instagram, el estado de WhatsApp y un QR para el local.</p>
         <Link href="/crear" className={`${ctaSol} mt-9`}>Crear mi página gratis</Link>
+        <p className="mt-5 text-sm font-medium text-white/70">Hecho en Argentina. Sin tarjeta, sin comisión por venta y con soporte por WhatsApp.</p>
       </div>
     </section>
   );

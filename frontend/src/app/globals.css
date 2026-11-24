@@ -427,3 +427,15 @@
 
 /* Barra superior de los paneles: cuenta, avisos y salir en la esquina superior derecha, pegada arriba al hacer scroll */
 .pm-topbar { position: sticky; top: 0; background: linear-gradient(180deg, rgb(243 244 248 / 0.92), rgb(243 244 248 / 0.72)); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); }
+
+/* ───────── Landing: movimiento al scrollear (lo activa ScrollFx; con «reducir movimiento» todo queda quieto y visible) ───────── */
+.fx-pre { opacity: 0; transform: translate3d(0, 28px, 0); transition: opacity 0.85s cubic-bezier(0.2, 0.7, 0.2, 1), transform 0.85s cubic-bezier(0.2, 0.7, 0.2, 1); transition-delay: var(--fx-d, 0ms); will-change: opacity, transform; }
+.fx-pre[data-fx="left"] { transform: translate3d(-40px, 0, 0); }
+.fx-pre[data-fx="right"] { transform: translate3d(40px, 0, 0); }
+.fx-pre[data-fx="zoom"] { transform: translate3d(0, 20px, 0) scale(0.94); }
+.fx-pre.fx-in { opacity: 1; transform: none; }
+@media (prefers-reduced-motion: reduce) { .fx-pre { opacity: 1; transform: none; transition: none; } }
+.mk-progress { position: fixed; inset: 0 0 auto 0; z-index: 60; height: 3px; pointer-events: none; transform-origin: left; transform: scaleX(var(--mk-scroll, 0)); background: linear-gradient(90deg, #FFB000, #FC5502 60%, #C73E00); }
+.mk-header { transition: box-shadow 0.3s, background-color 0.3s; }
+.mk-header[data-scrolled="true"] { box-shadow: 0 10px 30px -18px rgba(14, 27, 44, 0.35); background-color: rgb(255 251 248 / 0.94); }
+@media (prefers-reduced-motion: no-preference) and (min-width: 1024px) { .mk-parallax { transform: translate3d(0, calc(var(--mk-y, 0px) * -0.07), 0); will-change: transform; } }

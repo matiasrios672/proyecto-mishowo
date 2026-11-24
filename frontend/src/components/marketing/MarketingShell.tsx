@@ -9,7 +9,7 @@ const cta = "inline-flex items-center justify-center rounded-xl bg-gradient-to-b
 
 export function MarketingHeader() {
   return (
-    <header className="sticky top-0 z-40 border-b border-[#0E1B2C]/8 bg-[#FFFBF8]/85 backdrop-blur-xl">
+    <header className="mk-header sticky top-0 z-40 border-b border-[#0E1B2C]/8 bg-[#FFFBF8]/85 backdrop-blur-xl">
       <div className="mx-auto flex max-w-6xl items-center gap-3 px-4 py-3 sm:gap-4 sm:px-8">
         <Link href="/" aria-label="MiShowo, ir al inicio"><Wordmark className="text-xl sm:text-2xl" /></Link>
         <nav aria-label="Principal" className="ml-8 hidden gap-1 text-[15px] font-semibold lg:flex">

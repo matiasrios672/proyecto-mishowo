@@ -15,7 +15,8 @@ test.describe("landing de MiShowo", () => {
     // La home es corta: la demo y el menú para elegir qué ver. El resto vive en su propia página.
     for (const name of ["Dejá de contestar lo mismo cuarenta veces por día.", "Páginas hechas para negocios como el tuyo", "Empezá gratis, crecé cuando lo necesites", "Que te encuentren y te pidan."])
       await expect(page.getByRole("heading", { name, exact: true })).toBeVisible();
-    await expect(page.getByRole("heading", { name: "Preguntas frecuentes" })).toHaveCount(0); // las preguntas viven en /precios
+    await expect(page.getByRole("heading", { name: "Preguntas frecuentes" })).toBeVisible(); // la home muestra las primeras; el resto vive en /precios
+    await expect(page.getByRole("heading", { name: "Un producto que sigue creciendo con vos." })).toBeVisible();
     await expect(page.getByTestId("live-demo")).toHaveCount(0); // la demo vive en /probar, no en la home
     await expect(page.getByTestId("free-badge")).toHaveCount(0); // sin el cartelito de «plan gratis, sin tarjeta» en el hero
     await expect(page.getByText("Plan gratis para siempre · sin tarjeta")).toHaveCount(0);
@@ -86,6 +87,9 @@ test.describe("landing de MiShowo", () => {
     await demo.getByRole("button", { name: "Usar este diseño para mi página" }).click();
     // Para seguir hace falta cuenta: el diseño elegido viaja con la persona y aparece al crearla.
     await page.waitForURL("**/registro**");
+    await page.getByLabel(/^Nombre/).fill("Prueba");
+    await page.getByLabel(/^Apellido/).fill("Demo");
+    await page.getByLabel(/^Teléfono/).fill("1155550000");
     await page.getByLabel(/^Email/).fill(`demo-${Date.now()}@test.com`);
     await page.getByLabel(/^Contraseña/).fill("claveSegura123");
     await page.getByRole("button", { name: "Crear mi cuenta" }).click();
@@ -145,7 +149,7 @@ test.describe("páginas de la web (la home es corta y cada tema tiene la suya)",
         await expect(page.getByRole("heading", { level: 1 })).toHaveText(title);
         expect(await noOverflow(page), `${path} @${width}`).toBe(true);
       }
-      await expect(page.getByRole("heading", { name: "Creá tu página gratis", exact: true })).toBeVisible();
+      await expect(page.getByRole("heading", { name: "Que te encuentren y te pidan.", exact: true })).toBeVisible();
       await page.getByRole("navigation", { name: "Ubicación" }).getByRole("link", { name: /Inicio/ }).click();
       await expect(page).toHaveURL("/");
     });
@@ -204,7 +208,7 @@ test.describe("páginas de la web (la home es corta y cada tema tiene la suya)",
     test.skip(info.project.name !== "desktop", "solo en compu");
     await page.goto("/");
     const nav = page.getByRole("navigation", { name: "Principal" });
-    for (const name of ["Cómo funciona", "Rubros", "Cuotas", "Precios", "Ayuda"]) await expect(nav.getByRole("link", { name })).toBeVisible();
+    for (const name of ["Ejemplos", "Cómo funciona", "Funciones", "Precios"]) await expect(nav.getByRole("link", { name })).toBeVisible();
     await expect(page.getByRole("button", { name: "Abrir menú" })).toBeHidden();
   });
 });

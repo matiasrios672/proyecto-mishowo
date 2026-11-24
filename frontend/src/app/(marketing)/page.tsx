@@ -1,8 +1,9 @@
 import { Suspense } from "react";
 import type { Metadata } from "next";
-import { FinalCta, Hero, Plans, PlansList } from "@/components/marketing/sections";
+import { FaqSection, FinalCta, Hero, Plans, PlansList } from "@/components/marketing/sections";
 import { RubroStage } from "@/components/marketing/RubroStage";
-import { Contrast } from "@/components/marketing/Pitch";
+import { ScrollFx } from "@/components/marketing/ScrollFx";
+import { Contrast, Improving } from "@/components/marketing/Pitch";
 
 export const metadata: Metadata = {
   title: { absolute: "MiShowo: creá la página de tu negocio desde el celular" },
@@ -28,6 +29,7 @@ export default function Home() {
   return (
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }} />
+      <ScrollFx />
       <Hero />
       <Contrast />
       <RubroStage />
@@ -38,6 +40,8 @@ export default function Home() {
           </Suspense>
         }
       />
+      <Improving />
+      <FaqSection limit={5} />
       <FinalCta />
     </>
   );
