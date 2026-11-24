@@ -47,7 +47,7 @@ services:
       ADMIN_SECRET_KEY: ${SERVICE_BASE64_ADMINKEY}
       SMTP_HOST: mailpit
       SMTP_PORT: "1025"
-      MAIL_FROM: MiShowo <no-reply@mishowo.com>
+      MAIL_FROM: MiShowo <no-reply@${ROOT_DOMAIN}>
       UPLOADS_DIR: /app/uploads
     volumes:
       - uploads:/app/uploads

@@ -1,5 +1,26 @@
 # PROGRESS — MiShowo (bitácora, lo más nuevo arriba)
 
+## 2026-11-23 (12) — Avisos, confirmaciones, varias páginas por cuenta y paneles modernos
+- **Avisos emergentes** arriba a la derecha tras cada cambio (`components/feedback/`): `api()` avisa solo en POST/PUT/PATCH/DELETE (texto por ruta en `notify.ts`, una línea por aviso nuevo; silencio para autoguardado, ingreso y vistas previas; errores con texto claro).
+- **«¿Estás seguro?»** (`confirmAction`, ventana `<dialog>` accesible) antes de enviar mails y comunicados, invitar/reenviar/reiniciar 2FA, pagos, bloquear, suspender, despublicar, eliminar, mantenimiento y restaurar demos. Los e2e aceptan solos (`autoConfirm`).
+- **Varias páginas por cuenta (cobro por página, D-023):** encabezado `x-business-id` (la página abierta; «new» crea otra), `GET /me/pages`, tope de 10, una página ajena o borrada nunca crea otra por error; selector de página y «Agregar otra página» en el panel (`/crear?nueva=1`). Tests backend (417).
+- **Paneles modernos:** fondo crema, tarjetas blancas con esquinas amplias y sombra suave, foco visible, navegación con pastilla activa. **Botones en escala de grises (grafito) dentro de los paneles; el naranja queda para íconos.**
+- Sin correr: suite e2e completa (cambió mucho: login, menú, colores, avisos).
+
+## 2026-11-23 (11) — Color de acción y módulo de equipo
+- **Color:** botones principales en el naranja vivo del logo `#FC5502` con texto tinta en negrita (el blanco sobre ese naranja da 3,4:1; la tinta 5,3:1). `#C73E00` queda solo para texto chico de acento. Un único color de CTA (se fue el amarillo); titulares grandes en `#FC5502`. Manual actualizado.
+- **Equipo (/admin/admins, solo Owner):** enviar mail a una persona, comunicado a todo el equipo, reenviar invitación (invalida la anterior) y reiniciar el 2FA; todo auditado. Backend: POST /admin/admins/:id/email, /admin/admins/email, /:id/resend-invite, /:id/reset-2fa. Test nuevo (backend 413).
+
+## 2026-11-23 (10) — Admin ordenado, acceso único, demos, marca naranja (sin deploy)
+- **Admin:** menú en 6 grupos (Inicio, Clientes, Ventas, Atención, Contenido, Equipo y sistema); cada pantalla con explicación y «¿Cómo se usa?» (`PAGE_HELP` en AdminShell, editable sin tocar lógica); «Primeros pasos» en el Resumen (cobro, precios, demos, equipo); Cuentas con filtros (clientes/equipo/sin verificar/bloqueadas) y rol visible; Equipo con guía de roles; la cuenta técnica de las demos no se lista.
+- **Acceso:** una sola puerta (/ingresar) que deriva por rol (equipo → /admin; cliente → panel o editor) y que redirige sola si ya hay sesión. `node dist/admin-reset.js <email> [clave]` recupera/crea el Owner y reinicia el 2FA (ver DEPLOY.md).
+- **Demos:** `backend/src/demo.ts`; se crean solas al arrancar el backend (solo las que faltan, `SEED_DEMO_ON_BOOT=0` lo apaga) y con botón en /admin/sistema.
+- **Pantalla de «Cargando»** de marca en panel y admin. **«Hecho por MiShowo»** en todas las páginas (módulo remove_branding eliminado).
+- **Pedidos opcionales:** /crear pregunta si recibe pedidos por la página; landing, FAQ y metadatos ya no asumen pedidos. Carta: título «Nuestra carta» y chips para saltar de sección.
+- **Marca:** logo naranja nuevo (`public/brand/*`, favicon), paleta naranja `#FC5502` / `#C73E00` para texto, degradés en globals.css, manual en `/marca` y docs/MANUAL_DE_MARCA.md.
+- **Dominio:** DEPLOY-DOMINIO.md (mishowo.com + Cloudflare); MAIL_FROM sale de ROOT_DOMAIN.
+- Tests: backend 412, frontend 151 unitarios. E2E sin correr completos; los de /crear se actualizaron para el paso nuevo.
+
 ## 2026-11-23 (9) — Mudanza a mishowo.bitenv.site (preparada, falta el DNS comodín y el redeploy)
 - docker-compose.coolify.yml: web y API por HTTPS (Let's Encrypt de Coolify), negocios por HTTP (un certificado comodín exige validar por DNS), cookie Secure activa, etiqueta de Traefik de los negocios con el dominio nuevo y prioridad baja (api. y mail. ganan).
 - Coolify: dominios https://mishowo.bitenv.site (3000), https://api.mishowo.bitenv.site (4000) y https://mail.mishowo.bitenv.site (8025); variables ROOT_DOMAIN=mishowo.bitenv.site y API_HOST=api.mishowo.bitenv.site. Quedan como "Changes pending": nada cambia en lo que corre hasta redeployar.

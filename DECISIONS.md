@@ -143,3 +143,8 @@ Formato: ID · fecha · decisión · motivo · consecuencias. Las más nuevas ar
 - **Decisión:** 12 áreas (negocios, usuarios, pagos, planes, leads, consultas, denuncias, emails, contenido, rubros, sistema, auditoría) con tres niveles: sin acceso, ver y gestionar (gestionar incluye ver). Soporte y Admin pasan a ser plantillas con los mismos permisos que tenían los roles. El Owner puede ajustar cada persona (`users.permissions`, null = plantilla) desde Equipo; rige de inmediato porque se lee en cada pedido. Solo el Owner administra el equipo y los datos de cobro: no se delega. Cambiar el plan de un negocio pide permiso de planes (además del de negocios). Quien no ve pagos no ve ingresos en el resumen ni los pagos en la ficha del negocio.
 - **Por qué:** mínimo privilegio sin tocar el código de cada ruta cuando cambian las necesidades.
 - **Cómo cambiarlo:** el catálogo vive en `backend/src/lib/permissions.ts` (el frontend lo recibe del servidor); una área nueva se agrega ahí y en la ruta que la use con `requirePerm`.
+
+## D-023 · 2026-11-23 · El cobro es por página, no por cliente
+- El plan (`businesses.plan_id`, `plan_expires_at`) y los pagos (`payments.business_id`) ya cuelgan de la página, no de la cuenta. Se mantiene así: cada página tiene su plan, su vencimiento y sus recordatorios; los límites y módulos se miden por página.
+- Los textos lo dicen: precios «por mes, por página», «Plan de esta página» en el panel, pregunta frecuente nueva.
+- Hoy una cuenta opera una sola página (el panel usa la primera). Sumar varias páginas por cuenta (selector de página en el panel) es trabajo pendiente; el modelo de datos ya lo soporta.

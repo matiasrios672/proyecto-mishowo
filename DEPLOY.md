@@ -30,7 +30,16 @@ Sin Nginx, PM2, systemd ni Redis. Referencia: `docker-compose.prod.yml` y `.env.
 1. Registrate en `https://mishowo.com/registro` con el email que va a ser Owner.
 2. En la terminal del contenedor `backend`: `node dist/admin-cli.js <email> owner`. Al ingresar a `/admin` te pide configurar el 2FA (requiere `ADMIN_SECRET_KEY`).
 3. Desde `/admin`: cargá **precios finales de los planes**, datos de cobro (transferencia), SMTP de prueba (mandate un mail) y contenido legal.
-4. (Opcional) Negocios de ejemplo para los links de la landing (`lupe-empanadas`, `demo-ropa`…): `SEED_DEMO=1 node dist/seed.js` en el contenedor `backend`. Crea un usuario demo: cambiale la contraseña o borralo antes de abrir al público.
+4. Negocios de ejemplo (`lupe-empanadas`, `demo-ropa`…, los que enlaza la landing): **se crean solos al arrancar el backend** (solo los que faltan; se apaga con `SEED_DEMO_ON_BOOT=0`). También se pueden crear o restaurar desde `/admin/sistema` > «Negocios de ejemplo». Pertenecen a una cuenta técnica sin contraseña (`demo@mishowo.local`) que no aparece en la lista de cuentas.
+
+### Recuperar el acceso al admin (no me acuerdo del usuario o la contraseña)
+En la terminal del contenedor `backend` (Coolify > recurso > backend > Terminal):
+
+```
+node dist/admin-reset.js tu@email.com            # genera una contraseña nueva y la muestra
+node dist/admin-reset.js tu@email.com MiClave123  # o usa la que le pases (8+ caracteres)
+```
+Deja la cuenta como **Owner** con el email confirmado (si no existía, la crea), cierra sus sesiones y **reinicia el 2FA** (al entrar te pide escanear un QR nuevo con tu app de autenticación). Con `--keep-2fa` el 2FA no se toca. El usuario para ingresar es el email. Todo queda en Auditoría.
 
 ## 4. Tareas programadas (Coolify → *Scheduled Tasks*, contenedor `backend`)
 | Frecuencia | Comando | Para qué |
