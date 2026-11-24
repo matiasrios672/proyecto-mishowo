@@ -8,7 +8,7 @@ const product = (over: Partial<SiteProduct> = {}): SiteProduct => ({ id: "p", na
 const site = (over: Partial<SiteModel> = {}): SiteModel => ({
   name: "Lupe", tagline: "", description: "Panadería artesanal", whatsapp: "+54 9 11 5555-0000", instagram: "", address: "Av. Siempre Viva 123", deliveryZone: "",
   hours: null, announcement: "", design: { layout: "vidriera", theme: "blanco", fontPair: "moderna", brandColor: null, buttonShape: "recto" },
-  categories: [{ id: "c", name: "Panes", products: [product()] }], showQuantities: true, ordersEnabled: true, askEventDate: false, whatsappGreeting: "", hideBranding: false,
+  categories: [{ id: "c", name: "Panes", products: [product()] }], showQuantities: true, ordersEnabled: true, askEventDate: false, whatsappGreeting: "",
   exampleName: false, exampleTexts: false, cover: null, ...over,
 });
 

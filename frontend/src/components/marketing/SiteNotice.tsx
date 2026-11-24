@@ -13,7 +13,7 @@ async function Notice() {
         </p>
       )}
       {banner && (
-        <p className="bg-[#2F6FB0] px-4 py-2.5 text-center text-sm font-semibold text-white" data-testid="global-banner">
+        <p className="bg-[#FC5502] px-4 py-2.5 text-center text-sm font-semibold text-[#0E1B2C]" data-testid="global-banner">
           {banner.link ? (
             <Link href={banner.link} className="" {...(banner.link.startsWith("http") ? { target: "_blank", rel: "noopener noreferrer" } : {})}>{banner.text}</Link>
           ) : banner.text}

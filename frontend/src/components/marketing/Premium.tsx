@@ -12,13 +12,13 @@ export function ExplainerSection() {
       <div className={wrap}>
         <h2 id="story-title" className="mk-display max-w-[16ch] text-4xl font-extrabold leading-[1.02] tracking-tight sm:text-6xl">Del celular a tus clientes, en tres pasos</h2>
         <StepsCycler />
-        <Link href="/crear" className="mt-8 inline-flex min-h-12 items-center rounded-xl bg-[#F6B40E] px-7 font-bold text-[#0E1B2C] transition-transform hover:bg-[#FFC21F] active:scale-95 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white">Creá tu página gratis</Link>
+        <Link href="/crear" className="mt-8 inline-flex min-h-12 items-center rounded-xl bg-[#FC5502] px-7 font-bold text-[#0E1B2C] transition-transform hover:bg-[#FF6A1F] active:scale-95 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white">Creá tu página gratis</Link>
       </div>
     </section>
   );
 }
 
-const tile = "group rounded-[1.75rem] border border-[#0E1B2C]/8 bg-white p-6 shadow-[0_1px_0_rgba(14,27,44,0.04),0_30px_60px_-40px_rgba(47,111,176,0.5)] transition-transform duration-300 hover:-translate-y-1 sm:p-7";
+const tile = "group rounded-[1.75rem] border border-[#0E1B2C]/8 bg-white p-6 shadow-[0_1px_0_rgba(14,27,44,0.04),0_30px_60px_-40px_rgba(252,85,2,0.5)] transition-transform duration-300 hover:-translate-y-1 sm:p-7";
 
 function Tile({ title, line, className = "", children }: { title: string; line: string; className?: string; children?: React.ReactNode }) {
   return (
@@ -35,12 +35,12 @@ function Tile({ title, line, className = "", children }: { title: string; line: 
 /** Beneficios en formato bento: una imagen y una línea por cada uno, en vez de párrafos. */
 export function Bento() {
   return (
-    <section aria-labelledby="ben-title" className="bg-[#F4F9FE] py-14 sm:py-20">
+    <section aria-labelledby="ben-title" className="bg-[#FFF7F1] py-14 sm:py-20">
       <div className={wrap}>
         <h2 id="ben-title" className="mk-display max-w-[18ch] text-4xl font-extrabold leading-[1.04] tracking-tight text-[#0E1B2C] sm:text-6xl">Todo lo que necesitás para vender</h2>
         <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-4 lg:grid-rows-[repeat(2,minmax(15rem,auto))]">
           <Tile className="sm:col-span-2 lg:row-span-2" title="Pedidos ordenados" line="Con productos, total y fecha. Listos para responder.">
-            <div className="flex h-full min-h-56 flex-col justify-end gap-3 rounded-2xl bg-[#EAF4FC] p-4">
+            <div className="flex h-full min-h-56 flex-col justify-end gap-3 rounded-2xl bg-[#FFEFE6] p-4">
               <div className="mb-auto flex w-fit items-center gap-2.5 rounded-2xl bg-[#0E1B2C] px-4 py-3 text-sm font-semibold text-white shadow-lg"><span className="size-2.5 animate-pulse rounded-full bg-[#4ADE80]" />¡Pedido nuevo #12! · $ 17.700</div>
               <p className="max-w-[85%] self-start rounded-2xl rounded-bl-md bg-white p-3.5 text-sm font-medium text-[#0E1B2C] shadow-sm">Hola! Quiero hacer este pedido:<br />• 1 docena de empanadas<br />• 1 flan casero<br /><b>Total: $ 17.700</b></p>
               <p className="max-w-[80%] self-end rounded-2xl rounded-br-md bg-[#D9F7E4] p-3.5 text-sm font-medium text-[#0E1B2C] shadow-sm" style={{ animationDelay: "0.25s" }}>¡Genial! Te lo preparo para las 21 hs 🙌</p>
@@ -48,7 +48,7 @@ export function Bento() {
           </Tile>
           <Tile title="Estadísticas" line="Visitas y clics, sin cookies.">
             <div aria-hidden className="flex h-24 items-end gap-1.5">
-              {[30, 44, 36, 58, 52, 74, 66, 92].map((h, i) => <span key={i} className="mk-bar flex-1 rounded-t-md bg-gradient-to-t from-[#2F6FB0] to-[#74ACDF]" style={{ height: `${h}%`, animationDelay: `${i * 70}ms` }} />)}
+              {[30, 44, 36, 58, 52, 74, 66, 92].map((h, i) => <span key={i} className="mk-bar flex-1 rounded-t-md bg-gradient-to-t from-[#C73E00] to-[#FF8A4C]" style={{ height: `${h}%`, animationDelay: `${i * 70}ms` }} />)}
             </div>
             <IconChart className="sr-only" />
           </Tile>
@@ -57,14 +57,14 @@ export function Bento() {
           </Tile>
           <Tile title="Cupones y turnos" line="Descuentos y reservas, sin apps extra.">
             <div className="flex flex-wrap gap-2.5">
-              <span className="inline-flex items-center gap-2 rounded-full bg-[#2F6FB0]/10 px-3.5 py-2 font-bold text-[#2F6FB0]"><IconTag className="size-5" />BIENVENIDA15</span>
-              <span className="inline-flex items-center gap-2 rounded-full bg-[#2F6FB0]/10 px-3.5 py-2 font-bold text-[#2F6FB0]"><IconCalendar className="size-5" />Sáb 17:30</span>
+              <span className="inline-flex items-center gap-2 rounded-full bg-[#C73E00]/10 px-3.5 py-2 font-bold text-[#C73E00]"><IconTag className="size-5" />BIENVENIDA15</span>
+              <span className="inline-flex items-center gap-2 rounded-full bg-[#C73E00]/10 px-3.5 py-2 font-bold text-[#C73E00]"><IconCalendar className="size-5" />Sáb 17:30</span>
             </div>
           </Tile>
           <Tile title="Aparecés en Google" line="Con título, datos y fotos.">
             <div aria-hidden className="rounded-xl border border-[#0E1B2C]/10 p-3">
               <div className="flex items-center gap-2 text-xs text-[#47566A]"><IconGoogle className="size-4" />empanadas lupe</div>
-              <p className="mt-2 text-sm font-bold text-[#2F6FB0]">Empanadas de Lupe</p>
+              <p className="mt-2 text-sm font-bold text-[#C73E00]">Empanadas de Lupe</p>
               <p className="text-xs text-[#47566A]">lupe.mishowo.com</p>
             </div>
           </Tile>
@@ -119,7 +119,7 @@ export function BarsSection() {
             <div className="mx-auto grid size-20 place-items-center rounded-lg bg-[#0E1B2C]/95 p-1.5 sm:size-24">
               <div className="grid size-full grid-cols-7 gap-px">{Array.from({ length: 49 }, (_, i) => <span key={i} className={((i * 5 + (i % 7) * 3) % 3 !== 0 || [0, 1, 7, 6, 8, 40, 41, 48, 42, 47].includes(i)) ? "bg-white" : "bg-transparent"} />)}</div>
             </div>
-            <p className="mt-2 text-[11px] font-extrabold leading-tight text-[#0E1B2C]">Mesa 7<br /><span className="font-semibold text-[#2F6FB0]">Escaneá y mirá la carta</span></p>
+            <p className="mt-2 text-[11px] font-extrabold leading-tight text-[#0E1B2C]">Mesa 7<br /><span className="font-semibold text-[#C73E00]">Escaneá y mirá la carta</span></p>
           </div>
         </div>
       </div>

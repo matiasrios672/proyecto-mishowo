@@ -1,3 +1,14 @@
+import { notifyResult } from "@/components/feedback/notify";
+
+/** Página abierta en el panel (la elige el selector de páginas); sin cambios de dependencias circulares con el resto de lib. */
+function pageHeader(path: string): Record<string, string> {
+  if (!path.startsWith("/me/")) return {};
+  try {
+    const id = typeof window === "undefined" ? null : window.localStorage.getItem("mishowo:page:v1");
+    return id ? { "x-business-id": id } : {};
+  } catch { return {}; }
+}
+
 export const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
 
 export interface PublicUser { id: string; email: string; name: string | null; emailVerified: boolean; role: string }
@@ -7,20 +18,22 @@ export interface ApiResult<T> { ok: boolean; status: number; data: T & { error?:
 /** Llamada a la API con la cookie de sesión. Nunca lanza: una caída de red vuelve como `error: "network"`. */
 export async function api<T = Record<string, unknown>>(
   path: string,
-  init: { method?: "GET" | "POST" | "PUT" | "PATCH" | "DELETE"; body?: unknown; keepalive?: boolean } = {},
+  init: { method?: "GET" | "POST" | "PUT" | "PATCH" | "DELETE"; body?: unknown; keepalive?: boolean; /** No mostrar aviso emergente. */ quiet?: boolean; /** Texto propio para el aviso de éxito. */ toastText?: string } = {},
 ): Promise<ApiResult<T>> {
+  const method = init.method ?? (init.body !== undefined ? "POST" : "GET");
+  const done = (r: ApiResult<T>) => { notifyResult(method, path, r, init); return r; };
   try {
     const res = await fetch(`${API_URL}${path}`, {
-      method: init.method ?? (init.body !== undefined ? "POST" : "GET"),
+      method,
       credentials: "include",
       keepalive: init.keepalive,
-      headers: init.body !== undefined ? { "Content-Type": "application/json" } : undefined,
+      headers: { ...(init.body !== undefined ? { "Content-Type": "application/json" } : {}), ...pageHeader(path) },
       body: init.body !== undefined ? JSON.stringify(init.body) : undefined,
     });
     const data = (await res.json().catch(() => ({}))) as T & { error?: string };
-    return { ok: res.ok, status: res.status, data };
+    return done({ ok: res.ok, status: res.status, data });
   } catch {
-    return { ok: false, status: 0, data: { error: "network" } as T & { error?: string } };
+    return done({ ok: false, status: 0, data: { error: "network" } as T & { error?: string } });
   }
 }
 
@@ -64,9 +77,13 @@ export async function apiUpload<T = Record<string, unknown>>(path: string, file:
   try {
     const form = new FormData();
     form.append("file", file);
-    const res = await fetch(`${API_URL}${path}`, { method: "POST", credentials: "include", body: form });
-    return { ok: res.ok, status: res.status, data: (await res.json().catch(() => ({}))) as T & { error?: string } };
+    const res = await fetch(`${API_URL}${path}`, { method: "POST", credentials: "include", headers: pageHeader(path), body: form });
+    const out = { ok: res.ok, status: res.status, data: (await res.json().catch(() => ({}))) as T & { error?: string } };
+    notifyResult("POST", path, out);
+    return out;
   } catch {
-    return { ok: false, status: 0, data: { error: "network" } as T & { error?: string } };
+    const out = { ok: false, status: 0, data: { error: "network" } as T & { error?: string } };
+    notifyResult("POST", path, out);
+    return out;
   }
 }

@@ -40,6 +40,7 @@ export async function signUp(page: Page, mail: string) {
   await page.getByLabel(/^Contraseña/).fill(PASS);
   await page.getByRole("button", { name: "Crear mi cuenta" }).click();
   await page.getByRole("button", { name: /Rotisería y comidas/ }).click();
+  await page.getByTestId("orders-yes").click();
   await page.waitForURL("**/editor");
   await expect(status(page)).toHaveText("Guardado en tu cuenta", { timeout: 15_000 });
 }
@@ -100,4 +101,9 @@ export function totpNow(secretB32: string, nowMs = Date.now()): string {
 export function sql(query: string): string {
   const root = path.resolve(__dirname, "../..");
   return execFileSync("docker", ["compose", "exec", "-T", "db", "psql", "-U", "mishowo", "-d", "mishowo", "-tAc", query], { cwd: root, encoding: "utf8" }).trim();
+}
+
+/** Las acciones delicadas piden «¿Estás seguro?» en una ventana propia: en los recorridos se acepta sola cada vez que aparece. */
+export async function autoConfirm(page: Page) {
+  await page.addLocatorHandler(page.getByTestId("confirm-yes"), async (yes) => { await yes.click(); });
 }

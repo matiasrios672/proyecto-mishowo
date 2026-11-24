@@ -5,7 +5,7 @@ const PRODUCTS = [
   { n: "Docena de empanadas", p: "$ 14.500", tint: "#FBEBD3" },
   { n: "Pizza muzzarella", p: "$ 9.800", tint: "#FBE0DA" },
   { n: "Flan casero", p: "$ 3.200", tint: "#F8EFD2" },
-  { n: "Cerveza artesanal", p: "$ 4.800", tint: "#E3EEF9" },
+  { n: "Cerveza artesanal", p: "$ 4.800", tint: "#FFEADB" },
   { n: "Torta de ricota", p: "$ 6.500", tint: "#F3E6DC" },
   { n: "Hamburguesa doble", p: "$ 12.400", tint: "#F4E4CF" },
 ];
@@ -22,14 +22,14 @@ export function HeroStage() {
         aria-label="Vista de la página de un negocio: nombre, estado abierto, productos con foto y precio, y el botón Pedir por WhatsApp."
         className="overflow-hidden rounded-2xl border border-[#0E1B2C]/10 bg-white shadow-[0_40px_80px_-40px_rgba(14,27,44,0.45)]"
       >
-        <div className="flex items-center gap-3 border-b border-[#0E1B2C]/8 bg-[#F4F7FB] px-4 py-2.5">
+        <div className="flex items-center gap-3 border-b border-[#0E1B2C]/8 bg-[#FFFBF8] px-4 py-2.5">
           <span aria-hidden className="flex gap-1.5"><i className="size-2.5 rounded-full bg-[#0E1B2C]/15" /><i className="size-2.5 rounded-full bg-[#0E1B2C]/15" /><i className="size-2.5 rounded-full bg-[#0E1B2C]/15" /></span>
           <span className="min-w-0 flex-1 truncate rounded-md bg-white px-3 py-1 text-center text-[11px] font-medium text-[#0E1B2C]/60 sm:text-xs">lupe.mishowo.com</span>
         </div>
 
         <div className="p-4 sm:p-5">
           <div className="flex items-center gap-3">
-            <span className="grid size-10 shrink-0 place-items-center rounded-full bg-[#2F6FB0] text-base font-extrabold text-white">L</span>
+            <span className="grid size-10 shrink-0 place-items-center rounded-full bg-[#FC5502] text-base font-extrabold text-[#0E1B2C]">L</span>
             <span className="min-w-0 flex-1 text-left">
               <span className="block truncate text-sm font-extrabold leading-tight text-[#0E1B2C] sm:text-base">Lupe Empanadas</span>
               <span className="block text-[11px] font-semibold text-emerald-700 sm:text-xs">● Abierto ahora · pedidos hasta las 21 hs</span>

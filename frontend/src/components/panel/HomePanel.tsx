@@ -26,19 +26,19 @@ function LinkCard({ slug, published }: { slug: string; published: boolean }) {
   }
   if (!published)
     return (
-      <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border-2 border-dashed border-[#2F6FB0]/40 bg-[#F4F9FE] p-4" data-testid="home-link">
+      <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border-2 border-dashed border-[#D1D5DB] bg-[#F9FAFB] p-4" data-testid="home-link">
         <p className="text-sm"><strong>Tu link todavía no está activo.</strong> Publicá tu página para compartirlo en Instagram y WhatsApp.</p>
-        <Link href="/panel/pagina?tab=publicar" className="inline-flex min-h-11 items-center rounded-xl bg-[#2F6FB0] px-5 font-bold text-white">Publicar</Link>
+        <Link href="/panel/pagina?tab=publicar" className="inline-flex min-h-11 items-center rounded-xl bg-[#FC5502] px-5 font-bold text-[#0E1B2C]">Publicar</Link>
       </div>
     );
   return (
-    <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-[#D6E4F2] bg-gradient-to-br from-[#EAF4FC] to-white p-4" data-testid="home-link">
+    <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-[#E5E7EB] bg-gradient-to-br from-[#F1F3F5] to-white p-4" data-testid="home-link">
       <div className="min-w-0 flex-1">
         <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Tu link</p>
-        <p className="truncate text-lg font-extrabold text-[#2F6FB0]">{shown}</p>
+        <p className="truncate text-lg font-extrabold text-[#C73E00]">{shown}</p>
       </div>
-      <button type="button" onClick={() => void copy()} className="inline-flex min-h-11 items-center rounded-xl bg-[#2F6FB0] px-5 font-bold text-white hover:bg-[#245a92] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring">{copied ? "¡Copiado!" : "Copiar link"}</button>
-      <a href={`https://wa.me/?text=${encodeURIComponent(`Mirá mi catálogo: ${url}`)}`} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-11 items-center rounded-xl border border-[#2F6FB0]/40 px-5 font-bold text-[#2F6FB0] hover:bg-white">Mandar por WhatsApp</a>
+      <button type="button" onClick={() => void copy()} className="inline-flex min-h-11 items-center rounded-xl bg-[#FC5502] px-5 font-bold text-[#0E1B2C] hover:bg-[#E04C00] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring">{copied ? "¡Copiado!" : "Copiar link"}</button>
+      <a href={`https://wa.me/?text=${encodeURIComponent(`Mirá mi catálogo: ${url}`)}`} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-11 items-center rounded-xl border border-[#D1D5DB] px-5 font-bold text-[#C73E00] hover:bg-white">Mandar por WhatsApp</a>
     </div>
   );
 }
@@ -59,16 +59,16 @@ function ReferralCard() {
     try { await navigator.clipboard.writeText(r!.link); setCopied(true); setTimeout(() => setCopied(false), 2000); } catch { /* el link está a la vista para copiarlo a mano */ }
   }
   return (
-    <div className="border-y border-[#E1EAF3] py-4" data-testid="home-referral">
+    <div className="border-y border-[#E5E7EB] py-4" data-testid="home-referral">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="min-w-0">
           <p className="font-bold">Invitá a otros emprendedores</p>
           <p className="text-sm text-muted-foreground">Compartí tu link: cuando alguien crea su página desde ahí, lo vas a ver acá.</p>
-          <p className="mt-1 truncate text-sm font-semibold text-[#2F6FB0]">{r.link.replace(/^https?:\/\//, "")}</p>
+          <p className="mt-1 truncate text-sm font-semibold text-[#C73E00]">{r.link.replace(/^https?:\/\//, "")}</p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <button type="button" onClick={() => void copy()} className="inline-flex min-h-10 items-center border border-[#2F6FB0]/40 px-4 text-sm font-bold text-[#2F6FB0] hover:bg-[#F4F9FE]">{copied ? "¡Copiado!" : "Copiar link"}</button>
-          <a href={`https://wa.me/?text=${encodeURIComponent(`Armé la página de mi negocio con MiShowo, es gratis: ${r.link}`)}`} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-10 items-center border border-[#2F6FB0]/40 px-4 text-sm font-bold text-[#2F6FB0] hover:bg-[#F4F9FE]">Mandar por WhatsApp</a>
+          <button type="button" onClick={() => void copy()} className="inline-flex min-h-10 items-center border border-[#D1D5DB] px-4 text-sm font-bold text-[#C73E00] hover:bg-[#F9FAFB]">{copied ? "¡Copiado!" : "Copiar link"}</button>
+          <a href={`https://wa.me/?text=${encodeURIComponent(`Armé la página de mi negocio con MiShowo, es gratis: ${r.link}`)}`} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-10 items-center border border-[#D1D5DB] px-4 text-sm font-bold text-[#C73E00] hover:bg-[#F9FAFB]">Mandar por WhatsApp</a>
         </div>
       </div>
       {r.invited > 0 && <p className="mt-3 text-sm"><strong>{r.invited}</strong> {r.invited === 1 ? "persona se sumó" : "personas se sumaron"} · {r.published} {r.published === 1 ? "publicó" : "publicaron"} su página</p>}
@@ -95,7 +95,7 @@ export function HomePanel() {
       <section className="space-y-4">
         <h1 className="text-2xl font-bold">Armá tu primera página</h1>
         <p className="max-w-[56ch] text-muted-foreground">Elegí tu rubro y en minutos tenés un catálogo listo para compartir.</p>
-        <Link href="/crear" className="inline-flex min-h-11 items-center rounded-xl bg-[#2F6FB0] px-6 font-bold text-white">Empezar</Link>
+        <Link href="/crear" className="inline-flex min-h-11 items-center rounded-xl bg-[#FC5502] px-6 font-bold text-[#0E1B2C]">Empezar</Link>
       </section>
     );
 
@@ -120,23 +120,23 @@ export function HomePanel() {
           <h1 id="home-title" className="text-2xl font-bold">{greeting()}{name ? `, ${name}` : ""}!</h1>
           <p className="mt-1 text-muted-foreground">{draft.name} · {published ? "tu página está publicada" : "tu página todavía no está publicada"}</p>
         </div>
-        {published && <a href={siteUrl(biz.business.slug)} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-[#D6E4F2] px-4 font-semibold hover:bg-[#EAF4FC]"><IconStore className="size-5 text-[#2F6FB0]" />Ver mi página</a>}
+        {published && <a href={siteUrl(biz.business.slug)} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-[#E5E7EB] px-4 font-semibold hover:bg-[#F1F3F5]"><IconStore className="size-5 text-[#C73E00]" />Ver mi página</a>}
       </div>
 
       <LinkCard slug={biz.business.slug} published={published} />
       <ReferralCard />
 
-      <dl className="grid grid-cols-2 border-y border-[#E1EAF3] py-4 sm:grid-cols-3 sm:divide-x sm:divide-[#E1EAF3]" data-testid="home-stats">
+      <dl className="grid grid-cols-2 border-y border-[#E5E7EB] py-4 sm:grid-cols-3 sm:divide-x sm:divide-[#E5E7EB]" data-testid="home-stats">
         {tiles.map(([label, value]) => <div key={label} className="px-4 py-1 first:pl-0"><dt className="text-xs font-medium text-muted-foreground">{label}</dt><dd className="mt-1 text-3xl font-extrabold tabular-nums text-[#0E1B2C]">{value}</dd></div>)}
       </dl>
 
-      <div className="border-b border-[#E1EAF3] pb-6" data-testid="home-checklist">
+      <div className="border-b border-[#E5E7EB] pb-6" data-testid="home-checklist">
         <div className="flex items-center justify-between gap-3">
           <h2 className="font-bold">{pending.length === 0 ? "Tu página está completa" : "Para dejar tu página lista"}</h2>
-          <span className="rounded-full bg-white px-3 py-1 text-sm font-bold text-[#2F6FB0]">{q.score}%</span>
+          <span className="rounded-full bg-white px-3 py-1 text-sm font-bold text-[#C73E00]">{q.score}%</span>
         </div>
         <div role="progressbar" aria-label="Avance de tu página" aria-valuenow={q.score} aria-valuemin={0} aria-valuemax={100} className="mt-3 h-2 overflow-hidden rounded-full bg-white">
-          <div className="h-full rounded-full bg-gradient-to-r from-[#74ACDF] to-[#2F6FB0]" style={{ width: `${q.score}%` }} />
+          <div className="h-full rounded-full bg-gradient-to-r from-[#FF8A4C] to-[#C73E00]" style={{ width: `${q.score}%` }} />
         </div>
         {pending.length === 0 ? (
           <p className="mt-3 flex items-center gap-2 text-sm"><IconCheck className="size-5 text-emerald-600" />No te falta nada importante. Compartí tu link y mirá cómo entran las visitas.</p>
@@ -144,9 +144,9 @@ export function HomePanel() {
           <ul className="mt-4 space-y-2">
             {pending.slice(0, 5).map((i) => (
               <li key={i.id}>
-                <Link href={`${MODULE_ROUTE[moduleOf(i.tab)]}?tab=${i.tab}`} className="flex min-h-11 items-center justify-between gap-3 border border-[#E1EAF3] px-4 text-[15px] font-medium hover:bg-[#F4F9FE] focus-visible:outline-2 focus-visible:outline-ring">
-                  <span>{i.label}{i.required && <span className="ml-2 rounded-full bg-[#EAF4FC] px-2 py-0.5 text-xs font-bold text-[#2F6FB0]">Necesario para publicar</span>}</span>
-                  <IconArrowRight className="size-4 shrink-0 text-[#2F6FB0]" />
+                <Link href={`${MODULE_ROUTE[moduleOf(i.tab)]}?tab=${i.tab}`} className="flex min-h-11 items-center justify-between gap-3 border border-[#E5E7EB] px-4 text-[15px] font-medium hover:bg-[#F9FAFB] focus-visible:outline-2 focus-visible:outline-ring">
+                  <span>{i.label}{i.required && <span className="ml-2 rounded-full bg-[#F1F3F5] px-2 py-0.5 text-xs font-bold text-[#C73E00]">Necesario para publicar</span>}</span>
+                  <IconArrowRight className="size-4 shrink-0 text-[#C73E00]" />
                 </Link>
               </li>
             ))}
@@ -159,7 +159,7 @@ export function HomePanel() {
         <ul className="grid gap-3 sm:grid-cols-2">
           {actions.map(({ href, label, Icon }) => (
             <li key={href}>
-              <Link href={href} className="flex min-h-14 items-center gap-3 rounded-2xl border border-[#D6E4F2] px-4 font-semibold hover:bg-[#EAF4FC] focus-visible:outline-2 focus-visible:outline-ring"><Icon className="size-6 text-[#2F6FB0]" />{label}</Link>
+              <Link href={href} className="flex min-h-14 items-center gap-3 rounded-2xl border border-[#E5E7EB] px-4 font-semibold hover:bg-[#F1F3F5] focus-visible:outline-2 focus-visible:outline-ring"><Icon className="size-6 text-[#C73E00]" />{label}</Link>
             </li>
           ))}
         </ul>

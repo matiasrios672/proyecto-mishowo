@@ -171,13 +171,23 @@ export function Catalog({ site, cats, preview, order }: { site: SiteModel; cats:
   const consultFor = (p: SiteProduct) => (site.ordersEnabled || !site.whatsapp || !p.name.trim() ? null : whatsappLink(site.whatsapp, `Hola! Quería consultarles por "${p.name}".`));
   return (
     <main id="catalog" className={`${container} scroll-mt-20 pb-6 pt-4 @4xl:pt-10`}>
-      <h2 className="site-display text-3xl font-bold tracking-tight @4xl:text-4xl">{services ? "Nuestros servicios" : "Nuestros productos"}</h2>
+      <h2 className="site-display text-3xl font-bold tracking-tight @4xl:text-4xl">{services ? "Nuestros servicios" : layout === "mostrador" ? "Nuestra carta" : "Nuestros productos"}</h2>
+      {/* Saltar a una sección: en la carta de un local con muchos rubros se llega al postre sin recorrer toda la lista. Son links comunes (sin JS). */}
+      {cats.length >= 3 && (
+        <nav aria-label={layout === "mostrador" ? "Secciones de la carta" : "Categorías"} className="sticky top-14 z-10 -mx-5 mt-4 overflow-x-auto border-y border-border/60 bg-background/90 px-5 py-2 backdrop-blur @2xl:-mx-8 @2xl:px-8" data-testid="catalog-chips">
+          <ul className="flex w-max gap-2">
+            {cats.map((c) => (
+              <li key={c.id}><a href={`#sec-${slugify(c.name)}`} className="inline-flex min-h-9 items-center whitespace-nowrap rounded-full border border-border bg-card px-3.5 text-sm font-medium text-foreground transition-colors hover:border-primary hover:text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring">{c.name}</a></li>
+            ))}
+          </ul>
+        </nav>
+      )}
       {cats.length === 0 && <p className="py-12 text-muted-foreground">Todavía no hay {services ? "servicios" : "productos"} cargados.</p>}
       {cats.map((c) => (
         <section key={c.id} id={`sec-${slugify(c.name)}`} data-section className="scroll-mt-28 pt-8">
           <h3 className={layout === "mostrador"
             ? "mb-3 border-b-2 border-foreground/80 pb-2 site-display text-lg font-bold uppercase tracking-[0.16em] @4xl:text-xl" // carta de bar: títulos de sección en mayúsculas con regla
-            : "mb-5 site-display text-xl font-semibold @4xl:text-2xl"}>{c.name}</h3>
+            : "mb-5 site-display text-xl font-semibold @4xl:text-2xl"}>{c.name}{layout !== "mostrador" && <span className="ml-2 text-sm font-normal text-muted-foreground">{c.products.length} {c.products.length === 1 ? (services ? "servicio" : "opción") : (services ? "servicios" : "opciones")}</span>}</h3>
           <ul className={LIST[layout] ?? LIST.vidriera}>
             {c.products.map((p) => <Card key={p.id} p={p} layout={layout} preview={preview} order={order} showQuantities={site.showQuantities} consultHref={consultFor(p)} inst={site.installments} />)}
           </ul>

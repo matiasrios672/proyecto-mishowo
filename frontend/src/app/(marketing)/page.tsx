@@ -8,11 +8,11 @@ import { StickyCta } from "@/components/marketing/StickyCta";
 
 export const metadata: Metadata = {
   title: { absolute: "MiShowo: creá la página de tu negocio desde el celular" },
-  description: "Armá la página de tu negocio en minutos: catálogo, pedidos por WhatsApp y un link listo para tu bio de Instagram. Empezá gratis.",
+  description: "Armá la página de tu negocio en minutos: tu carta, catálogo o servicios online, con pedidos por WhatsApp si querés y un link listo para tu bio de Instagram. Empezá gratis.",
   alternates: { canonical: "/" },
   openGraph: {
     title: "MiShowo: tu negocio, en un link",
-    description: "Catálogo, pedidos por WhatsApp y tu link para Instagram. Empezá gratis.",
+    description: "Carta, catálogo o servicios, pedidos por WhatsApp si querés y tu link para Instagram. Empezá gratis.",
     type: "website", locale: "es_AR", siteName: "MiShowo", images: [{ url: "/opengraph-image", width: 1200, height: 630 }],
   },
 };
@@ -20,7 +20,7 @@ export const metadata: Metadata = {
 const jsonLd = {
   "@context": "https://schema.org",
   "@graph": [
-    { "@type": "Organization", name: "MiShowo", url: "https://mishowo.com" },
+    { "@type": "Organization", name: "MiShowo", url: process.env.NEXT_PUBLIC_SITE_URL ?? "https://mishowo.com" },
     { "@type": "SoftwareApplication", name: "MiShowo", applicationCategory: "BusinessApplication", operatingSystem: "Web", offers: { "@type": "Offer", price: "0", priceCurrency: "ARS" } },
   ],
 };

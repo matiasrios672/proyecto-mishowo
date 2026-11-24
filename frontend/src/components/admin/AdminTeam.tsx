@@ -2,18 +2,19 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Field, Select, TextInput } from "@/components/ui/fields";
+import { Field, Select, TextArea, TextInput } from "@/components/ui/fields";
 import { api } from "@/lib/authClient";
 import { sameAs, type AreaInfo, type Level, type Permissions } from "@/lib/permissions";
-import { ErrorBox, useAdmin, when } from "./AdminShell";
+import { ErrorBox, useAdmin, when, PageHeader } from "./AdminShell";
 import { msg, useLoad } from "./AdminPages";
+import { confirmAction } from "@/components/feedback/confirm";
 
 type Role = "admin" | "support";
 interface Member { id: string; email: string; name: string | null; role: string; totpEnabled: boolean; lastLoginAt: string | null; permissions: Permissions; customPermissions: boolean }
 interface TeamData { admins: Member[]; areas: AreaInfo[]; presets: Record<Role, Permissions> }
 
 const ROLE_LABEL: Record<string, string> = { owner: "Owner", admin: "Admin", support: "Soporte" };
-const TEAM_ERR: Record<string, string> = { already_member: "Esa persona ya es parte del equipo.", is_owner: "Esa persona es Owner: tiene todo y no se le cambian los permisos." };
+const TEAM_ERR: Record<string, string> = { mail_failed: "No se pudo enviar el mail (revisá el SMTP en Estado). Probá de nuevo.", no_recipients: "No hay a quién mandarle.", already_member: "Esa persona ya es parte del equipo.", is_owner: "Esa persona es Owner: tiene todo y no se le cambian los permisos." };
 const errText = (code?: string) => TEAM_ERR[code ?? ""] ?? msg(code);
 const LEVELS: { value: Level | ""; label: string }[] = [{ value: "", label: "Sin acceso" }, { value: "view", label: "Ver" }, { value: "manage", label: "Gestionar" }];
 
@@ -86,8 +87,35 @@ function RoleAndPermissions({ data, role, setRole, perms, setPerms, name }: { da
   );
 }
 
+/** Redactar un mail: a una persona (`to`) o a todo el equipo. Mismo formato de marca que los mails automáticos. */
+function ComposeMail({ endpoint, who, onDone }: { endpoint: string; who: string; onDone?: () => void }) {
+  const [status, setStatus] = useState<{ kind: "ok" | "error"; text: string } | null>(null);
+  const [busy, setBusy] = useState(false);
+  return (
+    <form className="space-y-3 rounded-xl bg-muted/30 p-3" data-testid="compose-mail" onSubmit={async (e) => {
+      e.preventDefault();
+      const form = e.currentTarget;
+      const f = new FormData(form);
+      if (!(await confirmAction({ title: endpoint.endsWith("/admins/email") ? "¿Mandar el mail a todo el equipo?" : "¿Enviar el mail?", message: endpoint.endsWith("/admins/email") ? "Le llega a todas las personas del equipo, incluido vos." : `Le llega a ${who}.`, confirmLabel: "Enviar mail" }))) return;
+      setBusy(true); setStatus(null);
+      const r = await api<{ sent?: number; failed?: number }>(endpoint, { body: { subject: String(f.get("subject")), body: String(f.get("body")) } });
+      setBusy(false);
+      if (!r.ok) return setStatus({ kind: "error", text: errText(r.data.error) });
+      form.reset();
+      setStatus({ kind: "ok", text: r.data.sent !== undefined ? `Enviado a ${r.data.sent} ${r.data.sent === 1 ? "persona" : "personas"}${r.data.failed ? ` (falló con ${r.data.failed})` : ""}.` : `Mail enviado a ${who}.` });
+      onDone?.();
+    }}>
+      <Field label="Asunto" required>{(id) => <TextInput id={id} name="subject" required minLength={3} maxLength={150} />}</Field>
+      <Field label="Mensaje" required hint="Texto simple. Se manda con el diseño de MiShowo.">{(id, d) => <TextArea id={id} aria-describedby={d} name="body" required minLength={5} maxLength={5000} rows={5} />}</Field>
+      {status && <p role={status.kind === "error" ? "alert" : "status"} className={`rounded-lg p-3 text-sm ${status.kind === "error" ? "bg-destructive/10 text-destructive" : "bg-muted"}`}>{status.text}</p>}
+      <Button type="submit" size="sm" disabled={busy}>{busy ? "Enviando…" : "Enviar mail"}</Button>
+    </form>
+  );
+}
+
 function MemberRow({ m, data, me, reload }: { m: Member; data: TeamData; me: { id: string }; reload: () => void }) {
   const [open, setOpen] = useState(false);
+  const [mailOpen, setMailOpen] = useState(false);
   const [role, setRole] = useState<Role>(m.role as Role);
   const [perms, setPerms] = useState<Permissions>({ ...m.permissions });
   const [status, setStatus] = useState<{ kind: "ok" | "error"; text: string } | null>(null);
@@ -103,14 +131,22 @@ function MemberRow({ m, data, me, reload }: { m: Member; data: TeamData; me: { i
         <span>
           <strong>{m.email}</strong>{m.name && <> ({m.name})</>} · {ROLE_LABEL[m.role] ?? m.role}{m.customPermissions && " · permisos a medida"} · 2FA {m.totpEnabled ? "activo" : "pendiente"} · último ingreso {when(m.lastLoginAt)}
         </span>
+        {m.role !== "owner" && (
+          <span className="flex flex-wrap gap-1">
+            <Button size="sm" variant="outline" aria-expanded={mailOpen} onClick={() => setMailOpen((v) => !v)}>Enviar mail</Button>
+            <Button size="sm" variant="outline" onClick={async () => { if (!(await confirmAction({ title: "¿Reenviar la invitación?", message: `Le mandamos un mail nuevo a ${m.email} y el enlace anterior deja de servir.`, confirmLabel: "Reenviar" }))) return; const r = await api<{ emailSent?: boolean }>(`/admin/admins/${m.id}/resend-invite`, { body: {} }); setStatus(r.ok ? { kind: "ok", text: r.data.emailSent ? "Le mandamos otra invitación (la anterior ya no sirve)." : "Se generó el enlace pero el envío de mails está apagado o falló." } : { kind: "error", text: errText(r.data.error) }); }}>Reenviar invitación</Button>
+            {m.totpEnabled && m.id !== me.id && <Button size="sm" variant="outline" onClick={async () => { if (!(await confirmAction({ title: "¿Reiniciar el 2FA?", message: `A ${m.email} se le cierran las sesiones y al entrar configura uno nuevo.`, confirmLabel: "Reiniciar 2FA", danger: true }))) return; const r = await api(`/admin/admins/${m.id}/reset-2fa`, { body: {} }); setStatus(r.ok ? { kind: "ok", text: "2FA reiniciado: al volver a entrar va a configurar uno nuevo." } : { kind: "error", text: errText(r.data.error) }); if (r.ok) reload(); }}>Reiniciar 2FA</Button>}
+          </span>
+        )}
         {editable && (
           <span className="flex gap-1">
             <Button size="sm" variant="outline" aria-expanded={open} onClick={() => { setOpen((v) => !v); setStatus(null); setRole(m.role as Role); setPerms({ ...m.permissions }); }}>Permisos</Button>
-            <Button size="sm" variant="ghost" onClick={async () => { const r = await api(`/admin/admins/${m.id}`, { method: "DELETE" }); if (r.ok) reload(); else setStatus({ kind: "error", text: errText(r.data.error) }); }}>Quitar acceso</Button>
+            <Button size="sm" variant="ghost" onClick={async () => { if (!(await confirmAction({ title: "¿Quitar el acceso?", message: `${m.email} deja de ser parte del equipo y pierde el acceso al admin.`, confirmLabel: "Quitar acceso", danger: true }))) return; const r = await api(`/admin/admins/${m.id}`, { method: "DELETE" }); if (r.ok) reload(); else setStatus({ kind: "error", text: errText(r.data.error) }); }}>Quitar acceso</Button>
           </span>
         )}
       </div>
       <p className="text-xs text-muted-foreground">{m.role === "owner" ? "Owner: tiene todo, y es la única persona que administra el equipo y los datos de cobro." : summary(m.permissions, data.areas)}</p>
+      {mailOpen && m.role !== "owner" && <ComposeMail endpoint={`/admin/admins/${m.id}/email`} who={m.email} />}
       {open && editable && (
         <div className="space-y-3 rounded-xl bg-muted/30 p-3">
           <RoleAndPermissions data={data} role={role} setRole={setRole} perms={perms} setPerms={setPerms} name={`perm-${m.id}`} />
@@ -134,6 +170,7 @@ function AddMember({ data, onDone }: { data: TeamData; onDone: () => void }) {
       const form = e.currentTarget;
       const f = new FormData(form);
       const email = String(f.get("email"));
+      if (!(await confirmAction({ title: existing ? "¿Dar acceso al equipo?" : "¿Crear la cuenta y mandar la invitación?", message: existing ? `${email} pasa a ser parte del equipo y va a tener que configurar el 2FA.` : `Le llega un mail a ${email} para elegir su contraseña.`, confirmLabel: existing ? "Dar acceso" : "Invitar" }))) return;
       const r = existing
         ? await api("/admin/admins", { body: { email, role, permissions: perms } })
         : await api<{ emailSent: boolean }>("/admin/admins/invite", { body: { name: String(f.get("name")), email, role, permissions: perms } });
@@ -170,8 +207,12 @@ export function Team() {
   const { data, error, reload } = useLoad<TeamData>("/admin/admins");
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold">Equipo</h1>
-      <p className="max-w-[64ch] text-muted-foreground">Sumá personas y elegí qué puede hacer cada una, área por área. Solo vos (Owner) administrás el equipo y los datos de cobro.</p>
+      <PageHeader title="Equipo" />
+      <ul className="grid gap-3 sm:grid-cols-3" aria-label="Qué hace cada rol" data-testid="role-guide">
+        {[["Owner", "Tiene todo. Es la única persona que administra el equipo y los datos de cobro."], ["Admin", "Gestiona casi todo (pagos, planes, negocios…) menos el equipo. Se le ajustan los permisos área por área."], ["Soporte", "Atiende consultas y denuncias y mira lo demás. No ve plata ni cambia planes."]].map(([r, d]) => (
+          <li key={r} className="rounded-2xl border border-[#E5E7EB] bg-[#F9FAFB] p-4"><strong className="block">{r}</strong><span className="text-sm text-muted-foreground">{d}</span></li>
+        ))}
+      </ul>
       <ErrorBox error={error} />
       {data && (
         <>
@@ -179,6 +220,13 @@ export function Team() {
             {data.admins.map((m) => <MemberRow key={m.id} m={m} data={data} me={me} reload={reload} />)}
           </ul>
           <AddMember data={data} onDone={reload} />
+          <section className="space-y-3 rounded-xl border p-4" aria-labelledby="mail-all-title" data-testid="mail-team">
+            <div>
+              <h2 id="mail-all-title" className="font-semibold">Mail a todo el equipo</h2>
+              <p className="text-sm text-muted-foreground">Para avisos internos: un cambio de horario, una novedad, una reunión. Le llega a todas las personas del equipo, incluido vos.</p>
+            </div>
+            <ComposeMail endpoint="/admin/admins/email" who="el equipo" />
+          </section>
         </>
       )}
     </div>

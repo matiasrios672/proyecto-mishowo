@@ -9,14 +9,14 @@ const body = Figtree({ subsets: ["latin"], weight: ["400", "500", "600", "700"],
 
 // Identidad de MiShowo: celeste y sol de la bandera argentina sobre tinta azul. Solo vive en estas páginas.
 const brand = {
-  "--background": "#FBFDFF",
+  "--background": "#FFFBF8",
   "--foreground": "#0E1B2C",
-  "--primary": "#2F6FB0",
+  "--primary": "#C73E00",
   "--primary-foreground": "#FFFFFF",
-  "--muted": "#EAF4FC",
+  "--muted": "#FFEFE6",
   "--muted-foreground": "#47566A",
-  "--border": "#D6E4F2",
-  "--ring": "#2F6FB0",
+  "--border": "#F5D9C8",
+  "--ring": "#C73E00",
 } as CSSProperties;
 
 export default function MarketingLayout({ children }: { children: ReactNode }) {

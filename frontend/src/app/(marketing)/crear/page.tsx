@@ -17,7 +17,7 @@ async function Picker() {
 
 export default function CrearPage() {
   return (
-    <div className="relative isolate overflow-hidden bg-gradient-to-b from-[#DCEBF8] to-[#EAF4FC]">
+    <div className="relative isolate overflow-hidden bg-gradient-to-b from-[#FFE2D0] to-[#FFEFE6]">
       <Glow />
       <div aria-hidden className="mk-grid pointer-events-none absolute inset-0 -z-10" />
       <CrearFlow

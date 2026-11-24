@@ -20,11 +20,11 @@ const RUBROS: Rubro[] = [
   {
     id: "ropa", tab: "Ropa", ghost: "TIENDA", title: "Tu tienda de ropa, con talles y cuotas a la vista", line: "Fotos grandes, variantes por talle y color, stock y precios tachados. Tus clientas arman el pedido solas.",
     points: ["Talles y colores con stock", "«6 cuotas sin interés» bajo cada precio", "Pedido armado por WhatsApp"],
-    shop: "Luna Indumentaria", tag: "luna.mishowo.com", accent: "#74ACDF", example: { href: exampleUrl("demo-ropa"), slug: "demo-ropa" },
-    items: [{ n: "Campera puffer corta", p: 189900, tint: "#E3EEF9", cuotas: 6 }, { n: "Buzo canguro de frisa", p: 64900, tint: "#F3E6DC", cuotas: 6 }, { n: "Remera oversize", p: 24900, tint: "#F8EFD2" }],
+    shop: "Luna Indumentaria", tag: "luna.mishowo.com", accent: "#FF8A4C", example: { href: exampleUrl("demo-ropa"), slug: "demo-ropa" },
+    items: [{ n: "Campera puffer corta", p: 189900, tint: "#FFEADB", cuotas: 6 }, { n: "Buzo canguro de frisa", p: 64900, tint: "#F3E6DC", cuotas: 6 }, { n: "Remera oversize", p: 24900, tint: "#F8EFD2" }],
   },
   {
-    id: "comidas", tab: "Comidas y bares", ghost: "MENÚ", title: "Tu carta, al día en cada mesa", line: "Secciones, precios y platos agotados que cambiás en segundos. Con QR para la mesa y pedidos para llevar.",
+    id: "comidas", tab: "Comidas y bares", ghost: "MENÚ", title: "Tu carta, al día en cada mesa", line: "Secciones, precios y platos agotados que cambiás en segundos. Con QR para la mesa y, si querés, pedidos para llevar.",
     points: ["Carta con puntos guía hasta el precio", "Cartel con QR listo para imprimir", "Platos agotados en un toque"],
     shop: "Empanadas de Lupe", tag: "lupe.mishowo.com", accent: "#F6B40E", example: { href: exampleUrl("lupe-empanadas"), slug: "lupe-empanadas" },
     items: [{ n: "Docena de empanadas", p: 14500, tint: "#FBEBD3" }, { n: "Pizza muzzarella", p: 9800, tint: "#FBE0DA" }, { n: "Flan casero", p: 3200, tint: "#F8EFD2" }],
@@ -32,26 +32,26 @@ const RUBROS: Rubro[] = [
   {
     id: "eventos", tab: "Eventos", ghost: "EVENTOS", title: "Mostrá tus servicios en grande y cobrá en cuotas", line: "Cada servicio con su foto, su precio y las cuotas que ofrecés. El cliente te escribe con el día y el lugar anotados.",
     points: ["Fecha del evento en el pedido", "Cuotas sin interés por servicio", "Reseñas de clientes reales"],
-    shop: "Fiestas Don Pepe", tag: "donpepe.mishowo.com", accent: "#74ACDF", example: { href: exampleUrl("demo-eventos"), slug: "demo-eventos" },
-    items: [{ n: "Cabina de fotos", p: 120000, tint: "#E3EEF9", cuotas: 3 }, { n: "Sonido y luces", p: 150000, tint: "#F3E6DC", cuotas: 3 }, { n: "Castillo inflable", p: 60000, tint: "#FBE0DA", cuotas: 3 }],
+    shop: "Fiestas Don Pepe", tag: "donpepe.mishowo.com", accent: "#FF8A4C", example: { href: exampleUrl("demo-eventos"), slug: "demo-eventos" },
+    items: [{ n: "Cabina de fotos", p: 120000, tint: "#FFEADB", cuotas: 3 }, { n: "Sonido y luces", p: 150000, tint: "#F3E6DC", cuotas: 3 }, { n: "Castillo inflable", p: 60000, tint: "#FBE0DA", cuotas: 3 }],
   },
   {
     id: "muebles", tab: "Muebles y deco", ghost: "DECO", title: "Cada pieza en primer plano", line: "Medidas claras, maderas y terminaciones, y consultas directas. Ideal para talleres y casas de deco.",
     points: ["Variantes de madera y medida", "Cuotas para piezas grandes", "Consulta directa por WhatsApp"],
     shop: "Taller Nogal Muebles", tag: "nogal.mishowo.com", accent: "#F6B40E", example: { href: exampleUrl("demo-muebles"), slug: "demo-muebles" },
-    items: [{ n: "Mesa ratona de paraíso", p: 185000, tint: "#F3E6DC", cuotas: 6 }, { n: "Biblioteca con 5 estantes", p: 240000, tint: "#F8EFD2", cuotas: 6 }, { n: "Banco bajo", p: 68000, tint: "#E3EEF9" }],
+    items: [{ n: "Mesa ratona de paraíso", p: 185000, tint: "#F3E6DC", cuotas: 6 }, { n: "Biblioteca con 5 estantes", p: 240000, tint: "#F8EFD2", cuotas: 6 }, { n: "Banco bajo", p: 68000, tint: "#FFEADB" }],
   },
   {
     id: "belleza", tab: "Belleza y salud", ghost: "TURNOS", title: "Servicios con duración, precio y turno", line: "Belleza, salud y deporte: tus servicios, tus profesionales y la agenda que ya tenés, con recordatorios por mail.",
     points: ["Turnos con profesionales y duración", "Recordatorio 24 h antes", "Clases y pases para gimnasios"],
-    shop: "Estudio Aura", tag: "aura.mishowo.com", accent: "#74ACDF", example: { href: exampleUrl("demo-belleza"), slug: "demo-belleza" },
-    items: [{ n: "Esmaltado semipermanente", p: 12000, tint: "#FBE0DA" }, { n: "Corte y peinado", p: 9500, tint: "#F8EFD2" }, { n: "Limpieza facial", p: 15000, tint: "#E3EEF9" }],
+    shop: "Estudio Aura", tag: "aura.mishowo.com", accent: "#FF8A4C", example: { href: exampleUrl("demo-belleza"), slug: "demo-belleza" },
+    items: [{ n: "Esmaltado semipermanente", p: 12000, tint: "#FBE0DA" }, { n: "Corte y peinado", p: 9500, tint: "#F8EFD2" }, { n: "Limpieza facial", p: 15000, tint: "#FFEADB" }],
   },
   {
     id: "oficios", tab: "Oficios y servicios", ghost: "OFICIOS", title: "Mostrá lo que hacés y dónde atendés", line: "Tus trabajos, tu zona y consultas por WhatsApp. Para quienes viven de su oficio y quieren verse profesionales.",
     points: ["Trabajos realizados con fotos", "Zona y horarios a la vista", "Link para tu bio y tu QR"],
     shop: "Servicios Rivas", tag: "rivas.mishowo.com", accent: "#F6B40E",
-    items: [{ n: "Instalación de luz", p: 45000, tint: "#F8EFD2" }, { n: "Arreglo de canilla", p: 18000, tint: "#E3EEF9" }, { n: "Service de aire", p: 35000, tint: "#F3E6DC" }],
+    items: [{ n: "Instalación de luz", p: 45000, tint: "#F8EFD2" }, { n: "Arreglo de canilla", p: 18000, tint: "#FFEADB" }, { n: "Service de aire", p: 35000, tint: "#F3E6DC" }],
   },
 ];
 
@@ -64,7 +64,7 @@ function Phone({ r }: { r: Rubro }) {
     <div aria-hidden className="relative mx-auto w-[16.5rem] rounded-[2.4rem] border-[9px] border-[#05101D] bg-white p-3 shadow-[0_60px_100px_-30px_rgba(0,0,0,0.85)] ring-1 ring-white/15 sm:w-[18.5rem]">
       <div className="mx-auto mb-3 h-3.5 w-14 rounded-full bg-[#05101D]" />
       <div className="flex items-center gap-2">
-        <span className="grid size-8 place-items-center rounded-full bg-[#2F6FB0] text-sm font-extrabold text-white">{r.shop[0]}</span>
+        <span className="grid size-8 place-items-center rounded-full bg-[#FC5502] text-sm font-extrabold text-[#0E1B2C]">{r.shop[0]}</span>
         <span className="min-w-0 text-left"><span className="block truncate text-[13px] font-extrabold leading-tight text-[#0E1B2C]">{r.shop}</span><span className="block truncate text-[10px] text-[#0E1B2C]/55">{r.tag}</span></span>
       </div>
       <ul className="mt-3 space-y-2">
@@ -74,7 +74,7 @@ function Phone({ r }: { r: Rubro }) {
             <span className="min-w-0">
               <span className="block truncate text-[12px] font-bold text-[#0E1B2C]">{it.n}</span>
               <span className="block text-[12px] font-semibold text-[#0E1B2C]/70">{ars(it.p)}</span>
-              {it.cuotas && <span className="block text-[10.5px] font-bold text-[#2F6FB0]">{installmentLine(it.p, { enabled: true, count: it.cuotas, note: "", minAmount: 0 })}</span>}
+              {it.cuotas && <span className="block text-[10.5px] font-bold text-[#C73E00]">{installmentLine(it.p, { enabled: true, count: it.cuotas, note: "", minAmount: 0 })}</span>}
             </span>
           </li>
         ))}
@@ -144,7 +144,7 @@ export function RubroStage() {
               ))}
             </ul>
             <div className="mt-8 flex flex-wrap items-center justify-center gap-3 lg:justify-start">
-              <Link href="/crear" className="inline-flex min-h-12 items-center justify-center rounded-xl bg-[#F6B40E] px-7 font-bold text-[#0E1B2C] transition-transform hover:bg-[#FFC21F] active:scale-95 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white">Crear mi página</Link>
+              <Link href="/crear" className="inline-flex min-h-12 items-center justify-center rounded-xl bg-[#FC5502] px-7 font-bold text-[#0E1B2C] transition-transform hover:bg-[#FF6A1F] active:scale-95 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white">Crear mi página</Link>
               {r.example && (
                 <a href={r.example.href} target="_blank" rel="noopener noreferrer" aria-label={`Ver el ejemplo de ${r.tab} (se abre en una pestaña nueva)`} className="inline-flex min-h-12 items-center gap-1.5 rounded-xl border border-white/25 px-6 font-bold text-white transition-colors hover:bg-white/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white">
                   Ver ejemplo <span aria-hidden>↗</span>

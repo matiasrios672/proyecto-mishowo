@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Field, Select, TextInput } from "@/components/ui/fields";
 import { api } from "@/lib/authClient";
 import { formatPrice } from "@/lib/format";
+import { confirmAction } from "@/components/feedback/confirm";
 
 interface Coupon {
   id: string; code: string; kind: "percent" | "fixed"; value: number; minPurchase: number; expiresAt: string | null;
@@ -54,6 +55,7 @@ export function CouponsPanel() {
     setTick((n) => n + 1);
   }
   async function remove(c: Coupon) {
+    if (!(await confirmAction({ title: "¿Eliminar el cupón?", message: "Deja de funcionar en el carrito. No se puede deshacer.", confirmLabel: "Eliminar", danger: true }))) return;
     const r = await api(`/me/coupons/${c.id}`, { method: "DELETE" });
     if (!r.ok) return setError(r.data.error ?? "network");
     setTick((n) => n + 1);

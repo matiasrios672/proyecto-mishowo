@@ -141,13 +141,13 @@ export function Editor({ initial, sync, module = "all" }: { initial: Draft; sync
   const idx = TABS.findIndex((t) => t.id === tab);
   const prev = TABS[idx - 1];
   const next = TABS[idx + 1];
-  const iconBtn = "grid size-10 place-items-center rounded-lg text-[#0E1B2C] hover:bg-[#EAF4FC] focus-visible:outline-2 focus-visible:outline-ring disabled:opacity-35";
+  const iconBtn = "grid size-10 place-items-center rounded-lg text-[#0E1B2C] hover:bg-[#F1F3F5] focus-visible:outline-2 focus-visible:outline-ring disabled:opacity-35";
 
   return (
     <div className={`flex flex-col bg-white ${user ? "h-full" : "h-dvh"}`}>
-      <header className="flex shrink-0 items-center gap-2 border-b border-[#D6E4F2] bg-white px-3 py-2 sm:gap-3 sm:px-4">
-        {!user && <Link href="/" aria-label="MiShowo, ir al inicio" className="font-heading text-lg font-bold">Mi<span className="text-primary">Showo</span></Link>}
-        {!rail && <h1 className="hidden shrink-0 text-lg font-extrabold text-[#2F6FB0] sm:block">{MODULE_TITLE[module]}</h1>}
+      <header className="flex shrink-0 items-center gap-2 border-b border-[#E5E7EB] bg-white px-3 py-2 sm:gap-3 sm:px-4">
+        {!user && <Link href="/" aria-label="MiShowo, ir al inicio" className="font-heading text-lg font-bold">Mi<span className="text-[#C73E00]">Showo</span></Link>}
+        {!rail && <h1 className="hidden shrink-0 text-lg font-extrabold text-[#C73E00] sm:block">{MODULE_TITLE[module]}</h1>}
         <div className="min-w-0 flex-1 leading-tight">
           <p className="truncate text-sm font-bold" data-testid="header-name">{draft.name}</p>
           <p className="truncate text-xs text-muted-foreground" role="status" aria-live="polite" data-testid="save-status">{saveLabel(save, now, syncState, syncEnabled)}</p>
@@ -156,7 +156,7 @@ export function Editor({ initial, sync, module = "all" }: { initial: Draft; sync
           <button type="button" className={iconBtn} onClick={undo} disabled={!canUndo} aria-label="Deshacer" title="Deshacer (Ctrl+Z)"><IconUndo className="size-5" /></button>
           <button type="button" className={iconBtn} onClick={redo} disabled={!canRedo} aria-label="Rehacer" title="Rehacer (Ctrl+Y)"><IconRedo className="size-5" /></button>
         </div>
-        <button type="button" onClick={() => goTab("publicar")} className="hidden min-h-10 items-center rounded-full border border-[#D6E4F2] px-3 text-sm font-semibold hover:bg-[#EAF4FC] focus-visible:outline-2 focus-visible:outline-ring md:inline-flex" aria-label={`Calidad de tu página: ${q.score} por ciento. Ver pendientes`}>
+        <button type="button" onClick={() => goTab("publicar")} className="hidden min-h-10 items-center rounded-full border border-[#E5E7EB] px-3 text-sm font-semibold hover:bg-[#F1F3F5] focus-visible:outline-2 focus-visible:outline-ring md:inline-flex" aria-label={`Calidad de tu página: ${q.score} por ciento. Ver pendientes`}>
           {q.score}% listo
         </button>
         {user === null ? (
@@ -201,12 +201,12 @@ export function Editor({ initial, sync, module = "all" }: { initial: Draft; sync
             setTab(TABS[i]!.id);
             document.getElementById(`tab-${TABS[i]!.id}`)?.focus();
           }}
-          className={`${rail ? "mk-tabstrip overflow-x-auto" : "mk-tabstrip-m overflow-x-auto lg:flex-wrap lg:overflow-visible"} relative flex shrink-0 gap-1 border-b border-[#D6E4F2] bg-[#F4F9FE] px-2 py-2 lg:col-start-1 lg:row-start-1 ${rail ? "xl:flex-col xl:gap-0.5 xl:overflow-y-auto xl:border-b-0 xl:border-r xl:px-3 xl:py-4" : ""} ${mobileView === "ver" ? "hidden lg:flex" : "flex"}`}>
+          className={`${rail ? "mk-tabstrip overflow-x-auto" : "mk-tabstrip-m overflow-x-auto lg:flex-wrap lg:overflow-visible"} relative flex shrink-0 gap-1 border-b border-[#E5E7EB] bg-[#F9FAFB] px-2 py-2 lg:col-start-1 lg:row-start-1 ${rail ? "xl:flex-col xl:gap-0.5 xl:overflow-y-auto xl:border-b-0 xl:border-r xl:px-3 xl:py-4" : ""} ${mobileView === "ver" ? "hidden lg:flex" : "flex"}`}>
           {TABS.map((t, n) => (
             <button key={t.id} id={`tab-${t.id}`} role="tab" type="button" aria-label={t.label} aria-posinset={n + 1} aria-setsize={TABS.length} title={t.hint} aria-selected={tab === t.id} aria-controls="panel" tabIndex={tab === t.id ? 0 : -1}
               onClick={() => setTab(t.id)} ref={(el) => { if (el && tab === t.id) el.scrollIntoView?.({ block: "nearest", inline: "center" }); }}
-              className={`flex min-h-11 shrink-0 items-center gap-2.5 whitespace-nowrap rounded-xl px-3.5 text-[15px] font-semibold transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring ${rail ? "xl:w-full" : ""} ${tab === t.id ? "bg-[#2F6FB0] text-white shadow-[0_8px_18px_-10px_rgba(47,111,176,0.9)]" : "text-[#0E1B2C] hover:bg-[#EAF4FC]"}`}>
-              <t.Icon className={`size-5 shrink-0 ${tab === t.id ? "text-white" : "text-[#2F6FB0]"}`} />
+              className={`flex min-h-11 shrink-0 items-center gap-2.5 whitespace-nowrap rounded-xl px-3.5 text-[15px] font-semibold transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring ${rail ? "xl:w-full" : ""} ${tab === t.id ? "bg-[#FC5502] text-[#0E1B2C] shadow-[0_8px_18px_-10px_rgba(252,85,2,0.9)]" : "text-[#0E1B2C] hover:bg-[#F1F3F5]"}`}>
+              <t.Icon className={`size-5 shrink-0 ${tab === t.id ? "text-white" : "text-[#C73E00]"}`} />
               <span className="flex flex-col items-start text-left leading-tight">
                 <span>{t.label}</span>
                 <span className={`${rail ? "hidden text-xs font-normal xl:block" : "hidden"} ${tab === t.id ? "text-white/80" : "text-[#47566A]"}`}>{t.hint}</span>
@@ -226,14 +226,14 @@ export function Editor({ initial, sync, module = "all" }: { initial: Draft; sync
             {tab === "seo" && <SeoTab {...props} />}
             {tab === "publicar" && <PublicarTab {...props} />}
           </div>
-          <nav aria-label="Pasos" className="hidden shrink-0 items-center justify-between gap-2 border-t border-[#D6E4F2] bg-white px-4 py-3 lg:flex">
+          <nav aria-label="Pasos" className="hidden shrink-0 items-center justify-between gap-2 border-t border-[#E5E7EB] bg-white px-4 py-3 lg:flex">
             {prev ? <Button variant="outline" size="lg" onClick={() => goTab(prev.id)}><IconArrowLeft className="size-4" />{prev.label}</Button> : <span />}
             {next ? <Button size="lg" onClick={() => goTab(next.id)}>Siguiente: {next.label}<IconArrowRight className="size-4" /></Button> : <span />}
           </nav>
         </div>
 
-        <aside aria-label="Vista previa" className={`min-h-0 min-w-0 flex-1 flex-col border-l border-[#D6E4F2] bg-[#EAF4FC]/60 ${rail ? "lg:col-start-2 lg:row-span-2 lg:row-start-1 xl:col-start-3 xl:row-span-1" : "lg:col-start-2 lg:row-span-2 lg:row-start-1"} ${mobileView === "ver" ? "flex" : "hidden lg:flex"}`}>
-          <div className="flex shrink-0 items-center justify-between gap-2 border-b border-[#D6E4F2] bg-white/70 px-3 py-2">
+        <aside aria-label="Vista previa" className={`min-h-0 min-w-0 flex-1 flex-col border-l border-[#E5E7EB] bg-[#F1F3F5]/60 ${rail ? "lg:col-start-2 lg:row-span-2 lg:row-start-1 xl:col-start-3 xl:row-span-1" : "lg:col-start-2 lg:row-span-2 lg:row-start-1"} ${mobileView === "ver" ? "flex" : "hidden lg:flex"}`}>
+          <div className="flex shrink-0 items-center justify-between gap-2 border-b border-[#E5E7EB] bg-white/70 px-3 py-2">
             <div role="group" aria-label="Dispositivo" className="flex gap-1">
               {(["celular", "computadora"] as const).map((d) => (
                 <Button key={d} size="sm" variant={device === d ? "default" : "outline"} aria-pressed={device === d} onClick={() => setDevice(d)} className="min-h-9 px-3">
@@ -248,7 +248,7 @@ export function Editor({ initial, sync, module = "all" }: { initial: Draft; sync
       </div>
 
       {/* Barra inferior del celular: ocupa su propio lugar (no flota), así nunca tapa contenido. */}
-      <div className="flex shrink-0 gap-2 border-t border-[#D6E4F2] bg-white p-3 lg:hidden">
+      <div className="flex shrink-0 gap-2 border-t border-[#E5E7EB] bg-white p-3 lg:hidden">
         <Button size="lg" variant={mobileView === "editar" ? "outline" : "default"} className="flex-1" onClick={() => setMobileView((v) => (v === "editar" ? "ver" : "editar"))} data-testid="toggle-view">
           {mobileView === "editar" ? "Ver cómo queda" : "Seguir editando"}
         </Button>

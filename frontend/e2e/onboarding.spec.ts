@@ -14,6 +14,8 @@ test("elegir un rubro crea el borrador y abre el editor con contenido de ejemplo
   await page.screenshot({ path: `test-results/crear-${info.project.name}.png`, fullPage: true });
 
   await page.getByRole("button", { name: /Rotisería y comidas/ }).click();
+
+  await page.getByTestId("orders-yes").click();
   await page.waitForURL("**/editor");
   await expect(page.getByTestId("header-name")).toContainText("Rotisería Doña Marta");
   await expect(page.getByTestId("preview-frame")).toContainText("Empanada de humita");

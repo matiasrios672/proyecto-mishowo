@@ -26,7 +26,7 @@ export function MedicionSection({ draft, update, account }: Pick<TabProps, "draf
     <Section title="Medición de campañas" description="Conectá el Pixel de Meta y Google Analytics para medir tus anuncios y retargetear a quienes visitan tu página.">
       {off && (
         <p role="status" className="border border-dashed p-4 text-sm text-muted-foreground" data-testid="pixels-locked">
-          {account?.enabled ? <>Tu plan actual no incluye la medición de campañas. <Link href="/panel/plan" className="font-semibold text-primary">Ver planes</Link></> : "Creá tu cuenta para conectar tus pixeles."}
+          {account?.enabled ? <>Tu plan actual no incluye la medición de campañas. <Link href="/panel/plan" className="font-semibold text-[#C73E00]">Ver planes</Link></> : "Creá tu cuenta para conectar tus pixeles."}
         </p>
       )}
       <fieldset disabled={off} className={`grid gap-4 border-0 p-0 sm:grid-cols-2 ${off ? "opacity-50" : ""}`}>

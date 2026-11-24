@@ -2,6 +2,7 @@
 
 import { useSyncExternalStore } from "react";
 import { api, type PublicUser } from "@/lib/authClient";
+import { setActivePage } from "@/lib/activePage";
 
 // Estado de sesión compartido. `undefined` = todavía no sabemos; `null` = no hay sesión.
 let user: PublicUser | null | undefined;
@@ -24,6 +25,7 @@ export async function logout() {
   // keepalive: si la persona cierra o recarga la pestaña enseguida, el navegador igual completa el pedido
   // (si no, la sesión quedaría abierta en el servidor).
   await api("/auth/logout", { method: "POST", body: {}, keepalive: true });
+  setActivePage(null); // la página abierta es de esta cuenta, no de la próxima
   setUser(null);
 }
 

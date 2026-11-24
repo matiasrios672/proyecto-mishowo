@@ -13,7 +13,7 @@ export async function GET(_req: Request, ctx: { params: Promise<{ slug: string }
   const site = await getSite(slug);
   if (!site?.business) return new Response("Not found", { status: 404 });
   const m = publicToSite(site);
-  const brand = /^#[0-9a-f]{6}$/i.test(m.design.brandColor ?? "") ? (m.design.brandColor as string) : "#2F6FB0";
+  const brand = /^#[0-9a-f]{6}$/i.test(m.design.brandColor ?? "") ? (m.design.brandColor as string) : "#C73E00";
   const display = siteUrl(slug).replace(/^https?:\/\//, "");
   const iso = await brandDataUri("isotipo.png");
   const name = m.name.length > 44 ? `${m.name.slice(0, 43)}…` : m.name;
@@ -27,7 +27,7 @@ export async function GET(_req: Request, ctx: { params: Promise<{ slug: string }
         </div>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
           <div style={{ display: "flex", padding: "16px 32px", borderRadius: 999, background: "#F6B40E", color: "#0E1B2C", fontSize: 38, fontWeight: 800 }}>{display}</div>
-          <div style={{ display: "flex", alignItems: "center", gap: 14, fontSize: 28, opacity: 0.9 }}>{iso ? <img src={iso} alt="" width={44} height={44} /> : null}Hecho con MiShowo</div>
+          <div style={{ display: "flex", alignItems: "center", gap: 14, fontSize: 28, opacity: 0.9 }}>{iso ? <img src={iso} alt="" width={44} height={44} /> : null}Hecho por MiShowo</div>
         </div>
       </div>
     ),

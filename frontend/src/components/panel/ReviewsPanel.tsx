@@ -45,7 +45,7 @@ export function ReviewsPanel() {
       {error && <p role="alert" className="bg-destructive/10 p-3 text-sm text-destructive">{error}</p>}
       <div role="group" aria-label="Estado" className="flex flex-wrap gap-1">
         {(Object.keys(LABEL) as Status[]).map((s) => (
-          <button key={s} type="button" aria-pressed={status === s} onClick={() => setStatus(s)} className={`min-h-10 px-4 text-sm ${status === s ? "bg-[#2F6FB0] text-white" : "border hover:bg-muted"}`}>
+          <button key={s} type="button" aria-pressed={status === s} onClick={() => setStatus(s)} className={`min-h-10 px-4 text-sm ${status === s ? "bg-[#FC5502] text-[#0E1B2C]" : "border hover:bg-muted"}`}>
             {LABEL[s]}{data ? ` (${data.counts[s]})` : ""}
           </button>
         ))}
@@ -60,7 +60,7 @@ export function ReviewsPanel() {
               <p className="text-xs text-muted-foreground">{when(r.createdAt)}</p>
             </div>
             {r.comment ? <p className="whitespace-pre-wrap text-sm">{r.comment}</p> : <p className="text-sm text-muted-foreground">Sin comentario.</p>}
-            {r.reply && open !== r.id && <p className="border-l-2 border-[#2F6FB0] pl-3 text-sm text-muted-foreground"><strong className="text-foreground">Tu respuesta:</strong> {r.reply}</p>}
+            {r.reply && open !== r.id && <p className="border-l-2 border-[#C73E00] pl-3 text-sm text-muted-foreground"><strong className="text-foreground">Tu respuesta:</strong> {r.reply}</p>}
             {open === r.id && (
               <div className="space-y-2">
                 <Field label="Tu respuesta pública" counter={{ value: reply[r.id] ?? r.reply ?? "", max: 500 }}>

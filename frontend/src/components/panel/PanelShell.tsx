@@ -5,6 +5,8 @@ import { usePathname, useRouter } from "next/navigation";
 import { AppShell, type NavGroup } from "@/components/brand/AppShell";
 import { logoutFromShell, useUser } from "@/components/auth/authStore";
 import { api } from "@/lib/authClient";
+import { PageSwitcher } from "./PageSwitcher";
+import { LoadingScreen } from "@/components/brand/LoadingScreen";
 import { IconBag, IconCalendar, IconCard, IconChart, IconChat, IconCheck, IconHome, IconQr, IconShield, IconSparkle, IconStore, IconTag } from "@/components/marketing/Doodles";
 
 const GROUPS: NavGroup[] = [
@@ -57,7 +59,7 @@ export function PanelFrame({ children, compact = false, fullBleed = false }: { c
   const { ordersEnabled, modules } = useNavInfo(!!user);
   if (!user) return <>{children}</>;
   return (
-    <AppShell groups={groupsFor(user.role, ordersEnabled, modules)} areaLabel="Panel del negocio" userLabel={user.email} onLogout={() => void logoutFromShell()} compact={compact} fullBleed={fullBleed}>
+    <AppShell groups={groupsFor(user.role, ordersEnabled, modules)} areaLabel="Panel del negocio" userLabel={user.email} onLogout={() => void logoutFromShell()} compact={compact} fullBleed={fullBleed} topSlot={<PageSwitcher />}>
       {children}
     </AppShell>
   );
@@ -74,10 +76,10 @@ export function PanelShell({ children }: { children: ReactNode }) {
     if (user === null) router.replace(`/ingresar?next=${encodeURIComponent(path)}`);
   }, [user, path, router]);
 
-  if (!user) return <main className="p-6 text-muted-foreground">Cargando tu panel…</main>;
+  if (!user) return <LoadingScreen message="Cargando tu panel…" />;
 
   return (
-    <AppShell groups={groupsFor(user.role, ordersEnabled, modules)} areaLabel="Panel del negocio" userLabel={user.email} onLogout={() => void logoutFromShell()}>
+    <AppShell groups={groupsFor(user.role, ordersEnabled, modules)} areaLabel="Panel del negocio" userLabel={user.email} onLogout={() => void logoutFromShell()} topSlot={<PageSwitcher />}>
       {children}
     </AppShell>
   );

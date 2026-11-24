@@ -9,6 +9,7 @@ import { quality } from "@/lib/score";
 import { fetchServerBusiness, type ServerBusiness } from "@/lib/serverSync";
 import { siteHost, siteUrl, suggestSlug } from "@/lib/siteUrl";
 import type { TabProps } from "./types";
+import { confirmAction } from "@/components/feedback/confirm";
 
 const REASONS: Record<string, string> = {
   formato: "Usá entre 2 y 30 letras, números o guiones, sin espacios ni tildes.",
@@ -85,6 +86,7 @@ export function PublicarTab({ draft, goTab, account }: TabProps) {
   }
 
   async function unpublish() {
+    if (!(await confirmAction({ title: "¿Despublicar tu página?", message: "Tus clientes dejan de verla hasta que la vuelvas a publicar. Tu link no cambia.", confirmLabel: "Despublicar", danger: true }))) return;
     setBusy(true);
     setError(null);
     const r = await api("/me/business/unpublish", { body: {} });

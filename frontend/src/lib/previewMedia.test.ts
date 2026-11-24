@@ -7,7 +7,7 @@ const site = (): SiteModel => ({
   name: "Lupe", tagline: "", description: "", whatsapp: "", instagram: "", address: "", deliveryZone: "", hours: null, announcement: "",
   design: { layout: "vidriera", theme: "blanco", fontPair: "moderna", brandColor: null, buttonShape: "recto" },
   categories: [{ id: "c", name: "C", products: [product("a"), product("b")] }], showQuantities: true, askEventDate: false, ordersEnabled: true, whatsappGreeting: "",
-  hideBranding: false, exampleName: false, exampleTexts: false, cover: null,
+  exampleName: false, exampleTexts: false, cover: null,
 });
 const m = (over: Partial<MediaItem>): MediaItem => ({ id: "x", kind: "image", productId: null, src: "http://api/x-800.webp", srcSet: "http://api/x-400.webp 400w", ...over });
 

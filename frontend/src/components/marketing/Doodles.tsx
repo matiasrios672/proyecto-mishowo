@@ -71,7 +71,7 @@ export function Cursor({ className = "" }: IconProps) {
 export function Underline({ className = "" }: { className?: string }) {
   return (
     <svg viewBox="0 0 400 20" preserveAspectRatio="none" aria-hidden className={className} fill="none">
-      <path className="mk-draw" pathLength={1} d="M4 12c60-9 120-9 190-3s130 4 202-2" stroke="#74ACDF" strokeOpacity={0.55} strokeWidth={10} strokeLinecap="round" />
+      <path className="mk-draw" pathLength={1} d="M4 12c60-9 120-9 190-3s130 4 202-2" stroke="#FF8A4C" strokeOpacity={0.55} strokeWidth={10} strokeLinecap="round" />
     </svg>
   );
 }

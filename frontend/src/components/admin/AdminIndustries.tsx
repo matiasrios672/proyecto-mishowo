@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Field, Select, TextInput } from "@/components/ui/fields";
 import { api } from "@/lib/authClient";
 import { getTheme } from "@/lib/themes";
-import { ErrorBox, useAdmin } from "./AdminShell";
+import { ErrorBox, useAdmin, PageHeader } from "./AdminShell";
 import { msg, useLoad } from "./AdminPages";
 
 interface Fields { name?: string; blurb?: string; tagline?: string; theme?: string; layout?: string; fontPair?: string; hidden?: boolean }
@@ -23,7 +23,7 @@ export function Industries() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold">Rubros</h1>
+        <PageHeader title="Rubros" />
         <p className="mt-1 max-w-[64ch] text-muted-foreground">Lo que se ofrece al crear una página. Los cambios se ven enseguida en /crear y en la demo de la landing. Lo que dejes vacío vuelve al valor original.</p>
       </div>
       <ErrorBox error={error} />

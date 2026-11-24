@@ -103,7 +103,7 @@ export function LiveDemo({ initial }: { initial?: TemplateInput | null }) {
 
         <button
           type="button" onClick={startFromDemo} disabled={!draft}
-          className="inline-flex items-center justify-center rounded-xl bg-[#F6B40E] px-6 py-3.5 text-base font-bold text-[#0E1B2C] transition-transform hover:bg-[#FFC21F] active:scale-95 disabled:opacity-60 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+          className="inline-flex items-center justify-center rounded-xl bg-[#FC5502] px-6 py-3.5 text-base font-bold text-[#0E1B2C] transition-transform hover:bg-[#FF6A1F] active:scale-95 disabled:opacity-60 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
         >
           Usar este diseño para mi página
         </button>

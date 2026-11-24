@@ -12,7 +12,7 @@ export function SeoTab({ draft, update, account }: TabProps) {
       <Section title="Cómo se ve tu link" description="Así aparece tu página cuando la compartís por WhatsApp o aparece en Google.">
         <div className="rounded-xl border p-4" data-testid="share-preview">
           <p className="text-xs text-muted-foreground">tunegocio.mishowo.com</p>
-          <p className="mt-1 text-lg font-medium text-primary">{title}</p>
+          <p className="mt-1 text-lg font-medium text-[#C73E00]">{title}</p>
           <p className="text-sm text-muted-foreground">{desc.slice(0, 160) || "Agregá una descripción para que aparezca acá."}</p>
         </div>
         <p className="text-sm text-muted-foreground">

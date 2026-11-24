@@ -1,5 +1,5 @@
 import { test, expect, type Browser, type Page } from "@playwright/test";
-import { PASS, mailSubjects, signUp, sql, totpNow, uniq, verifyEmail } from "./helpers";
+import { PASS, mailSubjects, signUp, sql, totpNow, uniq, verifyEmail, autoConfirm } from "./helpers";
 
 // Requiere el stack completo (`docker compose up -d --build`) y Docker accesible (se nombra al admin por SQL).
 // El admin es de escritorio y modifica datos globales (planes): corre solo en la versión de computadora y en orden.
@@ -9,7 +9,9 @@ test.beforeEach(({}, info) => { test.skip(info.project.name === "mobile", "el ad
 const BASE = "http://localhost:3100";
 async function newPage(browser: Browser) {
   const context = await browser.newContext({ baseURL: BASE });
-  return { context, page: await context.newPage() };
+  const page = await context.newPage();
+  await autoConfirm(page);
+  return { context, page };
 }
 
 /** Registra una cuenta, la nombra admin por SQL y configura su 2FA desde la interfaz. Devuelve el secreto. */

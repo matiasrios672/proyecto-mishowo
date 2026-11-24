@@ -55,14 +55,14 @@ export function StatsPanel() {
         <div role="group" aria-label="Período" className="flex gap-1">
           {RANGES.map((r) => (
             <button key={r} type="button" aria-pressed={days === r} onClick={() => setDays(r)}
-              className={`rounded-full px-3 py-1.5 text-sm ${days === r ? "bg-[#2F6FB0] text-white" : "hover:bg-muted"}`}>Últimos {r} días</button>
+              className={`rounded-full px-3 py-1.5 text-sm ${days === r ? "bg-[#FC5502] text-[#0E1B2C]" : "hover:bg-muted"}`}>Últimos {r} días</button>
           ))}
         </div>
       </div>
 
       {data?.limited && (
-        <p role="status" className="rounded-xl border border-[#2F6FB0]/30 bg-[#EAF4FC] p-4 text-sm text-[#0E1B2C]" data-testid="stats-limited">
-          Tu plan muestra los últimos 7 días. Con un plan superior ves 30 y 90 días, orígenes y productos más vistos. <a href="/panel/plan" className="font-bold text-[#2F6FB0]">Ver planes</a>
+        <p role="status" className="rounded-xl border border-[#D1D5DB] bg-[#F1F3F5] p-4 text-sm text-[#0E1B2C]" data-testid="stats-limited">
+          Tu plan muestra los últimos 7 días. Con un plan superior ves 30 y 90 días, orígenes y productos más vistos. <a href="/panel/plan" className="font-bold text-[#C73E00]">Ver planes</a>
         </p>
       )}
 
@@ -87,7 +87,7 @@ export function StatsPanel() {
         <div role="img" aria-label={`Visitas por día: ${data.series.filter((d) => d.visits > 0).map((d) => `${fmtDay(d.day)} ${d.visits}`).join(", ") || "sin visitas"}`}
           className="flex h-36 items-end gap-px">
           {data.series.map((d) => (
-            <div key={d.day} title={`${fmtDay(d.day)}: ${d.visits}`} className="flex-1 rounded-t-md bg-gradient-to-t from-[#2F6FB0] to-[#74ACDF]" style={{ height: `${Math.max(2, (d.visits / max) * 100)}%`, opacity: d.visits ? 1 : 0.2 }} />
+            <div key={d.day} title={`${fmtDay(d.day)}: ${d.visits}`} className="flex-1 rounded-t-md bg-gradient-to-t from-[#C73E00] to-[#FF8A4C]" style={{ height: `${Math.max(2, (d.visits / max) * 100)}%`, opacity: d.visits ? 1 : 0.2 }} />
           ))}
         </div>
         <div className="mt-1 flex justify-between text-xs text-muted-foreground"><span>{fmtDay(data.series[0]!.day)}</span><span>{fmtDay(data.series.at(-1)!.day)}</span></div>
@@ -101,7 +101,7 @@ export function StatsPanel() {
               {data.sources.map((s) => (
                 <li key={s.source} className="text-sm">
                   <div className="flex justify-between"><span>{SOURCE_LABEL[s.source] ?? s.source}</span><span className="tabular-nums">{s.visits}</span></div>
-                  <div className="mt-1 h-1.5 rounded-full bg-muted"><div className="h-full rounded-full bg-[#2F6FB0]" style={{ width: `${(s.visits / maxSrc) * 100}%` }} /></div>
+                  <div className="mt-1 h-1.5 rounded-full bg-muted"><div className="h-full rounded-full bg-[#FC5502]" style={{ width: `${(s.visits / maxSrc) * 100}%` }} /></div>
                 </li>
               ))}
             </ul>
@@ -114,7 +114,7 @@ export function StatsPanel() {
               {data.topProducts.map((p) => (
                 <li key={p.id} className="text-sm">
                   <div className="flex justify-between gap-3"><span className="truncate">{p.name}</span><span className="tabular-nums">{p.views}</span></div>
-                  <div className="mt-1 h-1.5 rounded-full bg-muted"><div className="h-full rounded-full bg-[#2F6FB0]" style={{ width: `${(p.views / maxTop) * 100}%` }} /></div>
+                  <div className="mt-1 h-1.5 rounded-full bg-muted"><div className="h-full rounded-full bg-[#FC5502]" style={{ width: `${(p.views / maxTop) * 100}%` }} /></div>
                 </li>
               ))}
             </ol>

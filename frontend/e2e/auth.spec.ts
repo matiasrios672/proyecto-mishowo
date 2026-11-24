@@ -143,6 +143,7 @@ test.describe("cuentas", () => {
     await page.waitForURL(/\/(editor|panel\/inicio)/);
     await page.goto("/crear");
     await page.getByRole("button", { name: /Rotisería y comidas/ }).click();
+    await page.getByTestId("orders-yes").click();
     await page.waitForURL("**/editor");
     await expect(page.getByTestId("account")).toContainText(email);
     await expect(page.getByTestId("verify-banner")).toHaveCount(0); // el enlace prueba que el email es suyo

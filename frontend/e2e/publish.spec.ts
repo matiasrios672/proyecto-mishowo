@@ -27,6 +27,7 @@ async function signUp(page: Page, mail: string) {
   await page.getByLabel(/^Contraseña/).fill(PASS);
   await page.getByRole("button", { name: "Crear mi cuenta" }).click();
   await page.getByRole("button", { name: /Rotisería y comidas/ }).click();
+  await page.getByTestId("orders-yes").click();
   await page.waitForURL("**/editor");
   await expect(status(page)).toHaveText("Guardado en tu cuenta", { timeout: 15_000 });
 }

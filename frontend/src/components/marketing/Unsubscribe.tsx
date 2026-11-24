@@ -12,13 +12,13 @@ export function Unsubscribe() {
   const token = useSearchParams().get("token") ?? "";
   const [state, setState] = useState<"idle" | "busy" | "done" | "error">("idle");
   return (
-    <main className="mx-auto my-12 max-w-md space-y-5 rounded-3xl border border-[#D6E4F2] bg-white p-7 text-[#0E1B2C] shadow-[0_30px_60px_-35px_rgba(47,111,176,0.5)]">
+    <main className="mx-auto my-12 max-w-md space-y-5 rounded-3xl border border-[#F5D9C8] bg-white p-7 text-[#0E1B2C] shadow-[0_30px_60px_-35px_rgba(252,85,2,0.5)]">
       <Wordmark className="text-2xl" />
       {state === "done" ? (
         <>
           <h1 className="text-2xl font-bold">Listo, no te mandamos más novedades</h1>
           <p className="text-[#47566A]">Los avisos de tu cuenta (pagos, seguridad, pedidos) se siguen enviando porque son parte del servicio.</p>
-          <Link href="/" className="inline-block font-semibold text-[#2F6FB0]">Volver a MiShowo</Link>
+          <Link href="/" className="inline-block font-semibold text-[#C73E00]">Volver a MiShowo</Link>
         </>
       ) : !token ? (
         <p role="alert">Este enlace está incompleto. Abrilo de nuevo desde el mail.</p>

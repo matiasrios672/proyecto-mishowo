@@ -1,5 +1,5 @@
 import { test, expect, type Browser, type Page } from "@playwright/test";
-import { PASS, mailSubjects, sql, tokenFromMail, totpNow, uniq } from "./helpers";
+import { PASS, mailSubjects, sql, tokenFromMail, totpNow, uniq, autoConfirm } from "./helpers";
 
 // Requiere el stack completo y Docker accesible (se nombra al admin por SQL). Modifica datos globales (plantillas y planes):
 // todo lo que cambia lo deja como estaba, y corre solo en la versión de computadora y en orden.
@@ -9,7 +9,9 @@ test.beforeEach(({}, info) => { test.skip(info.project.name === "mobile", "el ad
 const BASE = "http://localhost:3100";
 async function newPage(browser: Browser) {
   const context = await browser.newContext({ baseURL: BASE });
-  return { context, page: await context.newPage() };
+  const page = await context.newPage();
+  await autoConfirm(page);
+  return { context, page };
 }
 
 async function makeAdmin(page: Page, email: string, role: "owner" | "admin" | "support") {
@@ -33,7 +35,6 @@ test("el sysadmin edita una plantilla con vista previa, prueba el mail y vuelve 
   const mail = `${uniq("owner-mail", info.project.name)}@test.com`;
   const { page } = await newPage(browser);
   await makeAdmin(page, mail, "owner");
-  page.on("dialog", (d) => void d.accept());
 
   await page.getByRole("link", { name: "Emails", exact: true }).click();
   await expect(page.getByRole("heading", { name: "Emails", exact: true })).toBeVisible();

@@ -1,7 +1,7 @@
 import QRCode from "qrcode";
 
 const INK = "#0E1B2C";
-const BLUE = "#2F6FB0";
+const BLUE = "#C73E00";
 const YELLOW = "#F6B40E";
 export const POSTER_W = 1080;
 export const POSTER_H = 1528;
@@ -44,7 +44,7 @@ export async function renderQrPoster(opts: { url: string; name: string; display:
 
   // Fondo: celeste de marca con brillos
   const bg = c.createLinearGradient(0, 0, POSTER_W, POSTER_H);
-  bg.addColorStop(0, "#DCEBF8"); bg.addColorStop(0.55, "#F4F9FE"); bg.addColorStop(1, "#BFD9F0");
+  bg.addColorStop(0, "#FFE2D0"); bg.addColorStop(0.55, "#FFF7F1"); bg.addColorStop(1, "#FAC9A8");
   c.fillStyle = bg; c.fillRect(0, 0, POSTER_W, POSTER_H);
   for (const [x, y, r, a] of [[0, 0, 520, 0.5], [POSTER_W, POSTER_H, 600, 0.42]] as const) {
     const g = c.createRadialGradient(x, y, 0, x, y, r);
@@ -69,7 +69,7 @@ export async function renderQrPoster(opts: { url: string; name: string; display:
   // Tarjeta del QR
   const cardS = 700, cardX = (POSTER_W - cardS) / 2, cardY = afterName + 110;
   c.save();
-  c.shadowColor = "rgba(47,111,176,0.45)"; c.shadowBlur = 70; c.shadowOffsetY = 30;
+  c.shadowColor = "rgba(252,85,2,0.45)"; c.shadowBlur = 70; c.shadowOffsetY = 30;
   c.fillStyle = "#FFFFFF"; rr(c, cardX, cardY, cardS, cardS, 56); c.fill();
   c.restore();
 
@@ -106,6 +106,6 @@ export async function renderQrPoster(opts: { url: string; name: string; display:
 
   // Pie
   c.fillStyle = "#47566A"; c.font = `600 30px ${sans}`;
-  c.fillText("Hecho con MiShowo · mishowo.com", POSTER_W / 2, POSTER_H - 40);
+  c.fillText("Hecho por MiShowo", POSTER_W / 2, POSTER_H - 40);
   return cv.toDataURL("image/png");
 }

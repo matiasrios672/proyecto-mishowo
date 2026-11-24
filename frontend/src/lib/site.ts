@@ -27,7 +27,6 @@ export interface SiteModel {
   ordersEnabled: boolean;
   /** Cuotas sin interés que ofrece el negocio (informativo; sin esto no se muestra nada). */
   installments?: Installments;
-  hideBranding: boolean;
   /** IDs de medición (solo llegan si el plan incluye el módulo). */
   pixels?: { meta: string; ga: string };
   /** El plan incluye reseñas de clientes. */
@@ -59,7 +58,6 @@ export function draftToSite(d: Draft): SiteModel {
     })),
     showQuantities: d.showQuantities, ordersEnabled: d.ordersEnabled, askEventDate: d.askEventDate, whatsappGreeting: d.whatsappGreeting,
     installments: d.installments,
-    hideBranding: false,
     exampleName: d.nameIsExample, exampleTexts: d.textsAreExample, cover: null,
   };
 }
@@ -96,7 +94,6 @@ export function publicToSite(site: PublicSite): SiteModel {
     categories,
     showQuantities: settings.showQuantities !== false, ordersEnabled: settings.ordersEnabled !== false, installments: normalizeInstallments(settings.installments), askEventDate: settings.askEventDate === true,
     whatsappGreeting: str(settings.whatsappGreeting, "Hola! Quiero hacer este pedido:"),
-    hideBranding: site.modules ? site.modules.remove_branding === true : b.planId === "pro",
     reviews: site.modules?.reviews !== false,
     ...(site.modules?.pixels === true ? { pixels: { meta: str(settings.metaPixelId), ga: str(settings.gaId) } } : {}),
     exampleName: false, exampleTexts: false, cover: site.cover?.src ?? null, coverSet: site.cover?.srcSet ?? null, logo: site.logo?.src ?? null, logoSet: site.logo?.srcSet ?? null, video: site.video ?? null,

@@ -4,6 +4,7 @@ import { createContext, useContext, useEffect, useState, type ReactNode } from "
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import QRCode from "qrcode";
+import { LoadingScreen } from "@/components/brand/LoadingScreen";
 import { Wordmark } from "@/components/brand/Wordmark";
 import { AppShell, type NavGroup, type NavItem } from "@/components/brand/AppShell";
 import { IconCard, IconChat, IconEdit, IconFlag, IconHome, IconMail, IconSparkle, IconServer, IconShield, IconStore, IconTag, IconUsers } from "@/components/marketing/Doodles";
@@ -22,32 +23,74 @@ const Ctx = createContext<AdminUser | null>(null);
 export const useAdmin = () => useContext(Ctx)!;
 
 const ADMIN_GROUPS: { label: string; items: { href: string; label: string; Icon: NavItem["Icon"]; exact?: boolean; area?: AreaKey; ownerOnly?: boolean }[] }[] = [
-  { label: "General", items: [
+  { label: "Inicio", items: [
     { href: "/admin", label: "Resumen", Icon: IconHome, exact: true },
-    { href: "/admin/pagos", label: "Pagos", Icon: IconCard, area: "pagos" },
-    { href: "/admin/negocios", label: "Negocios", Icon: IconStore, area: "negocios" },
-    { href: "/admin/leads", label: "Leads", Icon: IconSparkle, area: "leads" },
-    { href: "/admin/usuarios", label: "Usuarios", Icon: IconUsers, area: "usuarios" },
   ] },
-  { label: "Moderación y contenido", items: [
-    { href: "/admin/consultas", label: "Consultas", Icon: IconChat, area: "consultas" },
-    { href: "/admin/denuncias", label: "Denuncias", Icon: IconFlag, area: "denuncias" },
-    { href: "/admin/emails", label: "Emails", Icon: IconMail, area: "emails" },
-    { href: "/admin/contenido", label: "Contenido", Icon: IconEdit, area: "contenido" },
-    { href: "/admin/rubros", label: "Rubros", Icon: IconStore, area: "rubros" },
+  { label: "Clientes", items: [
+    { href: "/admin/negocios", label: "Negocios", Icon: IconStore, area: "negocios" },
+    { href: "/admin/usuarios", label: "Cuentas", Icon: IconUsers, area: "usuarios" },
+    { href: "/admin/leads", label: "Leads", Icon: IconSparkle, area: "leads" },
+  ] },
+  { label: "Ventas", items: [
+    { href: "/admin/pagos", label: "Pagos", Icon: IconCard, area: "pagos" },
     { href: "/admin/planes", label: "Planes", Icon: IconTag, area: "planes" },
   ] },
-  { label: "Sistema", items: [
+  { label: "Atención", items: [
+    { href: "/admin/consultas", label: "Consultas", Icon: IconChat, area: "consultas" },
+    { href: "/admin/denuncias", label: "Denuncias", Icon: IconFlag, area: "denuncias" },
+  ] },
+  { label: "Contenido", items: [
+    { href: "/admin/rubros", label: "Rubros", Icon: IconStore, area: "rubros" },
+    { href: "/admin/contenido", label: "Contenido", Icon: IconEdit, area: "contenido" },
+    { href: "/admin/emails", label: "Emails", Icon: IconMail, area: "emails" },
+  ] },
+  { label: "Equipo y sistema", items: [
+    { href: "/admin/admins", label: "Equipo", Icon: IconShield, ownerOnly: true },
     { href: "/admin/sistema", label: "Estado", Icon: IconServer, area: "sistema" },
     { href: "/admin/auditoria", label: "Auditoría", Icon: IconShield, area: "auditoria" },
-    { href: "/admin/admins", label: "Equipo", Icon: IconUsers, ownerOnly: true },
   ] },
 ];
+
+/** Qué es cada pantalla y cómo usarla: se muestra bajo el título y se despliega con «¿Cómo se usa?». Editarlo acá no toca la lógica. */
+const PAGE_HELP: Record<string, { about: string; steps?: string[] }> = {
+  Resumen: { about: "Lo que necesita tu atención hoy y cómo viene el negocio.", steps: ["«Para atender» muestra lo urgente: tocá una tarjeta para ir directo.", "Los números de abajo se calculan solos.", "Si sos Owner, «Primeros pasos» te guía para dejar todo configurado."] },
+  Negocios: { about: "Todos los negocios creados, con su plan y estado.", steps: ["Buscá por nombre o link y tocá un negocio para ver su ficha.", "Desde la ficha podés cambiar el plan, suspender o ver la página.", "Cada cambio queda en Auditoría."] },
+  Cuentas: { about: "Las personas registradas: clientes y equipo. Para sumar o cambiar permisos del equipo andá a «Equipo».", steps: ["Usá los filtros para ver solo clientes, equipo, sin verificar o bloqueadas.", "Bloquear cierra todas sus sesiones al instante."] },
+  Leads: { about: "Personas que se registraron pero todavía no publicaron: oportunidades para escribirles.", steps: ["El embudo muestra en qué paso se frenó cada una.", "«Escribirle» manda el mail de retomar (máximo uno cada 3 días)."] },
+  Pagos: { about: "Pagos por transferencia que hay que confirmar o rechazar.", steps: ["Abrí el comprobante, compará el monto y confirmá.", "Al confirmar, el plan se activa y le llega un mail a la persona.", "Si no coincide, rechazá y escribile el motivo."] },
+  "Planes y precios": { about: "Precios, límites y módulos de cada plan, y los datos para transferir.", steps: ["Editá un plan y guardá: los cambios se ven al instante en la landing.", "Los datos de cobro los ve cada cliente al pagar: revisalos con cuidado."] },
+  Consultas: { about: "Mensajes que llegan desde el formulario de contacto de la landing.", steps: ["Respondé desde acá: queda registrado y se manda por mail."] },
+  Denuncias: { about: "Páginas que alguien reportó.", steps: ["Revisá la página, anotá qué decidiste y suspendé si corresponde."] },
+  Rubros: { about: "Los rubros que se ofrecen al crear una página: nombre, estilo inicial y visibilidad." },
+  Contenido: { about: "Aviso global, preguntas frecuentes y links reservados, sin tocar código.", steps: ["El aviso aparece arriba de la landing.", "Si cargás preguntas frecuentes, reemplazan a las de fábrica."] },
+  Emails: { about: "Textos de los mails automáticos, avisos y campañas.", steps: ["Probá cada mail con «Enviar prueba» antes de guardar cambios."] },
+  "Estado del sistema": { about: "Si todo funciona, modo mantenimiento y los negocios de ejemplo de la landing." },
+  Auditoría: { about: "Registro de quién hizo qué en el admin. No se puede editar." },
+  Equipo: { about: "Quiénes trabajan en MiShowo y qué puede hacer cada persona, área por área. Solo el Owner lo administra.", steps: ["Sumá a alguien abajo: le crea la cuenta y le llega un mail para elegir su contraseña.", "En cada persona: «Permisos» ajusta lo que ve y gestiona; «Enviar mail» le escribe; «Reenviar invitación» si perdió el mail; «Reiniciar 2FA» si perdió su app.", "«Mail a todo el equipo» manda un aviso a todos a la vez."] },
+};
+
+/** Título de cada pantalla del admin, con una explicación corta y una guía plegable. */
+export function PageHeader({ title, children }: { title: string; children?: ReactNode }) {
+  const help = PAGE_HELP[title === "Usuarios" ? "Cuentas" : title];
+  return (
+    <header className="space-y-2">
+      <h1 className="text-2xl font-bold">{title}</h1>
+      {help && <p className="max-w-[68ch] text-muted-foreground">{help.about}</p>}
+      {help?.steps && (
+        <details className="group max-w-[68ch] text-sm" data-testid="page-help">
+          <summary className="inline-flex min-h-9 cursor-pointer items-center gap-1.5 rounded-lg font-semibold text-[#C73E00] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring">¿Cómo se usa?</summary>
+          <ol className="mt-1 list-decimal space-y-1 rounded-xl bg-[#F9FAFB] py-3 pl-8 pr-4">{help.steps.map((t) => <li key={t}>{t}</li>)}</ol>
+        </details>
+      )}
+      {children}
+    </header>
+  );
+}
 
 const CODE_ERR: Record<string, string> = { invalid_code: "Ese código no es correcto o venció. Probá con el que muestra ahora tu app.", rate_limited: "Demasiados intentos. Esperá un minuto." };
 
 function Box({ children }: { children: ReactNode }) {
-  return <main className="mx-auto my-10 max-w-md space-y-5 rounded-3xl border border-[#D6E4F2] bg-white p-7 shadow-[0_30px_60px_-35px_rgba(47,111,176,0.5)] sm:my-16"><Wordmark className="text-2xl" />{children}</main>;
+  return <main className="mx-auto my-10 max-w-md space-y-5 rounded-3xl border border-[#E5E7EB] bg-white p-7 shadow-[0_30px_60px_-35px_rgba(252,85,2,0.5)] sm:my-16"><Wordmark className="text-2xl" />{children}</main>;
 }
 
 function CodeForm({ label, button, onSubmit }: { label: string; button: string; onSubmit: (code: string) => Promise<string | null> }) {
@@ -108,7 +151,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
 
   useEffect(() => { if (me === "anon") router.replace(`/ingresar?next=${encodeURIComponent(path)}`); }, [me, path, router]);
 
-  if (me === null || me === "anon") return <main className="p-6 text-muted-foreground">Cargando…</main>;
+  if (me === null || me === "anon") return <LoadingScreen message="Cargando la administración…" />;
   if (me === "denied") return <Box><h1 className="text-2xl font-bold">No tenés acceso</h1><p className="text-muted-foreground">Esta sección es solo para el equipo de MiShowo.</p><Link href="/" className="">Volver al inicio</Link></Box>;
   if (!me.totpEnabled) return <Setup2fa onDone={() => setTick((n) => n + 1)} />;
   if (!me.verified)

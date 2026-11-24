@@ -2,6 +2,7 @@
 
 import { Suspense, useEffect, type ReactNode } from "react";
 import { usePathname, useRouter } from "next/navigation";
+import { LoadingScreen } from "@/components/brand/LoadingScreen";
 import { useUser } from "@/components/auth/authStore";
 import { EditorShell } from "@/components/editor/EditorShell";
 import type { EditorModule } from "@/lib/modules";
@@ -28,7 +29,7 @@ export function WorkspaceShell({ children }: { children: ReactNode }) {
     if (user === null) router.replace(`/ingresar?next=${encodeURIComponent(path)}`);
   }, [user, path, router]);
 
-  if (!user) return <main className="p-6 text-muted-foreground">Cargando tu panel…</main>;
+  if (!user) return <LoadingScreen message="Cargando tu panel…" />;
   const which = MODULE_BY_PATH[path] ?? "pagina";
   return (
     <PanelFrame fullBleed>

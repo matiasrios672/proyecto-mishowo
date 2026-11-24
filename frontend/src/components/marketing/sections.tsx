@@ -13,7 +13,7 @@ import { getSiteConfig } from "@/lib/siteConfig";
 const SOL = "#F6B40E";
 const TINTA = "#0E1B2C";
 const wrap = "mx-auto w-full max-w-6xl px-5 sm:px-8";
-const ctaSol = "inline-flex items-center justify-center rounded-xl bg-[#F6B40E] px-7 py-4 text-base font-bold text-[#0E1B2C] transition-transform hover:bg-[#FFC21F] active:scale-95 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring";
+const ctaSol = "inline-flex items-center justify-center rounded-xl bg-[#FC5502] px-7 py-4 text-base font-bold text-[#0E1B2C] transition-transform hover:bg-[#FF6A1F] active:scale-95 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring";
 const ctaGhost = "inline-flex items-center justify-center rounded-xl border-2 border-[#0E1B2C] px-7 py-3.5 text-base font-bold text-[#0E1B2C] transition-transform hover:bg-[#0E1B2C] hover:text-white active:scale-95 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring";
 
 /** Trae el primer rubro de la demo al atender la visita (no al compilar: el build de Docker no tiene backend). */
@@ -32,14 +32,14 @@ const DemoSkeleton = () => <div aria-hidden className="h-[640px] rounded-3xl bg-
 
 export function Hero() {
   return (
-    <section className="relative isolate overflow-hidden bg-gradient-to-b from-[#DCEBF8] to-[#EAF4FC]">
+    <section className="relative isolate overflow-hidden bg-gradient-to-b from-[#FFE2D0] to-[#FFEFE6]">
       <Glow />
       <div aria-hidden className="mk-grid pointer-events-none absolute inset-0 -z-10" />
       <div className={`${wrap} grid items-center gap-4 pb-10 pt-12 lg:grid-cols-[1fr_1.1fr] lg:gap-12 lg:pb-16 lg:pt-16`}>
         <div>
           <h1 className="mk-display site-rise text-[clamp(3rem,7.4vw,5.6rem)] font-extrabold leading-[0.92] tracking-tight text-[#0E1B2C]">
             <span className="block">Tu negocio,</span>{" "}
-            <span className="relative block w-fit text-primary">en un link.</span>
+            <span className="relative block w-fit text-[#FC5502]">en un link.</span>
           </h1>
           <p className="site-rise mt-8 max-w-[34ch] text-xl leading-snug text-[#0E1B2C]/80 sm:text-2xl" style={{ "--d": "120ms" } as React.CSSProperties}>
             Armá la página de tu negocio desde el celular. Tus clientes eligen y te piden por WhatsApp, sin comisión por venta.
@@ -58,7 +58,7 @@ export function Hero() {
 
 export function DemoSection() {
   return (
-    <section id="probalo" aria-labelledby="demo-title" className="scroll-mt-16 bg-[#EAF4FC]">
+    <section id="probalo" aria-labelledby="demo-title" className="scroll-mt-16 bg-[#FFEFE6]">
       <div className={`${wrap} pb-16 pt-6 sm:pb-24`}>
         <h2 id="demo-title" className="mk-display mb-8 max-w-[20ch] text-4xl font-extrabold leading-tight tracking-tight text-[#0E1B2C] sm:text-5xl">Probalo vos mismo, ahora</h2>
         <Suspense fallback={<DemoSkeleton />}>
@@ -77,7 +77,7 @@ const EXAMPLES = [
   { slug: "demo-belleza", name: "Estudio Aura Nails", kind: "Belleza", color: "#B8335D" },
   { slug: "demo-gimnasio", name: "Fuerza Box Club", kind: "Gimnasio", color: "#F5C542" },
   { slug: "demo-muebles", name: "Taller Nogal Muebles", kind: "Muebles", color: "#7A4F24" },
-  { slug: "demo-eventos", name: "Fiestas Don Pepe", kind: "Eventos", color: "#8DB2FF" },
+  { slug: "demo-eventos", name: "Fiestas Don Pepe", kind: "Eventos", color: "#FF9B63" },
 ];
 
 export function Examples() {
@@ -105,7 +105,7 @@ export function Examples() {
 }
 
 const BENEFITS = [
-  { t: "Pedidos por WhatsApp, ordenados", d: "Tu cliente arma el pedido en tu página y llega a tu WhatsApp con todo escrito: productos, total y aclaraciones. Además, cada pedido queda registrado." },
+  { t: "Pedidos por WhatsApp, si querés", d: "Elegís si tu página recibe pedidos o solo muestra tu carta o catálogo. Con pedidos, tu cliente arma el carrito y te llega a WhatsApp con todo escrito y registrado; sin pedidos, cada producto tiene un botón «Consultar»." },
   { t: "Se ve bien en el celular y en la compu", d: "Tu página se adapta sola a cada pantalla, con animaciones suaves que no pesan. Carga rápido incluso con datos móviles." },
   { t: "Tu estilo, no una plantilla", d: "9 estilos de color, 4 diseños, 4 tipografías y el color de tu marca (lo detectamos desde tu logo). Cambiás todo sin perder nada." },
   { t: "Talles, colores y stock", d: "Variantes por talle y color, precios por opción, precio tachado para ofertas y stock numérico: cuando se acaba, aparece como agotado solo." },
@@ -143,13 +143,13 @@ export function Steps() {
     { t: "Compartí tu link", d: "Publicás y ponés tu link en la bio de Instagram, en WhatsApp y en tus bolsas." },
   ];
   return (
-    <section id="como-funciona" aria-labelledby="steps-title" className="scroll-mt-20 bg-[#EAF4FC]">
+    <section id="como-funciona" aria-labelledby="steps-title" className="scroll-mt-20 bg-[#FFEFE6]">
       <div className={`${wrap} py-16 sm:py-24`}>
         <h2 id="steps-title" className="mk-display text-4xl font-extrabold leading-tight tracking-tight sm:text-5xl">Cómo funciona</h2>
         <ol className="mt-12 grid gap-10 md:grid-cols-3">
           {steps.map((s, i) => (
             <li key={s.t} className="flex gap-5">
-              <span aria-hidden className="mk-display text-7xl font-extrabold leading-none text-primary/35">{i + 1}</span>
+              <span aria-hidden className="mk-display text-7xl font-extrabold leading-none text-[#C73E00]/35">{i + 1}</span>
               <div>
                 <h3 className="mk-display text-2xl font-bold">{s.t}</h3>
                 <p className="mt-2 text-muted-foreground">{s.d}</p>
@@ -182,7 +182,7 @@ async function PlansList() {
           {p.priceMonthly === 0 && <span className="absolute -top-3.5 left-7 rounded-full bg-[#15803D] px-3.5 py-1 text-xs font-extrabold uppercase tracking-wide text-white">Empezá acá · gratis</span>}
           <h3 className="mk-display text-2xl font-bold">{p.name}</h3>
           <p className="mk-display mt-3 text-4xl font-extrabold tracking-tight">
-            {p.priceMonthly === 0 ? "Gratis" : formatPrice(p.priceMonthly)}<span className="text-base font-semibold text-muted-foreground">{p.priceMonthly === 0 ? " para siempre" : " /mes"}</span>
+            {p.priceMonthly === 0 ? "Gratis" : formatPrice(p.priceMonthly)}<span className="text-base font-semibold text-muted-foreground">{p.priceMonthly === 0 ? " para siempre" : " por mes, por página"}</span>
           </p>
           <ul className="mt-6 flex-1 space-y-2.5 text-[0.95rem]">
             <li className="flex gap-2.5"><Check />{p.limits.products ? `Hasta ${p.limits.products} productos` : "Productos ilimitados"}</li>
@@ -198,7 +198,7 @@ async function PlansList() {
 }
 
 const Check = () => (
-  <svg viewBox="0 0 20 20" aria-hidden className="mt-0.5 size-5 shrink-0 text-primary"><path d="M4 10.5l4 4 8-9" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" /></svg>
+  <svg viewBox="0 0 20 20" aria-hidden className="mt-0.5 size-5 shrink-0 text-[#C73E00]"><path d="M4 10.5l4 4 8-9" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" /></svg>
 );
 
 export function Plans({ fallback }: { fallback: React.ReactNode }) {

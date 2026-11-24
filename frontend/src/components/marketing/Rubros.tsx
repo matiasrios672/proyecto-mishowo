@@ -13,17 +13,17 @@ interface Rubro {
 const RUBROS: Rubro[] = [
   {
     id: "ropa", ghost: "TIENDA", kicker: "Tiendas de ropa y accesorios", title: "Cada prenda con su talle, su foto y sus cuotas.",
-    line: "Variantes por talle y color, precios tachados, stock y «6 cuotas sin interés» bajo cada precio. Tus clientas arman el pedido y te llega listo por WhatsApp.",
-    cta: "Crear mi tienda", shop: "Luna Indumentaria", tag: "luna.mishowo.com", bg: "#0E1B2C", accent: "#74ACDF",
+    line: "Variantes por talle y color, precios tachados, stock y «6 cuotas sin interés» bajo cada precio. Tus clientas eligen y te escriben por WhatsApp; si querés, arman el pedido y te llega listo.",
+    cta: "Crear mi tienda", shop: "Luna Indumentaria", tag: "luna.mishowo.com", bg: "#0E1B2C", accent: "#FF8A4C",
     items: [
-      { n: "Campera puffer corta", p: 189900, tint: "#E3EEF9", cuotas: 6 },
+      { n: "Campera puffer corta", p: 189900, tint: "#FFEADB", cuotas: 6 },
       { n: "Buzo canguro de frisa", p: 64900, tint: "#F3E6DC", cuotas: 6 },
       { n: "Remera oversize", p: 24900, tint: "#F8EFD2" },
     ],
   },
   {
     id: "comidas", ghost: "MENÚ", kicker: "Rotiserías, bares y casas de comidas", title: "Cambiás un precio y se actualiza en todas las mesas.",
-    line: "Secciones, precios y platos agotados que cambiás en segundos. QR para la mesa y pedidos para llevar por WhatsApp, sin comisión.",
+    line: "Secciones, precios y platos agotados que cambiás en segundos. QR para la mesa y, si querés, pedidos para llevar por WhatsApp, sin comisión.",
     cta: "Crear mi carta", shop: "Empanadas de Lupe", tag: "lupe.mishowo.com", bg: "#0B2A4A", accent: "#F6B40E",
     items: [
       { n: "Docena de empanadas", p: 14500, tint: "#FBEBD3" },
@@ -34,9 +34,9 @@ const RUBROS: Rubro[] = [
   {
     id: "eventos", ghost: "EVENTOS", kicker: "Eventos, servicios y oficios", title: "Mostrá tus servicios en grande y cobrá en cuotas.",
     line: "Cada servicio con su foto, su precio y las cuotas que ofrecés. El cliente te escribe con el día y el lugar ya anotados.",
-    cta: "Crear mi página", shop: "Fiestas Don Pepe", tag: "donpepe.mishowo.com", bg: "#12233A", accent: "#74ACDF",
+    cta: "Crear mi página", shop: "Fiestas Don Pepe", tag: "donpepe.mishowo.com", bg: "#12233A", accent: "#FF8A4C",
     items: [
-      { n: "Cabina de fotos", p: 120000, tint: "#E3EEF9", cuotas: 3 },
+      { n: "Cabina de fotos", p: 120000, tint: "#FFEADB", cuotas: 3 },
       { n: "Sonido y luces", p: 150000, tint: "#F3E6DC", cuotas: 3 },
       { n: "Castillo inflable", p: 60000, tint: "#FBE0DA", cuotas: 3 },
     ],
@@ -51,7 +51,7 @@ function Phone({ r }: { r: Rubro }) {
     <div aria-hidden className="mk-phone-rise relative mx-auto w-[16.5rem] rounded-[2.4rem] border-[9px] border-[#05101D] bg-white p-3 shadow-[0_60px_100px_-30px_rgba(0,0,0,0.8)] ring-1 ring-white/15 sm:w-[18.5rem]">
       <div className="mx-auto mb-3 h-3.5 w-14 rounded-full bg-[#05101D]" />
       <div className="flex items-center gap-2">
-        <span className="grid size-8 place-items-center rounded-full text-sm font-extrabold text-white" style={{ background: "#2F6FB0" }}>{r.shop[0]}</span>
+        <span className="grid size-8 place-items-center rounded-full text-sm font-extrabold text-white" style={{ background: "#C73E00" }}>{r.shop[0]}</span>
         <span className="min-w-0 text-left"><span className="block truncate text-[13px] font-extrabold leading-tight text-[#0E1B2C]">{r.shop}</span><span className="block truncate text-[10px] text-[#0E1B2C]/55">{r.tag}</span></span>
       </div>
       <ul className="mt-3 space-y-2">
@@ -61,7 +61,7 @@ function Phone({ r }: { r: Rubro }) {
             <span className="min-w-0">
               <span className="block truncate text-[12px] font-bold text-[#0E1B2C]">{it.n}</span>
               <span className="block text-[12px] font-semibold text-[#0E1B2C]/70">{ars(it.p)}</span>
-              {it.cuotas && <span className="block text-[10.5px] font-bold text-[#2F6FB0]">{installmentLine(it.p, { enabled: true, count: it.cuotas, note: "", minAmount: 0 })}</span>}
+              {it.cuotas && <span className="block text-[10.5px] font-bold text-[#C73E00]">{installmentLine(it.p, { enabled: true, count: it.cuotas, note: "", minAmount: 0 })}</span>}
             </span>
           </li>
         ))}
@@ -89,7 +89,7 @@ export function RubroShowcase() {
             <h2 id={`rubro-${r.id}`} className="mk-display mx-auto max-w-[20ch] text-4xl font-extrabold leading-[1.02] tracking-tight sm:text-6xl">{r.title}</h2>
             <p className="mx-auto mt-5 max-w-[52ch] text-lg text-white/80">{r.line}</p>
             <div className="mt-7 flex flex-wrap items-center justify-center gap-3">
-              <Link href="/crear" className="inline-flex min-h-12 items-center justify-center rounded-xl bg-[#F6B40E] px-7 font-bold text-[#0E1B2C] transition-transform hover:bg-[#FFC21F] active:scale-95 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white">{r.cta}</Link>
+              <Link href="/crear" className="inline-flex min-h-12 items-center justify-center rounded-xl bg-[#FC5502] px-7 font-bold text-[#0E1B2C] transition-transform hover:bg-[#FF6A1F] active:scale-95 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white">{r.cta}</Link>
             </div>
             <div className={`mt-12 ${i === 1 ? "sm:mt-14" : ""}`}><Phone r={r} /></div>
           </div>

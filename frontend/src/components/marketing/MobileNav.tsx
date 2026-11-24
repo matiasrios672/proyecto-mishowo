@@ -37,7 +37,7 @@ export function MobileNav() {
             {NAV_LINKS.map(([label, href]) => (
               <li key={href}><Link href={href} className="flex min-h-12 items-center border-b border-border/60 text-base font-semibold focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-ring">{label}</Link></li>
             ))}
-            <li><Link href="/ingresar" className="flex min-h-12 items-center text-base font-semibold text-[#2F6FB0]">Ingresar</Link></li>
+            <li><Link href="/ingresar" className="flex min-h-12 items-center text-base font-semibold text-[#C73E00]">Ingresar</Link></li>
           </ul>
         </nav>
       )}

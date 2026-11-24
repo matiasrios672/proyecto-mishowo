@@ -1,4 +1,5 @@
 import { api } from "./authClient";
+import { NEW_PAGE, getActivePage, setActivePage } from "./activePage";
 import { draftToContent, type Draft, type DraftContent } from "./draft";
 import type { PushResult } from "./syncEngine";
 
@@ -14,8 +15,12 @@ export function pushDraft(draft: Draft, baseVersion: number | null): Promise<Pus
 }
 
 async function doPush(draft: Draft, baseVersion: number | null): Promise<PushResult> {
-  const r = await api<{ version: number }>("/me/business", { method: "PUT", body: { baseVersion, content: draftToContent(draft) } });
-  if (r.ok) return { ok: true, version: r.data.version };
+  const r = await api<{ version: number; id?: string }>("/me/business", { method: "PUT", body: { baseVersion, content: draftToContent(draft) } });
+  if (r.ok) {
+    if (r.data.id && getActivePage() === NEW_PAGE) setActivePage(r.data.id); // la página nueva ya existe: pasa a ser la abierta
+    return { ok: true, version: r.data.version };
+  }
+  if (r.status === 404 || (r.status === 422 && r.data.error === "pages_limit")) return { ok: false, reason: "invalid" };
   if (r.status === 409) return { ok: false, reason: "conflict", version: r.data.version ?? 0 };
   if (r.status === 401) return { ok: false, reason: "unauthorized" };
   if (r.status === 400 || r.status === 403 || r.status === 429) return { ok: false, reason: "invalid" };

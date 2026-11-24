@@ -220,8 +220,8 @@
   70%, 100% { left: 105%; top: 110%; opacity: 0; }
 }
 @keyframes mk-ripple { 0% { transform: translate(-50%, -50%) scale(0.2); opacity: 0.7; } 100% { transform: translate(-50%, -50%) scale(2.2); opacity: 0; } }
-@keyframes mk-add-a { 0%, 16.5% { background-color: #2F6FB0; } 17.5%, 94% { background-color: #15803D; } 100% { background-color: #2F6FB0; } }
-@keyframes mk-add-b { 0%, 32.5% { background-color: #2F6FB0; } 33.5%, 94% { background-color: #15803D; } 100% { background-color: #2F6FB0; } }
+@keyframes mk-add-a { 0%, 16.5% { background-color: #C73E00; } 17.5%, 94% { background-color: #15803D; } 100% { background-color: #C73E00; } }
+@keyframes mk-add-b { 0%, 32.5% { background-color: #C73E00; } 33.5%, 94% { background-color: #15803D; } 100% { background-color: #C73E00; } }
 @keyframes mk-show-a { 0%, 16.5% { opacity: 0; } 17.5%, 94% { opacity: 1; } 100% { opacity: 0; } }
 @keyframes mk-show-b { 0%, 32.5% { opacity: 0; } 33.5%, 94% { opacity: 1; } 100% { opacity: 0; } }
 @keyframes mk-hide-a { 0%, 16.5% { opacity: 1; } 17.5%, 94% { opacity: 0; } 100% { opacity: 1; } }
@@ -292,7 +292,7 @@
   .mk-tabstrip-m::-webkit-scrollbar { display: none; }
 }
 /* Barras de desplazamiento finas y discretas dentro de las pantallas con la marca. */
-.mk-text :is(.overflow-y-auto, .overflow-x-auto, .overflow-auto) { scrollbar-width: thin; scrollbar-color: #B8CCE0 transparent; }
+.mk-text :is(.overflow-y-auto, .overflow-x-auto, .overflow-auto) { scrollbar-width: thin; scrollbar-color: #E8C4AA transparent; }
 
 /* ───────── Landing premium: brillo que sigue al mouse y micro-animaciones de los beneficios ───────── */
 .mk-spot::before { content: ""; position: absolute; inset: 0; opacity: 0; transition: opacity 0.3s; pointer-events: none; background: radial-gradient(260px circle at var(--mx, 50%) var(--my, 50%), rgb(116 172 223 / 0.28), transparent 70%); }
@@ -303,11 +303,57 @@
   .mk-bar { transform-origin: bottom; animation: mk-bar-grow 0.8s cubic-bezier(0.3, 1.3, 0.5, 1) both; }
 }
 
-/* ───────── Paneles (cliente y admin): estilo plano. Esquinas casi rectas, sin sombras, módulos separados por una línea fina ───────── */
-.panel-flat { --radius: 2px; }
-.panel-flat :is(button, a, input, select, textarea).rounded-full { border-radius: 2px; }
-.panel-flat [class*="shadow-"]:not([class*="shadow-[inset"]) { box-shadow: none; } /* los indicadores "inset" (menú activo, pestañas) se conservan */
-.panel-flat [class*="bg-gradient"] { background-image: none; background-color: #F7FAFD; }
+/* ───────── Paneles (cliente y admin): estilo moderno y neutro. Fondo gris muy claro, tarjetas blancas con esquinas amplias y sombra suave, botones grafito, íconos naranjas ───────── */
+.panel-modern {
+  --radius: 14px; --background: #F6F7F9; --muted: #F1F3F5; --border: #E5E7EB; --input: #D1D5DB;
+  --primary: #1F2937; --primary-foreground: #FFFFFF; --ring: #1F2937;
+  background: #F6F7F9;
+}
+.panel-modern :is(h1) { letter-spacing: -0.02em; font-family: var(--font-mk-display), var(--font-sans), system-ui, sans-serif; font-weight: 800; }
+/* Botones del panel en escala de grises (el naranja queda para los íconos y detalles): los rellenos naranjas pasan a grafito. */
+.panel-modern [class*="bg-[#FC5502]"], .panel-modern [class*="bg-[#C73E00]"]:not([class*="/"]) { background-color: #1F2937; color: #fff; }
+.panel-modern [class*="hover:bg-[#E04C00]"]:hover, .panel-modern [class*="hover:bg-[#A23200]"]:hover { background-color: #111827; }
+.panel-modern button:is([class*="bg-[#FC5502]"], [class*="bg-primary"]):disabled { background-color: #6B7280; }
+.panel-modern [class*="border-[#FC5502]"] { border-color: #9CA3AF; }
+/* Todo bloque con borde (listas, formularios, tablas) se vuelve una tarjeta: blanca, redondeada y con relieve leve. */
+.panel-modern :is(.rounded-xl, .rounded-2xl).border:not(input, select, textarea, button, a, label, span, li > a) { background-color: #fff; box-shadow: 0 1px 2px rgb(17 24 39 / 0.04), 0 14px 28px -20px rgb(17 24 39 / 0.28); border-color: #E5E7EB; transition: box-shadow 0.25s, transform 0.25s, border-color 0.25s; }
+.panel-modern :is(.rounded-xl, .rounded-2xl).border.divide-y > * + *, .panel-modern :is(.rounded-xl, .rounded-2xl).border:is(ul, ol) > li + li { border-color: #EEF0F3; }
+.panel-modern table { border-collapse: separate; border-spacing: 0; }
+.panel-modern thead { background: #F3F4F6; }
+.panel-modern tbody tr { transition: background-color 0.15s; }
+.panel-modern tbody tr:hover { background: #F9FAFB; }
+.panel-modern :is(input:not([type="radio"], [type="checkbox"]), select, textarea) { border-radius: 12px; border-color: #D1D5DB; background-color: #fff; transition: border-color 0.15s, box-shadow 0.15s; }
+.panel-modern :is(input:not([type="radio"], [type="checkbox"]), select, textarea):focus-visible { outline: none; border-color: #1F2937; box-shadow: 0 0 0 4px rgb(31 41 55 / 0.14); }
+.panel-modern button, .panel-modern a[class*="rounded"] { transition: background-color 0.15s, box-shadow 0.2s, transform 0.12s, border-color 0.15s; }
+.panel-modern button:active:not(:disabled) { transform: translateY(1px) scale(0.99); }
+.panel-modern details[data-testid="page-help"] summary { list-style: none; }
+.panel-modern details[data-testid="page-help"] summary::-webkit-details-marker { display: none; }
+.panel-modern details[data-testid="page-help"] summary::before { content: "?"; display: inline-grid; place-items: center; width: 1.25rem; height: 1.25rem; margin-right: 0.4rem; border-radius: 999px; background: #FC5502; color: #0E1B2C; font-weight: 800; font-size: 0.75rem; }
+
+/* ───────── Movimiento del panel (solo si la persona no pidió menos movimiento) ───────── */
+@keyframes panel-rise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+@keyframes panel-grow { from { transform: scaleY(0.05); opacity: 0.3; } to { transform: scaleY(1); opacity: 1; } }
+@keyframes panel-shimmer { from { background-position: 200% 0; } to { background-position: -200% 0; } }
+@keyframes panel-pulse-ring { 0% { box-shadow: 0 0 0 0 rgb(252 85 2 / 0.45); } 70%, 100% { box-shadow: 0 0 0 9px rgb(252 85 2 / 0); } }
+.panel-skeleton { border-radius: 12px; background: linear-gradient(100deg, #E9ECEF 30%, #F8F9FA 50%, #E9ECEF 70%); background-size: 200% 100%; }
+.panel-dot { display: inline-block; width: 0.5rem; height: 0.5rem; border-radius: 999px; background: #FC5502; }
+@media (prefers-reduced-motion: no-preference) {
+  /* Al cambiar de pantalla, el contenido entra de abajo hacia arriba y sus bloques lo hacen escalonados. */
+  .panel-enter > * > * { animation: panel-rise 0.5s cubic-bezier(0.2, 0.75, 0.2, 1) both; }
+  .panel-enter > * > *:nth-child(2) { animation-delay: 60ms; }
+  .panel-enter > * > *:nth-child(3) { animation-delay: 120ms; }
+  .panel-enter > * > *:nth-child(4) { animation-delay: 180ms; }
+  .panel-enter > * > *:nth-child(5) { animation-delay: 240ms; }
+  .panel-enter > * > *:nth-child(n+6) { animation-delay: 300ms; }
+  .panel-skeleton { animation: panel-shimmer 1.4s linear infinite; }
+  .panel-grow { transform-origin: bottom; animation: panel-grow 0.7s cubic-bezier(0.3, 1.2, 0.5, 1) both; }
+  .panel-dot-live { animation: panel-pulse-ring 1.8s ease-out infinite; }
+  /* Tarjetas que son enlaces (alertas, accesos): se levantan al pasar el mouse. */
+  .panel-modern a:is(.rounded-xl, .rounded-2xl).border:hover { transform: translateY(-2px); box-shadow: 0 1px 2px rgb(17 24 39 / 0.05), 0 22px 36px -22px rgb(17 24 39 / 0.38); }
+  /* Menú lateral: el ícono se asoma al pasar el mouse. */
+  .panel-modern nav a svg { transition: transform 0.2s; }
+  .panel-modern nav a:hover svg { transform: scale(1.12) rotate(-4deg); }
+}
 
 /* Luces de fondo de la landing: degradé radial estático. (Antes eran círculos con blur() animados: se repintaban en cada cuadro y trababan la página.) */
 .mk-orb { background: radial-gradient(closest-side, var(--orb), transparent); }
@@ -329,3 +375,18 @@
   .mk-type { animation: mk-type 1.2s steps(16, end) both; animation-delay: var(--d, 0ms); }
   .mk-caret { animation: mk-blink 0.9s steps(1) 6; }
 }
+
+/* Identidad de MiShowo (ver /marca y docs/MANUAL_DE_MARCA.md). Cambiar un valor acá cambia la marca. */
+:root {
+  --brand-orange: #FC5502;
+  --brand-orange-strong: #C73E00; /* texto y botones con texto blanco: contraste AA */
+  --brand-amber: #FFB000;
+  --brand-ink: #0E1B2C;
+  --brand-cream: #FFF7F1;
+  --brand-gradient: linear-gradient(135deg, #FF8A00 0%, #FC5502 55%, #E03E00 100%);
+  --brand-gradient-sun: linear-gradient(135deg, #FFB000 0%, #FF7A00 50%, #FC5502 100%);
+  --brand-gradient-night: linear-gradient(160deg, #0E1B2C 0%, #1B2B44 60%, #3A2A2A 100%);
+  --brand-gradient-soft: linear-gradient(180deg, #FFE2D0 0%, #FFF7F1 100%);
+}
+
+@keyframes toast-in { from { opacity: 0; transform: translateY(-8px) translateX(8px); } to { opacity: 1; transform: none; } }

@@ -15,7 +15,7 @@ export function PasswordField({ label = "Contraseña", name = "password", hint, 
         <div className="relative">
           <TextInput id={id} aria-describedby={d} name={name} type={shown ? "text" : "password"} autoComplete={autoComplete} minLength={minLength} required className="pr-12" />
           <button type="button" aria-pressed={shown} aria-label={shown ? "Ocultar la contraseña" : "Mostrar la contraseña"} onClick={() => setShown((v) => !v)}
-            className="absolute right-1 top-1/2 grid size-10 -translate-y-1/2 place-items-center rounded-lg text-[#47566A] hover:bg-[#EAF4FC] focus-visible:outline-2 focus-visible:outline-ring">
+            className="absolute right-1 top-1/2 grid size-10 -translate-y-1/2 place-items-center rounded-lg text-[#47566A] hover:bg-[#FFEFE6] focus-visible:outline-2 focus-visible:outline-ring">
             {shown ? <IconEyeOff className="size-5" /> : <IconEye className="size-5" />}
           </button>
         </div>

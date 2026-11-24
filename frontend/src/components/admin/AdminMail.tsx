@@ -4,8 +4,9 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Field, Select, TextArea, TextInput } from "@/components/ui/fields";
 import { api } from "@/lib/authClient";
-import { ErrorBox, Pager, useAdmin, when } from "./AdminShell";
+import { ErrorBox, Pager, useAdmin, when, PageHeader } from "./AdminShell";
 import { msg, useLoad } from "./AdminPages";
+import { confirmAction } from "@/components/feedback/confirm";
 
 const MAIL_ERR: Record<string, string> = {
   unknown_variables: "Usaste una variable que no existe en esta plantilla. Mirá la lista de variables disponibles.",
@@ -32,13 +33,13 @@ export function Emails() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold">Emails</h1>
+        <PageHeader title="Emails" />
         <p className="mt-1 max-w-[62ch] text-muted-foreground">Editá los mails automáticos, mandá comunicados a grupos de usuarios (ahora o programados) y configurá los avisos.</p>
       </div>
-      <div role="tablist" aria-label="Secciones de emails" className="flex gap-1 overflow-x-auto border-b border-[#E1EAF3]">
+      <div role="tablist" aria-label="Secciones de emails" className="flex gap-1 overflow-x-auto border-b border-[#E5E7EB]">
         {TABS.map((t) => (
           <button key={t.id} role="tab" type="button" aria-selected={tab === t.id} onClick={() => setTab(t.id)}
-            className={`min-h-10 shrink-0 px-4 text-sm font-medium ${tab === t.id ? "text-[#0E1B2C] shadow-[inset_0_-2px_0_#2F6FB0]" : "text-muted-foreground hover:text-foreground"}`}>{t.label}</button>
+            className={`min-h-10 shrink-0 px-4 text-sm font-medium ${tab === t.id ? "text-[#0E1B2C] shadow-[inset_0_-2px_0_#C73E00]" : "text-muted-foreground hover:text-foreground"}`}>{t.label}</button>
         ))}
       </div>
       {tab === "plantillas" && <Templates />}
@@ -77,11 +78,11 @@ function Templates() {
               {list.map((t) => (
                 <li key={t.key}>
                   <button type="button" onClick={() => setSel(t.key)} aria-current={sel === t.key ? "true" : undefined}
-                    className={`flex min-h-10 w-full items-center justify-between gap-2 rounded-lg px-3 text-left text-sm ${sel === t.key ? "bg-[#EAF4FC] font-semibold text-[#0E1B2C]" : "hover:bg-muted"}`}>
+                    className={`flex min-h-10 w-full items-center justify-between gap-2 rounded-lg px-3 text-left text-sm ${sel === t.key ? "bg-[#F1F3F5] font-semibold text-[#0E1B2C]" : "hover:bg-muted"}`}>
                     <span>{t.name}</span>
                     <span className="flex gap-1">
                       {!t.enabled && <span className="rounded bg-muted px-1.5 text-[10px] font-semibold text-muted-foreground">APAGADO</span>}
-                      {t.customized && <span className="rounded bg-[#2F6FB0]/15 px-1.5 text-[10px] font-semibold text-[#2F6FB0]">EDITADO</span>}
+                      {t.customized && <span className="rounded bg-[#F1F3F5] px-1.5 text-[10px] font-semibold text-[#C73E00]">EDITADO</span>}
                     </span>
                   </button>
                 </li>
@@ -126,11 +127,12 @@ function TemplateEditor({ tpl, canEdit, onSaved }: { tpl: Tpl; canEdit: boolean;
     else setStatus({ kind: "error", text: err(r.data.error) + (Array.isArray(r.data.variables) ? ` (${(r.data.variables as string[]).map((v) => `{{${v}}}`).join(", ")})` : "") });
   }
   async function restore() {
-    if (!window.confirm("¿Volver al texto original de MiShowo? Perdés tus cambios de esta plantilla.")) return;
+    if (!(await confirmAction({ title: "¿Volver al texto original?", message: "Perdés los cambios que hiciste en esta plantilla.", confirmLabel: "Restaurar", danger: true }))) return;
     const r = await api(`/admin/emails/templates/${tpl.key}`, { method: "DELETE" });
     if (r.ok) { setSubject(tpl.defaultSubject); setBody(tpl.defaultBody); setEnabled(true); setStatus({ kind: "ok", text: "Volvió al texto original." }); onSaved(); } else setStatus({ kind: "error", text: err(r.data.error) });
   }
   async function test() {
+    if (!(await confirmAction({ title: "¿Mandar un mail de prueba?", message: "Te llega a tu casilla para que veas cómo queda.", confirmLabel: "Enviar prueba" }))) return;
     const r = await api<{ to: string }>(`/admin/emails/templates/${tpl.key}/test`, { body: {} });
     setStatus(r.ok ? { kind: "ok", text: `Te mandamos una prueba a ${r.data.to}.` } : { kind: "error", text: err(r.data.error) });
   }
@@ -165,7 +167,7 @@ function TemplateEditor({ tpl, canEdit, onSaved }: { tpl: Tpl; canEdit: boolean;
             </label>
           )}
           {tpl.locked && <p className="text-xs text-muted-foreground">Este mail no se puede apagar: lo necesitan las cuentas para funcionar o lo exige la ley.</p>}
-          {status && <p role={status.kind === "error" ? "alert" : "status"} className={`rounded-lg p-3 text-sm ${status.kind === "error" ? "bg-destructive/10 text-destructive" : "bg-[#EAF4FC]"}`}>{status.text}</p>}
+          {status && <p role={status.kind === "error" ? "alert" : "status"} className={`rounded-lg p-3 text-sm ${status.kind === "error" ? "bg-destructive/10 text-destructive" : "bg-[#F1F3F5]"}`}>{status.text}</p>}
           <div className="flex flex-wrap gap-2">
             {canEdit && <Button onClick={() => void save()} disabled={!dirty}>Guardar cambios</Button>}
             <Button variant="outline" onClick={() => void test()}>Mandarme una prueba</Button>
@@ -210,14 +212,15 @@ function Campaigns() {
     const r = await api<{ id: string }>("/admin/emails/campaigns", { body: { subject: String(f.get("subject")), body: String(f.get("body")), kind, segment, scheduledAt: when } });
     if (!r.ok) return setStatus({ kind: "error", text: err(r.data.error) });
     if (mode === "now") {
-      if (!window.confirm(`Se va a enviar a ${count ?? "todos los"} destinatarios ahora. ¿Confirmás?`)) { setStatus({ kind: "ok", text: "Quedó guardado como borrador." }); camps.reload(); return; }
+      if (!(await confirmAction({ title: "¿Enviar el comunicado ahora?", message: `Le llega a ${count ?? "todos los"} destinatarios y no se puede deshacer.`, confirmLabel: "Enviar ahora", danger: true }))) { setStatus({ kind: "ok", text: "Quedó guardado como borrador." }); camps.reload(); return; }
       const s = await api<{ sent: number; failed: number }>(`/admin/emails/campaigns/${r.data.id}/send`, { body: {} });
       setStatus(s.ok ? { kind: "ok", text: `Enviado a ${s.data.sent} personas${s.data.failed ? ` (${s.data.failed} fallaron)` : ""}.` } : { kind: "error", text: err(s.data.error) });
     } else setStatus({ kind: "ok", text: "Programado. Sale solo a la hora indicada." });
     form.reset(); camps.reload(); segs.reload();
   }
   async function act(id: string, what: "send" | "cancel") {
-    if (what === "send" && !window.confirm("¿Enviar este comunicado ahora?")) return;
+    if (what === "send" && !(await confirmAction({ title: "¿Enviar este comunicado ahora?", message: "Le llega a todos sus destinatarios y no se puede deshacer.", confirmLabel: "Enviar ahora", danger: true }))) return;
+    if (what === "cancel" && !(await confirmAction({ title: "¿Cancelar el comunicado?", message: "No se va a enviar.", confirmLabel: "Cancelar comunicado", cancelLabel: "Volver" }))) return;
     const r = await api(`/admin/emails/campaigns/${id}/${what}`, { body: {} });
     if (!r.ok) setStatus({ kind: "error", text: err(r.data.error) });
     camps.reload();
@@ -244,7 +247,7 @@ function Campaigns() {
             <label className="flex items-center gap-2 text-sm"><input type="radio" name="when" checked={mode === "later"} onChange={() => setMode("later")} className="size-4" />Programar</label>
             {mode === "later" && <Field label="Fecha y hora">{(id) => <TextInput id={id} name="at" type="datetime-local" required className="w-60" />}</Field>}
           </fieldset>
-          {status && <p role={status.kind === "error" ? "alert" : "status"} className={`rounded-lg p-3 text-sm ${status.kind === "error" ? "bg-destructive/10 text-destructive" : "bg-[#EAF4FC]"}`}>{status.text}</p>}
+          {status && <p role={status.kind === "error" ? "alert" : "status"} className={`rounded-lg p-3 text-sm ${status.kind === "error" ? "bg-destructive/10 text-destructive" : "bg-[#F1F3F5]"}`}>{status.text}</p>}
           <Button type="submit">{mode === "now" ? "Enviar comunicado" : "Programar comunicado"}</Button>
         </form>
       )}
@@ -301,7 +304,7 @@ function Automation() {
           <Field label="Avisar con cuántos días de anticipación" hint="Entre 1 y 30. Se manda una sola vez por vencimiento.">{(id, d) => <TextInput id={id} aria-describedby={d} name="days" type="number" min={1} max={30} defaultValue={data?.remindDays ?? 7} key={data?.remindDays} className="w-40" disabled={!canEdit} required />}</Field>
           {canEdit && <Button type="submit">Guardar</Button>}
         </form>
-        {status && <p role={status.kind === "error" ? "alert" : "status"} className={`rounded-lg p-3 text-sm ${status.kind === "error" ? "bg-destructive/10 text-destructive" : "bg-[#EAF4FC]"}`}>{status.text}</p>}
+        {status && <p role={status.kind === "error" ? "alert" : "status"} className={`rounded-lg p-3 text-sm ${status.kind === "error" ? "bg-destructive/10 text-destructive" : "bg-[#F1F3F5]"}`}>{status.text}</p>}
       </section>
       <section className="space-y-3">
         <h2 className="text-lg font-bold">Mails automáticos</h2>
@@ -335,6 +338,7 @@ export function Consultas() {
   const [notice, setNotice] = useState<string | null>(null);
 
   async function send(it: Item) {
+    if (!(await confirmAction({ title: "¿Enviar la respuesta?", message: `Le llega por mail a ${it.email} y la consulta queda resuelta.`, confirmLabel: "Enviar respuesta" }))) return;
     const r = await api(`/admin/contact/${it.id}/reply`, { body: { message: reply[it.id] ?? "" } });
     // La consulta sale de "Pendientes" al resolverse, así que la confirmación va arriba de la lista y no dentro de su tarjeta.
     if (r.ok) { setNotice(`Respuesta enviada a ${it.email}. La consulta quedó resuelta.`); setMsg(null); setOpen(null); setReply((x) => ({ ...x, [it.id]: "" })); reload(); }
@@ -347,7 +351,7 @@ export function Consultas() {
   return (
     <div className="space-y-5">
       <div>
-        <h1 className="text-2xl font-bold">Consultas</h1>
+        <PageHeader title="Consultas" />
         <p className="mt-1 max-w-[62ch] text-muted-foreground">Lo que escribe la gente desde Contacto y los pedidos de arrepentimiento. Los de arrepentimiento tienen plazo legal: atendelos primero.</p>
       </div>
       <form role="search" className="flex max-w-md gap-2" onSubmit={(e) => { e.preventDefault(); setPage(1); setQuery(q.trim()); }}>
@@ -357,13 +361,13 @@ export function Consultas() {
       </form>
       <div role="group" aria-label="Estado" className="flex gap-1">
         {(["nuevo", "resuelto"] as const).map((s) => (
-          <button key={s} type="button" aria-pressed={status === s} onClick={() => { setStatus(s); setPage(1); }} className={`min-h-10 rounded-full px-4 text-sm ${status === s ? "bg-[#2F6FB0] text-white" : "border hover:bg-muted"}`}>
+          <button key={s} type="button" aria-pressed={status === s} onClick={() => { setStatus(s); setPage(1); }} className={`min-h-10 rounded-full px-4 text-sm ${status === s ? "bg-[#FC5502] text-[#0E1B2C]" : "border hover:bg-muted"}`}>
             {s === "nuevo" ? "Pendientes" : "Resueltas"}{data ? ` (${data.counts[s]})` : ""}
           </button>
         ))}
       </div>
       <ErrorBox error={error} />
-      {notice && <p role="status" className="rounded-lg bg-[#EAF4FC] p-3 text-sm" data-testid="inbox-notice">{notice}</p>}
+      {notice && <p role="status" className="rounded-lg bg-[#F1F3F5] p-3 text-sm" data-testid="inbox-notice">{notice}</p>}
       {data?.items.length === 0 && <p className="rounded-xl border border-dashed p-8 text-center text-sm text-muted-foreground">{status === "nuevo" ? "No hay consultas pendientes. 🎉" : "Todavía no resolviste ninguna."}</p>}
       <ul className="space-y-3" data-testid="inbox">
         {data?.items.map((it) => (
@@ -387,7 +391,7 @@ export function Consultas() {
                 <Field label={`Respuesta para ${it.email}`} hint="Sale desde el mail de MiShowo, con el código de seguimiento. La consulta pasa a resuelta.">
                   {(id, d) => <TextArea id={id} aria-describedby={d} rows={5} maxLength={3000} value={reply[it.id] ?? ""} onChange={(e) => setReply((x) => ({ ...x, [it.id]: e.target.value }))} />}
                 </Field>
-                {msgState?.id === it.id && <p role={msgState.kind === "error" ? "alert" : "status"} className={`rounded-lg p-3 text-sm ${msgState.kind === "error" ? "bg-destructive/10 text-destructive" : "bg-[#EAF4FC]"}`}>{msgState.text}</p>}
+                {msgState?.id === it.id && <p role={msgState.kind === "error" ? "alert" : "status"} className={`rounded-lg p-3 text-sm ${msgState.kind === "error" ? "bg-destructive/10 text-destructive" : "bg-[#F1F3F5]"}`}>{msgState.text}</p>}
                 <div className="flex flex-wrap gap-2">
                   <Button size="sm" disabled={(reply[it.id] ?? "").trim().length < 5} onClick={() => void send(it)}>Enviar respuesta</Button>
                   {it.status === "nuevo" ? <Button size="sm" variant="ghost" onClick={() => void mark(it, "resuelto")}>Marcar resuelta sin responder</Button> : <Button size="sm" variant="ghost" onClick={() => void mark(it, "nuevo")}>Reabrir</Button>}

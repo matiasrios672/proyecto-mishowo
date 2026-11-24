@@ -43,7 +43,7 @@ export function RegisterForm({ onDone, nameRequired = false }: { onDone?: () => 
       <FormError message={error} />
       <Button type="submit" size="lg" className="w-full" disabled={busy}>{busy ? "Creando tu cuenta…" : "Crear mi cuenta"}</Button>
       <p className="text-center text-[15px] text-[#47566A]">
-        ¿Preferís no usar contraseña? <Link className="font-semibold text-[#2F6FB0] " href={`/ingresar?next=${encodeURIComponent(onDone ? "/crear" : next)}`}>Entrá con un enlace a tu email</Link>
+        ¿Preferís no usar contraseña? <Link className="font-semibold text-[#C73E00] " href={`/ingresar?next=${encodeURIComponent(onDone ? "/crear" : next)}`}>Entrá con un enlace a tu email</Link>
       </p>
     </form>
   );

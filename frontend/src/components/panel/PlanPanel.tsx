@@ -83,7 +83,7 @@ export function PlanPanel() {
       <div>
         <h1 id="plan-title" className="text-2xl font-bold">Plan y pagos</h1>
         <p className="mt-2" data-testid="current-plan">
-          Tu plan actual es <strong>{data.current.name}</strong>
+          El plan de esta página es <strong>{data.current.name}</strong>
           {data.expiresAt ? `, activo hasta el ${new Date(data.expiresAt).toLocaleDateString("es-AR")} (${data.daysLeft} ${data.daysLeft === 1 ? "día" : "días"})` : "."}
         </p>
       </div>
@@ -92,12 +92,13 @@ export function PlanPanel() {
       {sent && !error && <p role="status" className="rounded-lg bg-muted p-3 text-sm" data-testid="payment-sent">Recibimos tu aviso. Lo revisamos y te escribimos por email cuando el plan esté activo.</p>}
 
       <div>
-        <h2 className="mb-3 text-lg font-semibold">Elegí un plan</h2>
+        <h2 className="mb-3 text-lg font-semibold">Elegí el plan de esta página</h2>
+        <p className="mb-3 text-sm text-muted-foreground">El plan se paga por página: cada página tiene el suyo y vence por separado.</p>
         <ul className="grid gap-3 sm:grid-cols-3">
           {data.plans.map((p) => (
             <li key={p.id} className={`flex flex-col rounded-xl border p-4 ${data.current.id === p.id ? "border-primary" : ""}`}>
               <p className="font-semibold">{p.name}</p>
-              <p className="mt-1 text-2xl font-bold">{p.priceMonthly === 0 ? "Gratis" : <>{formatPrice(p.priceMonthly)}<span className="text-sm font-normal text-muted-foreground"> /mes</span></>}</p>
+              <p className="mt-1 text-2xl font-bold">{p.priceMonthly === 0 ? "Gratis" : <>{formatPrice(p.priceMonthly)}<span className="text-sm font-normal text-muted-foreground"> por mes</span></>}</p>
               <ul className="my-3 flex-1 space-y-1 text-sm text-muted-foreground">
                 <li>{p.limits.products ? `Hasta ${p.limits.products} productos` : "Productos ilimitados"}</li>
                 {p.features.filter((f) => f.trim().toLowerCase() !== (p.limits.products ? `hasta ${p.limits.products} productos` : "productos ilimitados")).map((f) => <li key={f}>{f}</li>)}

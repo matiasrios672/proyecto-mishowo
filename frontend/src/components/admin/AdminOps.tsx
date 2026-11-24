@@ -7,8 +7,9 @@ import { Field, TextArea, TextInput } from "@/components/ui/fields";
 import { api } from "@/lib/authClient";
 import { siteUrl } from "@/lib/siteUrl";
 import { DEFAULT_FAQ } from "@/content/faq";
-import { ErrorBox, Pager, useAdmin, when } from "./AdminShell";
+import { ErrorBox, Pager, useAdmin, when, PageHeader } from "./AdminShell";
 import { msg, useLoad } from "./AdminPages";
+import { confirmAction } from "@/components/feedback/confirm";
 
 const REASON: Record<string, string> = { contenido_ilegal: "Contenido ilegal", estafa: "Estafa", ofensivo: "Contenido ofensivo", otro: "Otro motivo" };
 const ACTION_LABEL: Record<string, string> = { "report.dismiss": "Descartada", "report.unpublish": "Despublicó el negocio", "report.suspend": "Suspendió el negocio", "report.note": "Nota" };
@@ -32,6 +33,8 @@ export function Reports() {
   const [busy, setBusy] = useState<string | null>(null);
 
   async function act(id: string, action: "note" | "dismiss" | "unpublish" | "suspend") {
+    if (action === "unpublish" && !(await confirmAction({ title: "¿Despublicar la página?", message: "Deja de verse al instante. El dueño puede volver a publicarla.", confirmLabel: "Despublicar", danger: true }))) return;
+    if (action === "suspend" && !(await confirmAction({ title: "¿Suspender el negocio?", message: "La página y el panel dejan de funcionar hasta que lo reactives.", confirmLabel: "Suspender", danger: true }))) return;
     setBusy(id); setErr(null);
     const text = (note[id] ?? "").trim();
     const r = await api(`/admin/reports/${id}/resolve`, { body: { action, ...(text ? { note: text } : {}) } });
@@ -44,11 +47,11 @@ export function Reports() {
   const tabs: [string, string][] = [["nuevo", "Nuevas"], ["revisado", "Descartadas"], ["accion_tomada", "Con acción"], ["todas", "Todas"]];
   return (
     <div className="space-y-5">
-      <h1 className="text-2xl font-bold">Denuncias</h1>
+      <PageHeader title="Denuncias" />
       <div role="tablist" aria-label="Estado" className="flex flex-wrap gap-1">
         {tabs.map(([k, label]) => (
           <button key={k} role="tab" aria-selected={status === k} onClick={() => { setStatus(k); setPage(1); }}
-            className={`rounded-full px-3 py-1.5 text-sm ${status === k ? "bg-[#2F6FB0] text-white" : "hover:bg-muted"}`}>
+            className={`rounded-full px-3 py-1.5 text-sm ${status === k ? "bg-[#FC5502] text-[#0E1B2C]" : "hover:bg-muted"}`}>
             {label}{k !== "todas" && data ? ` (${data.counts[k] ?? 0})` : ""}
           </button>
         ))}
@@ -103,6 +106,35 @@ interface Sys {
 const mb = (b: number) => (b >= 1024 ** 3 ? `${(b / 1024 ** 3).toFixed(1)} GB` : `${(b / 1024 ** 2).toFixed(1)} MB`);
 const uptime = (s: number) => (s >= 86400 ? `${Math.floor(s / 86400)} d ${Math.floor((s % 86400) / 3600)} h` : s >= 3600 ? `${Math.floor(s / 3600)} h ${Math.floor((s % 3600) / 60)} min` : `${Math.floor(s / 60)} min`);
 
+/** Los negocios de ejemplo que enlaza la landing. Si faltan, las demos no abren: acá se crean con un botón. */
+function DemoCard({ canManage }: { canManage: boolean }) {
+  const { data, reload } = useLoad<{ expected: string[]; missing: string[] }>("/admin/system/demo");
+  const [busy, setBusy] = useState(false);
+  const [note, setNote] = useState<string | null>(null);
+  if (!data) return null;
+  async function run(reset: boolean) {
+    if (reset && !(await confirmAction({ title: "¿Restaurar los negocios de ejemplo?", message: "Se borran y se vuelven a crear como vienen de fábrica.", confirmLabel: "Restaurar", danger: true }))) return;
+    setBusy(true); setNote(null);
+    const r = await api<{ created: string[] }>("/admin/system/demo", { body: { reset } });
+    setBusy(false);
+    setNote(r.ok ? (r.data.created.length ? `Listo: se crearon ${r.data.created.length} negocios de ejemplo.` : "No había nada para crear.") : msg(r.data.error));
+    reload();
+  }
+  return (
+    <section className="rounded-xl border-2 p-5" aria-labelledby="demo-title" data-testid="demo-card">
+      <h2 id="demo-title" className="text-lg font-semibold">Negocios de ejemplo {data.missing.length === 0 ? <span className="ml-2 rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-bold text-emerald-900">Todos creados</span> : <span className="ml-2 rounded-full bg-amber-400 px-2.5 py-0.5 text-xs font-bold text-amber-950">Faltan {data.missing.length}</span>}</h2>
+      <p className="mt-1 max-w-[62ch] text-sm text-muted-foreground">Son las demos que se abren desde la landing (ropa, eventos, belleza…). {data.missing.length > 0 ? `Faltan: ${data.missing.join(", ")}.` : "Están todos."}</p>
+      {canManage ? (
+        <div className="mt-3 flex flex-wrap gap-2">
+          {data.missing.length > 0 && <Button disabled={busy} onClick={() => void run(false)}>Crear los que faltan</Button>}
+          <Button variant="outline" disabled={busy} onClick={() => void run(true)}>Restaurar todos a como vienen de fábrica</Button>
+        </div>
+      ) : <p className="mt-3 text-sm">Solo Admin u Owner pueden crearlos.</p>}
+      {note && <p role="status" className="mt-3 rounded-lg bg-muted p-3 text-sm">{note}</p>}
+    </section>
+  );
+}
+
 export function System() {
   const me = useAdmin();
   const { data, error, reload } = useLoad<Sys>("/admin/system");
@@ -113,6 +145,7 @@ export function System() {
   const m = data.maintenance;
 
   async function setMaintenance(enabled: boolean) {
+    if (enabled && !(await confirmAction({ title: "¿Activar el modo mantenimiento?", message: "Se frenan los registros y los pedidos nuevos, y la landing muestra un aviso.", confirmLabel: "Activar", danger: true }))) return;
     setErr(null);
     const r = await api("/admin/system/maintenance", { method: "PUT", body: { enabled, message: (text ?? m.message).trim() } });
     if (!r.ok) return setErr(msg(r.data.error));
@@ -128,7 +161,7 @@ export function System() {
   ];
   return (
     <div className="space-y-8">
-      <h1 className="text-2xl font-bold">Estado del sistema</h1>
+      <PageHeader title="Estado del sistema" />
       <ErrorBox error={err} />
       <dl className="grid gap-x-8 gap-y-5 sm:grid-cols-2" data-testid="system-tiles">
         {tiles.map(([k, v, ok]) => (
@@ -138,6 +171,7 @@ export function System() {
           </div>
         ))}
       </dl>
+      <DemoCard canManage={manage} />
       <section className={`rounded-xl border-2 p-5 ${m.enabled ? "border-amber-400 bg-amber-50" : ""}`} aria-labelledby="mant-title" data-testid="maintenance-card">
         <h2 id="mant-title" className="text-lg font-semibold">Modo mantenimiento {m.enabled && <span className="ml-2 rounded-full bg-amber-400 px-2.5 py-0.5 text-xs font-bold text-amber-950">ACTIVO</span>}</h2>
         <p className="mt-1 max-w-[62ch] text-sm text-muted-foreground">Muestra un aviso en la landing y frena los registros y los pedidos nuevos con un mensaje claro. Los negocios, el panel, el ingreso y este admin siguen funcionando.</p>
@@ -162,7 +196,7 @@ export function Content() {
   const manage = me.can("contenido", "manage");
   return (
     <div className="space-y-10">
-      <h1 className="text-2xl font-bold">Contenido</h1>
+      <PageHeader title="Contenido" />
       <Banner manage={manage} />
       <Faq manage={manage} />
       <Reserved manage={me.can("sistema", "manage")} />

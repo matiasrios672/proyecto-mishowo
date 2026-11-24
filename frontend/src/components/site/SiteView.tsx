@@ -1,4 +1,5 @@
 import { Wordmark } from "@/components/brand/Wordmark";
+import { mainSiteUrl } from "@/lib/siteUrl";
 import { FloatingWhatsApp } from "./FloatingWhatsApp";
 import { Pixels } from "./Pixels";
 import { ReviewsBlock } from "./ReviewsBlock";
@@ -86,7 +87,7 @@ export function SiteView({ site, preview = false, orderable }: { site: SiteModel
           <Brand name={site.name} logo={site.logo} logoSet={site.logoSet} size="sm" />
           <span className="site-display font-bold">{site.name}</span>
         </div>
-        {!site.hideBranding && <p className="flex items-center gap-1.5 text-xs text-muted-foreground">Hecho con <a href="https://mishowo.com" target="_blank" rel="noopener noreferrer" aria-label="MiShowo" className="inline-flex"><Wordmark className="text-sm" /></a></p>}
+        <p className="flex items-center gap-1.5 text-xs text-muted-foreground">Hecho por <a href={mainSiteUrl()} target="_blank" rel="noopener noreferrer" aria-label="MiShowo" className="inline-flex"><Wordmark className="text-sm" /></a></p>
         {orderable && <ReportButton slug={orderable.slug} />}
       </footer>
 

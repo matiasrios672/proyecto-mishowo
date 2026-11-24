@@ -12,7 +12,7 @@ export function PedidosTab({ draft, update }: TabProps) {
   return (
     <div className="space-y-8">
       <Section title="Pedidos" description="Elegí cómo te contactan tus clientes.">
-        <div className="rounded-2xl border border-[#D6E4F2] bg-[#F4F9FE] p-4" data-testid="orders-switch">
+        <div className="rounded-2xl border border-[#E5E7EB] bg-[#F9FAFB] p-4" data-testid="orders-switch">
           <Toggle checked={on} label="Recibir pedidos en mi página"
             hint={on
               ? "Tus clientes arman el pedido en la página y te llega por WhatsApp con todo escrito."
@@ -42,7 +42,7 @@ export function PedidosTab({ draft, update }: TabProps) {
       </Section>
 
       <Section title="Cuotas sin interés" description="Mostrá en cada precio que ofrecés cuotas. Es un aviso para tus clientes: el cobro lo coordinás vos (con tu posnet, Mercado Pago o el medio que uses).">
-        <div className="rounded-2xl border border-[#D6E4F2] bg-[#F4F9FE] p-4" data-testid="installments-switch">
+        <div className="rounded-2xl border border-[#E5E7EB] bg-[#F9FAFB] p-4" data-testid="installments-switch">
           <Toggle checked={inst.enabled} label="Ofrecer cuotas sin interés"
             hint={inst.enabled ? "Cada producto con precio muestra «N cuotas sin interés de $X» y el carrito deja pedir pagar en cuotas." : "No se muestra ninguna cuota en tu página."}
             onChange={(v) => setInst({ enabled: v })} />
