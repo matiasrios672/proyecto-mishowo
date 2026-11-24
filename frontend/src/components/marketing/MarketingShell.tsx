@@ -1,20 +1,20 @@
 import Link from "next/link";
 import { Wordmark } from "@/components/brand/Wordmark";
 import { MobileNav } from "./MobileNav";
-import { NAV_LINKS } from "./navLinks";
+import { HEADER_LINKS } from "./navLinks";
 
 export const SUPPORT_WHATSAPP = process.env.NEXT_PUBLIC_SUPPORT_WHATSAPP ?? "";
 
-const cta = "inline-flex items-center justify-center rounded-xl bg-[#FC5502] px-3.5 py-2.5 text-[13px] font-bold whitespace-nowrap text-[#0E1B2C] transition-transform sm:px-5 sm:text-sm hover:bg-[#FF6A1F] active:scale-95 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring";
+const cta = "inline-flex items-center justify-center rounded-xl bg-gradient-to-b from-[#D14300] to-[#B83700] px-3.5 py-2.5 text-[13px] font-bold whitespace-nowrap text-white shadow-[0_10px_22px_-10px_rgba(184,55,0,0.7),inset_0_1px_0_rgba(255,255,255,0.3)] transition sm:px-5 sm:text-sm hover:-translate-y-px active:scale-95 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring";
 
 export function MarketingHeader() {
   return (
-    <header className="sticky top-0 z-40 border-b border-border/70 bg-background">
+    <header className="sticky top-0 z-40 border-b border-[#0E1B2C]/8 bg-[#FFFBF8]/85 backdrop-blur-xl">
       <div className="mx-auto flex max-w-6xl items-center gap-3 px-4 py-3 sm:gap-4 sm:px-8">
         <Link href="/" aria-label="MiShowo, ir al inicio"><Wordmark className="text-xl sm:text-2xl" /></Link>
-        <nav aria-label="Principal" className="ml-6 hidden gap-6 text-sm font-medium lg:flex">
-          {NAV_LINKS.filter(([, href]) => href !== "/funciones" && href !== "/blog").map(([label, href]) => (
-            <Link key={href} href={href} className="hover:text-[#C73E00]">{label === "Cuotas sin interés" ? "Cuotas" : label}</Link>
+        <nav aria-label="Principal" className="ml-8 hidden gap-1 text-[15px] font-semibold lg:flex">
+          {HEADER_LINKS.map(([label, href]) => (
+            <Link key={href} href={href} className="rounded-xl px-3.5 py-2 text-[#0E1B2C]/80 transition-colors hover:bg-[#0E1B2C]/5 hover:text-[#0E1B2C]">{label}</Link>
           ))}
         </nav>
         <div className="ml-auto flex items-center gap-3">

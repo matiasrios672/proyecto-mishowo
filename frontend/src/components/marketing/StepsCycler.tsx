@@ -93,12 +93,12 @@ export function StepsCycler() {
                   </li>
                 ))}
               </ul>
-              <p className="mk-pop mt-3 inline-block bg-[#FC5502] px-4 py-2.5 text-sm font-bold text-[#0E1B2C]" style={d(900)}>+ Agregar producto</p>
+              <p className="mk-pop mt-3 inline-block bg-[#D14300] px-4 py-2.5 text-sm font-bold text-white" style={d(900)}>+ Agregar producto</p>
             </Pane>
 
             <Pane on={step === 1}>
               <p className="text-xs font-bold uppercase tracking-wide text-[#0E1B2C]/55">Tu link está listo</p>
-              <div className="mt-3 inline-flex max-w-full items-center bg-[#FC5502] px-5 py-3 text-lg font-extrabold text-[#0E1B2C] sm:text-2xl">
+              <div className="mt-3 inline-flex max-w-full items-center bg-[#D14300] px-5 py-3 text-lg font-extrabold text-white sm:text-2xl">
                 <span className="mk-type inline-block whitespace-nowrap" style={d(200)}>lupe.mishowo.com</span>
                 <span aria-hidden className="mk-caret ml-1 inline-block h-6 w-0.5 bg-white" />
               </div>

@@ -72,11 +72,11 @@ export function StatsPanel() {
         </p>
       )}
 
-      <dl className="grid grid-cols-2 gap-x-6 gap-y-5 lg:grid-cols-4" data-testid="stats-totals">
+      <dl className="grid grid-cols-2 gap-4 lg:grid-cols-4" data-testid="stats-totals">
         {tiles.map(([label, value, hint]) => (
-          <div key={label} className="border-t pt-2">
-            <dt className="text-xs text-muted-foreground">{label}</dt>
-            <dd className="text-3xl font-bold tabular-nums">{value}</dd>
+          <div key={label} className="rounded-3xl border border-[#E5E8EF] bg-white p-5 shadow-[0_1px_2px_rgba(21,27,43,0.04),0_22px_40px_-30px_rgba(21,27,43,0.3)]">
+            <dt className="text-sm font-medium text-muted-foreground">{label}</dt>
+            <dd className="mt-1 text-4xl font-extrabold tabular-nums tracking-tight">{value}</dd>
             <p className="mt-0.5 text-xs text-muted-foreground">{hint}</p>
           </div>
         ))}

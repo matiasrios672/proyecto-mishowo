@@ -12,7 +12,7 @@ export function ExplainerSection() {
       <div className={wrap}>
         <h2 id="story-title" className="mk-display max-w-[16ch] text-4xl font-extrabold leading-[1.02] tracking-tight sm:text-6xl">Del celular a tus clientes, en tres pasos</h2>
         <StepsCycler />
-        <Link href="/crear" className="mt-8 inline-flex min-h-12 items-center rounded-xl bg-[#FC5502] px-7 font-bold text-[#0E1B2C] transition-transform hover:bg-[#FF6A1F] active:scale-95 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white">Creá tu página gratis</Link>
+        <Link href="/crear" className="mt-8 inline-flex min-h-12 items-center rounded-xl bg-[#D14300] px-7 font-bold text-white transition-transform hover:bg-[#B83700] active:scale-95 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white">Creá tu página gratis</Link>
       </div>
     </section>
   );

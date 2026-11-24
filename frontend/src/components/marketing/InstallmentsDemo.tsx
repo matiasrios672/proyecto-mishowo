@@ -55,7 +55,7 @@ export function InstallmentsDemo() {
             <legend className="text-sm font-semibold text-[#0E1B2C]/70">Probá cambiar las cuotas</legend>
             <div className="mt-2 grid grid-cols-3 gap-2">
               {CHOICES.map((n) => (
-                <label key={n} className={`flex min-h-12 cursor-pointer items-center justify-center rounded-xl border-2 text-base font-bold transition-colors has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-[#C73E00] ${count === n ? "border-[#C73E00] bg-[#FC5502] text-[#0E1B2C]" : "border-[#0E1B2C]/15 text-[#0E1B2C] hover:border-[#C73E00]"}`}>
+                <label key={n} className={`flex min-h-12 cursor-pointer items-center justify-center rounded-xl border-2 text-base font-bold transition-colors has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-[#C73E00] ${count === n ? "border-[#C73E00] bg-[#D14300] text-white" : "border-[#0E1B2C]/15 text-white hover:border-[#C73E00]"}`}>
                   <input type="radio" name={name} value={n} checked={count === n} onChange={() => setCount(n)} className="sr-only" />
                   {n} cuotas
                 </label>

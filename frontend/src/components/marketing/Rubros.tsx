@@ -89,7 +89,7 @@ export function RubroShowcase() {
             <h2 id={`rubro-${r.id}`} className="mk-display mx-auto max-w-[20ch] text-4xl font-extrabold leading-[1.02] tracking-tight sm:text-6xl">{r.title}</h2>
             <p className="mx-auto mt-5 max-w-[52ch] text-lg text-white/80">{r.line}</p>
             <div className="mt-7 flex flex-wrap items-center justify-center gap-3">
-              <Link href="/crear" className="inline-flex min-h-12 items-center justify-center rounded-xl bg-[#FC5502] px-7 font-bold text-[#0E1B2C] transition-transform hover:bg-[#FF6A1F] active:scale-95 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white">{r.cta}</Link>
+              <Link href="/crear" className="inline-flex min-h-12 items-center justify-center rounded-xl bg-[#D14300] px-7 font-bold text-white transition-transform hover:bg-[#B83700] active:scale-95 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white">{r.cta}</Link>
             </div>
             <div className={`mt-12 ${i === 1 ? "sm:mt-14" : ""}`}><Phone r={r} /></div>
           </div>

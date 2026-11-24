@@ -2,16 +2,14 @@ import { Suspense } from "react";
 import type { Metadata } from "next";
 import { FinalCta, Hero, Plans, PlansList } from "@/components/marketing/sections";
 import { RubroStage } from "@/components/marketing/RubroStage";
-import { TrustStrip } from "@/components/marketing/Story";
-import { ExploreGrid } from "@/components/marketing/Explore";
-import { StickyCta } from "@/components/marketing/StickyCta";
+import { Contrast } from "@/components/marketing/Pitch";
 
 export const metadata: Metadata = {
   title: { absolute: "MiShowo: creá la página de tu negocio desde el celular" },
   description: "Armá la página de tu negocio en minutos: tu carta, catálogo o servicios online, con pedidos por WhatsApp si querés y un link listo para tu bio de Instagram. Empezá gratis.",
   alternates: { canonical: "/" },
   openGraph: {
-    title: "MiShowo: tu negocio, en un link",
+    title: "MiShowo: tu negocio, siempre abierto",
     description: "Carta, catálogo o servicios, pedidos por WhatsApp si querés y tu link para Instagram. Empezá gratis.",
     type: "website", locale: "es_AR", siteName: "MiShowo", images: [{ url: "/opengraph-image", width: 1200, height: 630 }],
   },
@@ -31,7 +29,7 @@ export default function Home() {
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }} />
       <Hero />
-      <TrustStrip />
+      <Contrast />
       <RubroStage />
       <Plans
         fallback={
@@ -40,9 +38,7 @@ export default function Home() {
           </Suspense>
         }
       />
-      <ExploreGrid />
       <FinalCta />
-      <StickyCta />
     </>
   );
 }

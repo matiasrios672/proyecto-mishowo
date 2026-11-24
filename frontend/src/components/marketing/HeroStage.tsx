@@ -16,7 +16,7 @@ const PRODUCTS = [
  */
 export function HeroStage() {
   return (
-    <div className="relative mx-auto w-full max-w-[34rem] pb-6 lg:max-w-none">
+    <div className="relative mx-auto w-full max-w-[34rem] pb-16 sm:pb-6 lg:max-w-none">
       <div
         role="img"
         aria-label="Vista de la página de un negocio: nombre, estado abierto, productos con foto y precio, y el botón Pedir por WhatsApp."
@@ -29,7 +29,7 @@ export function HeroStage() {
 
         <div className="p-4 sm:p-5">
           <div className="flex items-center gap-3">
-            <span className="grid size-10 shrink-0 place-items-center rounded-full bg-[#FC5502] text-base font-extrabold text-[#0E1B2C]">L</span>
+            <span className="grid size-10 shrink-0 place-items-center rounded-full bg-[#D14300] text-base font-extrabold text-white">L</span>
             <span className="min-w-0 flex-1 text-left">
               <span className="block truncate text-sm font-extrabold leading-tight text-[#0E1B2C] sm:text-base">Lupe Empanadas</span>
               <span className="block text-[11px] font-semibold text-emerald-700 sm:text-xs">● Abierto ahora · pedidos hasta las 21 hs</span>

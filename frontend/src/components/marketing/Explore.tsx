@@ -22,7 +22,7 @@ export function ExploreGrid() {
               <Link href={href} className="group flex h-full flex-col rounded-[1.75rem] border border-[#0E1B2C]/8 bg-white p-6 shadow-[0_1px_0_rgba(14,27,44,0.04),0_30px_60px_-40px_rgba(252,85,2,0.5)] transition-transform duration-300 hover:-translate-y-1 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring">
                 <span className="flex items-center justify-between">
                   <span aria-hidden className="grid size-12 place-items-center rounded-2xl bg-[#C73E00]/10 text-[#C73E00]"><Icon className="size-6" /></span>
-                  {"badge" in rest && <span className="rounded-full bg-[#FC5502] px-3 py-1 text-xs font-extrabold text-[#0E1B2C]">{rest.badge}</span>}
+                  {"badge" in rest && <span className="rounded-full bg-[#D14300] px-3 py-1 text-xs font-extrabold text-white">{rest.badge}</span>}
                 </span>
                 <span className="mk-display mt-5 block text-2xl font-extrabold leading-tight text-[#0E1B2C]">{title}</span>
                 <span className="mt-1.5 block flex-1 text-[15px] text-[#47566A]">{line}</span>
@@ -34,7 +34,7 @@ export function ExploreGrid() {
             <Link href="/crear" className="flex h-full min-h-40 flex-col justify-center rounded-[1.75rem] bg-[#0E1B2C] p-6 text-white transition-transform duration-300 hover:-translate-y-1 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring">
               <span className="mk-display text-2xl font-extrabold leading-tight">¿Ya lo tenés claro?</span>
               <span className="mt-1.5 text-[15px] text-white/80">Creá tu página gratis en 5 minutos.</span>
-              <span className="mt-4 inline-flex w-fit rounded-xl bg-[#FC5502] px-5 py-2.5 text-sm font-bold text-[#0E1B2C]">Empezar ahora</span>
+              <span className="mt-4 inline-flex w-fit rounded-xl bg-[#D14300] px-5 py-2.5 text-sm font-bold text-white">Empezar ahora</span>
             </Link>
           </li>
         </ul>

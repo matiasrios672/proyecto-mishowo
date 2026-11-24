@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { API_URL, api } from "@/lib/authClient";
 import { formatPrice, timeAgo } from "@/lib/format";
 import { whatsappLink } from "@/lib/whatsapp";
+import { IconBag } from "@/components/marketing/Doodles";
 
 type Status = "nuevo" | "confirmado" | "listo" | "entregado" | "cancelado";
 interface Order {
@@ -118,8 +119,9 @@ export function OrdersPanel() {
 
       {orders === null && !error && <p className="mt-8 text-muted-foreground">Cargando pedidos…</p>}
       {orders?.length === 0 && (
-        <div className="mt-8 rounded-xl border border-dashed p-8 text-center" data-testid="orders-empty">
-          <p className="font-medium">{filter === "todos" ? "Todavía no te llegaron pedidos" : `No hay pedidos ${FILTERS.find((f) => f.id === filter)!.label.toLowerCase()}`}</p>
+        <div className="mt-8 rounded-3xl border border-dashed border-[#D5D9E2] bg-white/60 p-10 text-center" data-testid="orders-empty">
+          <span aria-hidden className="mx-auto mb-3 grid size-12 place-items-center rounded-2xl bg-[#FFF1E8] text-[#C73E00]"><IconBag className="size-6" /></span>
+          <p className="text-lg font-bold">{filter === "todos" ? "Todavía no te llegaron pedidos" : `No hay pedidos ${FILTERS.find((f) => f.id === filter)!.label.toLowerCase()}`}</p>
           {filter === "todos" && <p className="mt-1 text-sm text-muted-foreground">Compartí el link de tu página en Instagram y WhatsApp para recibir el primero.</p>}
         </div>
       )}

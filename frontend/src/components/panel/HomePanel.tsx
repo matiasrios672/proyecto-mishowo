@@ -26,19 +26,19 @@ function LinkCard({ slug, published }: { slug: string; published: boolean }) {
   }
   if (!published)
     return (
-      <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border-2 border-dashed border-[#D1D5DB] bg-[#F9FAFB] p-4" data-testid="home-link">
+      <div className="flex flex-wrap items-center justify-between gap-3 rounded-3xl border-2 border-dashed border-[#D5D9E2] bg-white/60 p-5" data-testid="home-link">
         <p className="text-sm"><strong>Tu link todavía no está activo.</strong> Publicá tu página para compartirlo en Instagram y WhatsApp.</p>
         <Link href="/panel/pagina?tab=publicar" className="inline-flex min-h-11 items-center rounded-xl bg-[#FC5502] px-5 font-bold text-[#0E1B2C]">Publicar</Link>
       </div>
     );
   return (
-    <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-[#E5E7EB] bg-gradient-to-br from-[#F1F3F5] to-white p-4" data-testid="home-link">
+    <div className="relative flex flex-wrap items-center gap-4 overflow-hidden rounded-3xl border border-[#E5E8EF] bg-gradient-to-br from-white via-white to-[#FFF1E8] p-5 sm:p-6" data-testid="home-link">
       <div className="min-w-0 flex-1">
-        <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Tu link</p>
-        <p className="truncate text-lg font-extrabold text-[#C73E00]">{shown}</p>
+        <p className="text-sm font-medium text-muted-foreground">Tu link para compartir</p>
+        <p className="truncate text-xl font-extrabold tracking-tight text-[#151B2B]">{shown}</p>
       </div>
       <button type="button" onClick={() => void copy()} className="inline-flex min-h-11 items-center rounded-xl bg-[#FC5502] px-5 font-bold text-[#0E1B2C] hover:bg-[#E04C00] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring">{copied ? "¡Copiado!" : "Copiar link"}</button>
-      <a href={`https://wa.me/?text=${encodeURIComponent(`Mirá mi catálogo: ${url}`)}`} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-11 items-center rounded-xl border border-[#D1D5DB] px-5 font-bold text-[#C73E00] hover:bg-white">Mandar por WhatsApp</a>
+      <a href={`https://wa.me/?text=${encodeURIComponent(`Mirá mi catálogo: ${url}`)}`} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-11 items-center rounded-xl border border-[#D5D9E2] bg-white px-5 font-semibold text-[#151B2B] shadow-sm hover:border-[#FC5502]">Mandar por WhatsApp</a>
     </div>
   );
 }
@@ -59,7 +59,7 @@ function ReferralCard() {
     try { await navigator.clipboard.writeText(r!.link); setCopied(true); setTimeout(() => setCopied(false), 2000); } catch { /* el link está a la vista para copiarlo a mano */ }
   }
   return (
-    <div className="border-y border-[#E5E7EB] py-4" data-testid="home-referral">
+    <div className="rounded-3xl border border-[#E5E8EF] bg-white p-5 sm:p-6" data-testid="home-referral">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="min-w-0">
           <p className="font-bold">Invitá a otros emprendedores</p>
@@ -67,8 +67,8 @@ function ReferralCard() {
           <p className="mt-1 truncate text-sm font-semibold text-[#C73E00]">{r.link.replace(/^https?:\/\//, "")}</p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <button type="button" onClick={() => void copy()} className="inline-flex min-h-10 items-center border border-[#D1D5DB] px-4 text-sm font-bold text-[#C73E00] hover:bg-[#F9FAFB]">{copied ? "¡Copiado!" : "Copiar link"}</button>
-          <a href={`https://wa.me/?text=${encodeURIComponent(`Armé la página de mi negocio con MiShowo, es gratis: ${r.link}`)}`} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-10 items-center border border-[#D1D5DB] px-4 text-sm font-bold text-[#C73E00] hover:bg-[#F9FAFB]">Mandar por WhatsApp</a>
+          <button type="button" onClick={() => void copy()} className="inline-flex min-h-10 items-center rounded-xl border border-[#D5D9E2] px-4 text-sm font-semibold hover:border-[#FC5502]">{copied ? "¡Copiado!" : "Copiar link"}</button>
+          <a href={`https://wa.me/?text=${encodeURIComponent(`Armé la página de mi negocio con MiShowo, es gratis: ${r.link}`)}`} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-10 items-center rounded-xl border border-[#D5D9E2] px-4 text-sm font-semibold hover:border-[#FC5502]">Mandar por WhatsApp</a>
         </div>
       </div>
       {r.invited > 0 && <p className="mt-3 text-sm"><strong>{r.invited}</strong> {r.invited === 1 ? "persona se sumó" : "personas se sumaron"} · {r.published} {r.published === 1 ? "publicó" : "publicaron"} su página</p>}
@@ -114,28 +114,27 @@ export function HomePanel() {
   ];
 
   return (
-    <section aria-labelledby="home-title" className="space-y-8">
-      <div className="flex flex-wrap items-end justify-between gap-3">
+    <section aria-labelledby="home-title" className="space-y-6">
+      <div className="flex flex-wrap items-end justify-between gap-3 pb-1">
         <div>
-          <h1 id="home-title" className="text-2xl font-bold">{greeting()}{name ? `, ${name}` : ""}!</h1>
-          <p className="mt-1 text-muted-foreground">{draft.name} · {published ? "tu página está publicada" : "tu página todavía no está publicada"}</p>
+          <h1 id="home-title">{greeting()}{name ? `, ${name}` : ""}!</h1>
+          <p className="mt-2 flex items-center gap-2 text-muted-foreground"><span className={`inline-block size-2 rounded-full ${published ? "bg-emerald-500" : "bg-amber-400"}`} aria-hidden />{draft.name}: {published ? "tu página está publicada" : "tu página todavía no está publicada"}</p>
         </div>
-        {published && <a href={siteUrl(biz.business.slug)} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-[#E5E7EB] px-4 font-semibold hover:bg-[#F1F3F5]"><IconStore className="size-5 text-[#C73E00]" />Ver mi página</a>}
+        {published && <a href={siteUrl(biz.business.slug)} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-[#D5D9E2] bg-white px-4 font-semibold shadow-sm hover:border-[#FC5502]"><IconStore className="size-5 text-[#C73E00]" />Ver mi página</a>}
       </div>
 
       <LinkCard slug={biz.business.slug} published={published} />
-      <ReferralCard />
 
-      <dl className="grid grid-cols-2 border-y border-[#E5E7EB] py-4 sm:grid-cols-3 sm:divide-x sm:divide-[#E5E7EB]" data-testid="home-stats">
-        {tiles.map(([label, value]) => <div key={label} className="px-4 py-1 first:pl-0"><dt className="text-xs font-medium text-muted-foreground">{label}</dt><dd className="mt-1 text-3xl font-extrabold tabular-nums text-[#0E1B2C]">{value}</dd></div>)}
+      <dl className={`grid gap-2.5 sm:gap-4 ${tiles.length === 2 ? "grid-cols-2" : "grid-cols-3"}`} data-testid="home-stats">
+        {tiles.map(([label, value]) => <div key={label} className="rounded-3xl border border-[#E5E8EF] bg-white p-3.5 shadow-[0_1px_2px_rgba(21,27,43,0.04),0_22px_40px_-30px_rgba(21,27,43,0.3)] sm:p-5"><dt className="text-xs font-medium leading-tight text-muted-foreground sm:text-sm">{label}</dt><dd className="mt-2 text-3xl sm:text-4xl font-extrabold tabular-nums tracking-tight text-[#151B2B]">{value}</dd></div>)}
       </dl>
 
-      <div className="border-b border-[#E5E7EB] pb-6" data-testid="home-checklist">
+      <div className="rounded-3xl border border-[#E5E8EF] bg-white p-5 sm:p-6" data-testid="home-checklist">
         <div className="flex items-center justify-between gap-3">
-          <h2 className="font-bold">{pending.length === 0 ? "Tu página está completa" : "Para dejar tu página lista"}</h2>
-          <span className="rounded-full bg-white px-3 py-1 text-sm font-bold text-[#C73E00]">{q.score}%</span>
+          <h2 className="text-lg font-bold">{pending.length === 0 ? "Tu página está completa" : "Para dejar tu página lista"}</h2>
+          <span className="rounded-full bg-[#FFF1E8] px-3 py-1 text-sm font-bold text-[#C73E00]">{q.score}%</span>
         </div>
-        <div role="progressbar" aria-label="Avance de tu página" aria-valuenow={q.score} aria-valuemin={0} aria-valuemax={100} className="mt-3 h-2 overflow-hidden rounded-full bg-white">
+        <div role="progressbar" aria-label="Avance de tu página" aria-valuenow={q.score} aria-valuemin={0} aria-valuemax={100} className="mt-3 h-2 overflow-hidden rounded-full bg-[#EDEFF4]">
           <div className="h-full rounded-full bg-gradient-to-r from-[#FF8A4C] to-[#C73E00]" style={{ width: `${q.score}%` }} />
         </div>
         {pending.length === 0 ? (
@@ -144,8 +143,8 @@ export function HomePanel() {
           <ul className="mt-4 space-y-2">
             {pending.slice(0, 5).map((i) => (
               <li key={i.id}>
-                <Link href={`${MODULE_ROUTE[moduleOf(i.tab)]}?tab=${i.tab}`} className="flex min-h-11 items-center justify-between gap-3 border border-[#E5E7EB] px-4 text-[15px] font-medium hover:bg-[#F9FAFB] focus-visible:outline-2 focus-visible:outline-ring">
-                  <span>{i.label}{i.required && <span className="ml-2 rounded-full bg-[#F1F3F5] px-2 py-0.5 text-xs font-bold text-[#C73E00]">Necesario para publicar</span>}</span>
+                <Link href={`${MODULE_ROUTE[moduleOf(i.tab)]}?tab=${i.tab}`} className="flex min-h-12 items-center justify-between gap-3 rounded-2xl border border-[#E5E8EF] bg-[#FAFBFD] px-4 text-[15px] font-medium hover:border-[#FC5502] hover:bg-white focus-visible:outline-2 focus-visible:outline-ring">
+                  <span>{i.label}{i.required && <span className="ml-2 rounded-full bg-[#FFF1E8] px-2 py-0.5 text-xs font-bold text-[#C73E00]">Necesario para publicar</span>}</span>
                   <IconArrowRight className="size-4 shrink-0 text-[#C73E00]" />
                 </Link>
               </li>
@@ -155,15 +154,17 @@ export function HomePanel() {
       </div>
 
       <div>
-        <h2 className="mb-3 font-bold">Atajos</h2>
+        <h2 className="mb-3 text-lg font-bold">Atajos</h2>
         <ul className="grid gap-3 sm:grid-cols-2">
           {actions.map(({ href, label, Icon }) => (
             <li key={href}>
-              <Link href={href} className="flex min-h-14 items-center gap-3 rounded-2xl border border-[#E5E7EB] px-4 font-semibold hover:bg-[#F1F3F5] focus-visible:outline-2 focus-visible:outline-ring"><Icon className="size-6 text-[#C73E00]" />{label}</Link>
+              <Link href={href} className="group flex min-h-16 items-center gap-3.5 rounded-2xl border border-[#E5E8EF] bg-white px-4 font-semibold shadow-sm transition hover:-translate-y-0.5 hover:border-[#FC5502]/50 hover:shadow-md focus-visible:outline-2 focus-visible:outline-ring"><span className="grid size-10 place-items-center rounded-xl bg-[#FFF1E8] text-[#C73E00] transition-colors group-hover:bg-[#FC5502] group-hover:text-white"><Icon className="size-5" /></span>{label}</Link>
             </li>
           ))}
         </ul>
       </div>
+
+      <ReferralCard />
     </section>
   );
 }

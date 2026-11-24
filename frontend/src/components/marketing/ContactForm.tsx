@@ -48,7 +48,7 @@ export function ContactForm({ kind }: { kind: "arrepentimiento" | "contacto" }) 
         {(id) => <TextArea id={id} name="message" rows={5} maxLength={1000} required={!withdraw} />}
       </Field>
       {state.kind === "error" && <p role="alert" className="rounded-lg bg-destructive/10 p-3 text-sm text-destructive">{state.message}</p>}
-      <Button type="submit" size="lg" disabled={state.kind === "sending"} className="bg-[#FC5502] font-bold text-[#0E1B2C] hover:bg-[#FF6A1F]">
+      <Button type="submit" size="lg" disabled={state.kind === "sending"} className="bg-[#D14300] font-bold text-white hover:bg-[#B83700]">
         {state.kind === "sending" ? "Enviando…" : withdraw ? "Solicitar arrepentimiento" : "Enviar consulta"}
       </Button>
     </form>

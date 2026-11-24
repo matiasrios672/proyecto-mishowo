@@ -56,7 +56,7 @@ function SetupGuide() {
   const todo = items.filter((i) => !i.done);
   if (todo.length === 0) return null;
   return (
-    <section aria-labelledby="setup-title" className="rounded-2xl border-2 border-dashed border-[#D1D5DB] bg-[#F9FAFB] p-5" data-testid="setup-guide">
+    <section aria-labelledby="setup-title" className="rounded-3xl border border-[#FFD2B8] bg-gradient-to-br from-[#FFF7F1] to-white p-5 sm:p-6" data-testid="setup-guide">
       <h2 id="setup-title" className="font-bold">Primeros pasos</h2>
       <p className="mb-3 text-sm text-muted-foreground">Lo que falta para dejar MiShowo listo. Cada paso te lleva a la pantalla donde se hace.</p>
       <ol className="space-y-2">
@@ -69,6 +69,28 @@ function SetupGuide() {
         ))}
       </ol>
     </section>
+  );
+}
+
+/** Atajos a lo que más se hace: cada uno solo aparece si la persona tiene permiso para esa pantalla. */
+function QuickLinks() {
+  const me = useAdmin();
+  const links = [
+    { href: "/admin/negocios", label: "Buscar un negocio", hint: "Por nombre, link o email", area: "negocios" as const },
+    { href: "/admin/pagos", label: "Confirmar pagos", hint: "Transferencias por revisar", area: "pagos" as const },
+    { href: "/admin/consultas", label: "Responder consultas", hint: "Mensajes de la landing", area: "consultas" as const },
+    { href: "/admin/planes", label: "Editar precios", hint: "Planes y datos de cobro", area: "planes" as const },
+  ].filter((l) => me.can(l.area));
+  if (links.length === 0) return null;
+  return (
+    <nav aria-label="Accesos rápidos" className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      {links.map((l) => (
+        <Link key={l.href} href={l.href} className="group rounded-2xl border border-[#E5E8EF] bg-white px-4 py-3.5 shadow-sm transition hover:-translate-y-0.5 hover:border-[#FC5502]/50 hover:shadow-md focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring">
+          <span className="block font-bold text-[#151B2B]">{l.label}</span>
+          <span className="block text-sm text-muted-foreground">{l.hint}</span>
+        </Link>
+      ))}
+    </nav>
   );
 }
 
@@ -110,10 +132,11 @@ export function Dashboard() {
     <div className="space-y-8">
       <PageHeader title="Resumen" />
       <SetupGuide />
+      <QuickLinks />
       <section aria-labelledby="todo-title">
-        <h2 id="todo-title" className="mb-3 text-sm font-semibold uppercase tracking-wide text-muted-foreground">Para atender</h2>
+        <h2 id="todo-title" className="mb-3 text-lg font-bold">Para atender hoy</h2>
         {pending.length === 0 ? (
-          <p className="rounded-2xl bg-[#F1F3F5] p-5 text-sm font-medium">Todo al día: no hay pagos, consultas ni denuncias esperando.</p>
+          <p className="rounded-2xl border border-emerald-200 bg-emerald-50/70 p-5 text-sm font-semibold text-emerald-900">Todo al día: no hay pagos, consultas ni denuncias esperando.</p>
         ) : (
           <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3" aria-label="Alertas">
             {pending.map((t) => {
@@ -124,7 +147,7 @@ export function Dashboard() {
                   {t.href && <span aria-hidden className="ml-auto text-muted-foreground">→</span>}
                 </>
               );
-              const cls = `flex min-h-16 items-center gap-3 rounded-2xl border-2 px-4 py-3 ${t.tone === "alert" ? "border-destructive/40 bg-destructive/5" : "border-[#D1D5DB] bg-[#F9FAFB]"}`;
+              const cls = `flex min-h-16 items-center gap-3 rounded-2xl border px-4 py-3 ${t.tone === "alert" ? "border-red-200 bg-red-50/70" : "border-[#E5E8EF] bg-white shadow-sm"}`;
               return <li key={t.label}>{t.href ? <Link href={t.href} className={`${cls} transition-colors hover:bg-white`}>{body}</Link> : <div className={cls}>{body}</div>}</li>;
             })}
           </ul>
@@ -132,15 +155,15 @@ export function Dashboard() {
       </section>
       <div className="grid gap-4 lg:grid-cols-3" data-testid="kpis">
         {groups.map((g) => (
-          <section key={g.title} aria-label={g.title} className="border-t border-[#E5E7EB] pt-4 lg:px-5 lg:first:pl-0 lg:[&:not(:first-child)]:border-l lg:border-t-0 lg:pt-0">
-            <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-muted-foreground">{g.title}</h2>
+          <section key={g.title} aria-label={g.title} className="rounded-3xl border bg-white p-5 shadow-sm">
+            <h2 className="mb-4 text-base font-bold">{g.title}</h2>
             <dl className="grid grid-cols-2 gap-x-4 gap-y-4">
               {g.tiles.map(([label, value]) => <div key={label}><dt className="text-xs text-muted-foreground">{label}</dt><dd className="text-2xl font-bold tabular-nums"><Animated value={value} /></dd></div>)}
             </dl>
           </section>
         ))}
       </div>
-      <section aria-labelledby="altas" className="border-t border-[#E5E7EB] pt-5">
+      <section aria-labelledby="altas" className="rounded-3xl border bg-white p-5 shadow-sm sm:p-6">
         <h2 id="altas" className="mb-3 font-semibold">Altas por día <span className="text-sm font-normal text-muted-foreground">(últimos 30 días)</span></h2>
         <div role="img" aria-label={`Altas por día: ${d.signups.map((s) => `${s.day} ${s.count}`).join(", ")}`} className="flex h-32 items-end gap-1">
           {d.signups.map((s, i) => <div key={s.day} title={`${s.day}: ${s.count}`} className="panel-grow flex-1 rounded-t bg-[#FC5502]" style={{ height: `${Math.max(3, (s.count / max) * 100)}%`, opacity: s.count ? 1 : 0.25, animationDelay: `${i * 18}ms` }} />)}
@@ -148,7 +171,7 @@ export function Dashboard() {
       </section>
       <div className="grid gap-4 sm:grid-cols-2">
         {([...(finance ? [["Por plan", d.byPlan.map((p) => [p.plan, p.count] as const), topPlan] as const] : []), ["Por rubro", d.byIndustry.map((p) => [p.industry, p.count] as const), topInd]] as const).map(([title, rows, top]) => (
-          <section key={title} className="border-t border-[#E5E7EB] pt-5">
+          <section key={title} className="rounded-3xl border bg-white p-5 shadow-sm sm:p-6">
             <h2 className="mb-3 font-semibold">{title}</h2>
             <ul className="space-y-2.5 text-sm">
               {rows.map(([label, n]) => (

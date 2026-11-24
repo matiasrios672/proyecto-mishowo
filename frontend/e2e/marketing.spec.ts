@@ -9,11 +9,11 @@ test.describe("landing de MiShowo", () => {
       await page.setViewportSize({ width, height: 900 });
       await page.goto("/");
       await expect(page.getByRole("heading", { level: 1 })).toHaveCount(1); // la demo no agrega un segundo h1
-      await expect(page.getByRole("heading", { level: 1 })).toContainText("Tu negocio, en un link.");
+      await expect(page.getByRole("heading", { level: 1 })).toContainText("Tu negocio, siempre abierto.");
       expect(await noOverflow(page), `@${width}`).toBe(true);
     }
     // La home es corta: la demo y el menú para elegir qué ver. El resto vive en su propia página.
-    for (const name of ["Elegí tu rubro", "Empezá gratis, crecé cuando lo necesites", "¿Qué querés ver?", "Creá tu página gratis"])
+    for (const name of ["Dejá de contestar lo mismo cuarenta veces por día.", "Páginas hechas para negocios como el tuyo", "Empezá gratis, crecé cuando lo necesites", "Que te encuentren y te pidan."])
       await expect(page.getByRole("heading", { name, exact: true })).toBeVisible();
     await expect(page.getByRole("heading", { name: "Preguntas frecuentes" })).toHaveCount(0); // las preguntas viven en /precios
     await expect(page.getByTestId("live-demo")).toHaveCount(0); // la demo vive en /probar, no en la home
@@ -153,7 +153,6 @@ test.describe("páginas de la web (la home es corta y cada tema tiene la suya)",
 
   test("la home muestra una vitrina de seis rubros: uno grande a la vez, con pestañas accesibles", async ({ page }) => {
     await page.goto("/");
-    await expect(page.getByTestId("home-steps").getByRole("listitem")).toHaveCount(3);
     const tabs = page.getByRole("tablist", { name: "Rubros" }).getByRole("tab");
     await expect(tabs).toHaveCount(6);
     await expect(tabs.first()).toHaveAttribute("aria-selected", "true");
@@ -181,17 +180,9 @@ test.describe("páginas de la web (la home es corta y cada tema tiene la suya)",
     await expect(tabs.first()).toHaveAttribute("aria-selected", "true");
 
     // el segundo botón del hero baja a la vitrina y no hay desborde
-    await page.getByRole("link", { name: "Elegí tu rubro" }).first().click();
+    await page.getByRole("link", { name: "Ver ejemplos" }).first().click();
     await expect(page).toHaveURL(/#elegi-tu-rubro$/);
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
-  });
-
-  test("la home enlaza a cada tema desde «¿Qué querés ver?»", async ({ page }) => {
-    await page.goto("/");
-    const grid = page.locator("#explorar");
-    for (const [path] of PAGES.filter(([p]) => p !== "/probar")) await expect(grid.locator(`a[href="${path}"]`)).toBeVisible(); // la demo no es una tarjeta: vive en el pie
-    await grid.getByRole("link", { name: /Cuotas sin interés/ }).click();
-    await expect(page).toHaveURL(/\/cuotas$/);
   });
 
   test("en celular el menú abre, navega, se cierra solo y responde a Escape", async ({ page }, info) => {

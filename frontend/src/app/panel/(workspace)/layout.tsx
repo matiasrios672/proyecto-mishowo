@@ -1,7 +1,6 @@
 import type { ReactNode } from "react";
-import { WorkspaceShell } from "@/components/panel/WorkspaceShell";
 
-// Espacios de trabajo (catálogo, mi página, ajustes): barra lateral y pantalla completa con vista previa en vivo.
+// Catálogo, Mi página y Ajustes: el marco y el editor viven en el layout de /panel (PanelRoot); acá solo existen las rutas.
 export default function WorkspaceLayout({ children }: { children: ReactNode }) {
-  return <WorkspaceShell>{children}</WorkspaceShell>;
+  return <>{children}</>;
 }

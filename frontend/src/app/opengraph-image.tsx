@@ -2,7 +2,7 @@
 import { ImageResponse } from "next/og";
 import { brandDataUri } from "@/lib/brandAssets";
 
-export const alt = "MiShowo: tu negocio, en un link";
+export const alt = "MiShowo: tu negocio, siempre abierto";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
@@ -15,7 +15,7 @@ export default async function OpengraphImage() {
         <div style={{ display: "flex", fontSize: 54, fontWeight: 800 }}>{logo ? <img src={logo} alt="MiShowo" height={64} width={373} /> : <>Mi<span style={{ color: "#C73E00" }}>Showo</span></>}</div>
         <div style={{ display: "flex", flexDirection: "column" }}>
           <div style={{ display: "flex", fontSize: 108, fontWeight: 800, lineHeight: 1, letterSpacing: -3 }}>Tu negocio,</div>
-          <div style={{ display: "flex", fontSize: 108, fontWeight: 800, lineHeight: 1.05, letterSpacing: -3, color: "#FC5502" }}>en un link.</div>
+          <div style={{ display: "flex", fontSize: 108, fontWeight: 800, lineHeight: 1.05, letterSpacing: -3, color: "#FC5502" }}>siempre abierto.</div>
           <div style={{ display: "flex", marginTop: 26, fontSize: 38, color: "#47566A" }}>Catálogo, pedidos por WhatsApp y link para Instagram.</div>
         </div>
         <div style={{ display: "flex" }}>

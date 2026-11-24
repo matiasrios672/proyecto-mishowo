@@ -12,33 +12,9 @@ const glass = "border border-white/80 bg-white/80 shadow-[0_30px_60px_-30px_rgba
 export function Glow({ className = "" }: { className?: string }) {
   return (
     <div aria-hidden className={`pointer-events-none absolute inset-0 -z-10 overflow-hidden ${className}`}>
-      <div className="mk-orb absolute -left-24 top-10 size-96 rounded-full" style={{ "--orb": "rgb(116 172 223 / 0.52)" } as React.CSSProperties} />
-      <div className="mk-orb absolute -right-24 bottom-0 size-[28rem] rounded-full" style={{ "--orb": "rgb(47 111 176 / 0.30)" } as React.CSSProperties} />
+      <div className="mk-orb absolute -left-24 top-10 size-96 rounded-full" style={{ "--orb": "rgb(255 160 90 / 0.40)" } as React.CSSProperties} />
+      <div className="mk-orb absolute -right-24 bottom-0 size-[28rem] rounded-full" style={{ "--orb": "rgb(255 190 120 / 0.34)" } as React.CSSProperties} />
     </div>
-  );
-}
-
-/** Tira de beneficios concretos, justo debajo del hero. */
-export function TrustStrip() {
-  const items = [
-    { I: IconBolt, t: "Lista en minutos", d: "Elegís tu rubro y ya tenés una página armada." },
-    { I: IconChat, t: "Pedidos por WhatsApp, opcional", d: "Con carrito y total armado, o solo un botón para consultar." },
-    { I: IconCheck, t: "Sin comisión por venta", d: "Lo que vendés es tuyo: cobrás como siempre." },
-    { I: IconStore, t: "Empezás gratis", d: "Sin tarjeta. Pasás de plan cuando lo necesites." },
-  ];
-  return (
-    <section aria-label="Por qué MiShowo" className="relative bg-[#FFEFE6]">
-      <div className={`${wrap} pb-14`}>
-        <ul className={`grid gap-px overflow-hidden rounded-3xl bg-white/70 sm:grid-cols-2 lg:grid-cols-4 ${glass}`}>
-          {items.map(({ I, t, d }) => (
-            <li key={t} className="flex gap-3.5 bg-white/55 p-5">
-              <span className="grid size-11 shrink-0 place-items-center rounded-xl bg-[#C73E00]/10 text-[#C73E00]"><I className="size-6" /></span>
-              <span><span className="block font-extrabold text-[#0E1B2C]">{t}</span><span className="mt-0.5 block text-sm leading-snug text-[#0E1B2C]/70">{d}</span></span>
-            </li>
-          ))}
-        </ul>
-      </div>
-    </section>
   );
 }
 
@@ -100,7 +76,7 @@ export function Story() {
 
           <Scene n={2} title="Compartís tu link" text="Un solo link para tu bio de Instagram, tus historias y tu estado de WhatsApp. O un QR para pegar en tu local.">
             <div className="flex h-full flex-col items-center justify-center gap-5">
-              <p className="mk-drop flex items-center gap-2 rounded-full bg-[#FC5502] px-5 py-2.5 text-lg font-extrabold text-[#0E1B2C] shadow-lg" style={at(0)}><IconLink className="size-5" />lupe.mishowo.com</p>
+              <p className="mk-drop flex items-center gap-2 rounded-full bg-[#D14300] px-5 py-2.5 text-lg font-extrabold text-white shadow-lg" style={at(0)}><IconLink className="size-5" />lupe.mishowo.com</p>
               <svg viewBox="0 0 24 40" aria-hidden className="h-10 w-6 text-[#C73E00]"><path className="mk-draw-scroll" pathLength={1} d="M12 2v32M5 28l7 8 7-8" stroke="currentColor" strokeWidth="2.500" strokeLinecap="round" strokeLinejoin="round" fill="none" /></svg>
               <div className="grid w-full max-w-sm gap-3 sm:grid-cols-[1fr_auto]">
                 <div className={`${row} flex-col items-start gap-1`} style={at(2)}>
@@ -146,7 +122,7 @@ export function Compare() {
             <ul className="mt-5 space-y-4">
               {con.map((t) => <li key={t} className="flex gap-3 font-medium text-[#0E1B2C]"><IconCheck className="mt-0.5 size-5 shrink-0 text-emerald-700" />{t}</li>)}
             </ul>
-            <Link href="/crear" className="mt-7 inline-flex items-center justify-center rounded-xl bg-[#FC5502] px-6 py-3.5 font-bold text-[#0E1B2C] transition-transform hover:bg-[#2A649F] active:scale-95 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring">Creá tu página gratis</Link>
+            <Link href="/crear" className="mt-7 inline-flex items-center justify-center rounded-xl bg-[#D14300] px-6 py-3.5 font-bold text-white transition-transform hover:bg-[#2A649F] active:scale-95 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring">Creá tu página gratis</Link>
           </div>
         </div>
         <ul className="mt-10 grid gap-4 sm:grid-cols-3">

@@ -1,12 +1,12 @@
 "use client";
 
-import { useEffect, useState, type ReactNode } from "react";
-import { usePathname, useRouter } from "next/navigation";
+import { useCallback, useEffect, useState, type ReactNode } from "react";
+import { usePathname } from "next/navigation";
 import { AppShell, type NavGroup } from "@/components/brand/AppShell";
 import { logoutFromShell, useUser } from "@/components/auth/authStore";
 import { api } from "@/lib/authClient";
 import { PageSwitcher } from "./PageSwitcher";
-import { LoadingScreen } from "@/components/brand/LoadingScreen";
+import { NotifBell, type NotifItem } from "@/components/brand/NotifBell";
 import { IconBag, IconCalendar, IconCard, IconChart, IconChat, IconCheck, IconHome, IconQr, IconShield, IconSparkle, IconStore, IconTag } from "@/components/marketing/Doodles";
 
 const GROUPS: NavGroup[] = [
@@ -32,7 +32,7 @@ const GROUPS: NavGroup[] = [
 const ADMIN_ROLES = ["owner", "admin", "support"];
 /** El equipo de MiShowo ve además un acceso a su panel de administración. */
 const MODULE_OF: Record<string, string> = { "/panel/pedidos": "orders", "/panel/cupones": "coupons", "/panel/turnos": "appointments", "/panel/resenas": "reviews" };
-const groupsFor = (role: string, ordersEnabled: boolean, modules: Record<string, boolean> | null): NavGroup[] => {
+export const groupsFor = (role: string, ordersEnabled: boolean, modules: Record<string, boolean> | null): NavGroup[] => {
   // Con los pedidos apagados no tiene sentido mostrar Pedidos ni Cupones (los históricos siguen en la base).
   // Los módulos que el plan no incluye tampoco se muestran: se ven en "Plan y pagos".
   const hidden = (href: string) => (!ordersEnabled && (href === "/panel/pedidos" || href === "/panel/cupones")) || (modules !== null && MODULE_OF[href] !== undefined && modules[MODULE_OF[href]!] === false);
@@ -41,7 +41,8 @@ const groupsFor = (role: string, ordersEnabled: boolean, modules: Record<string,
 };
 
 /** ¿El negocio recibe pedidos? (por defecto sí) y qué módulos incluye su plan. Se lee una vez al abrir el panel. */
-function useNavInfo(active: boolean) {
+export function useNavInfo(active: boolean) {
+  const path = usePathname(); // el marco es único y persiste entre pantallas: se vuelve a leer al cambiar (ej. al activar pedidos en Ajustes)
   const [info, setInfo] = useState<{ ordersEnabled: boolean; modules: Record<string, boolean> | null }>({ ordersEnabled: true, modules: null });
   useEffect(() => {
     if (!active) return;
@@ -49,8 +50,27 @@ function useNavInfo(active: boolean) {
     api<{ content: { ordersEnabled?: boolean } | null }>("/me/business").then((r) => { if (alive && r.ok) setInfo((i) => ({ ...i, ordersEnabled: r.data.content?.ordersEnabled !== false })); });
     api<{ current: { modules?: Record<string, boolean> } }>("/me/plan").then((r) => { if (alive && r.ok) setInfo((i) => ({ ...i, modules: r.data.current.modules ?? null })); });
     return () => { alive = false; };
-  }, [active]);
+  }, [active, path]);
   return info;
+}
+
+/** Lo que espera atención en el negocio: pedidos nuevos y turnos por confirmar (solo de los módulos que tiene). */
+async function loadAlerts(ordersEnabled: boolean, modules: Record<string, boolean> | null): Promise<NotifItem[]> {
+  const out: NotifItem[] = [];
+  if (ordersEnabled && modules?.orders !== false) {
+    const r = await api<{ counts: Record<string, number> }>("/me/orders/summary");
+    if (r.ok) out.push({ id: "orders", label: "Pedidos nuevos", n: r.data.counts.nuevo ?? 0, href: "/panel/pedidos", tone: "alert" });
+  }
+  if (modules?.appointments === true) {
+    const r = await api<{ appointments: unknown[] }>("/me/appointments?status=pendiente");
+    if (r.ok) out.push({ id: "appts", label: "Turnos por confirmar", n: r.data.appointments.length, href: "/panel/turnos" });
+  }
+  return out;
+}
+
+export function ClientBell({ ordersEnabled, modules, side }: { ordersEnabled: boolean; modules: Record<string, boolean> | null; side: "below" | "right" | "end" }) {
+  const load = useCallback(() => loadAlerts(ordersEnabled, modules), [ordersEnabled, modules]);
+  return <NotifBell load={load} side={side} empty="Todo al día: no hay pedidos ni turnos esperando." />;
 }
 
 /** Marco con la barra lateral del panel (para quien ya inició sesión). El editor lo usa en modo angosto y a pantalla completa. */
@@ -59,27 +79,7 @@ export function PanelFrame({ children, compact = false, fullBleed = false }: { c
   const { ordersEnabled, modules } = useNavInfo(!!user);
   if (!user) return <>{children}</>;
   return (
-    <AppShell groups={groupsFor(user.role, ordersEnabled, modules)} areaLabel="Panel del negocio" userLabel={user.email} onLogout={() => void logoutFromShell()} compact={compact} fullBleed={fullBleed} topSlot={<PageSwitcher />}>
-      {children}
-    </AppShell>
-  );
-}
-
-/** Marco del panel del negocio. Exige sesión: sin ella manda a ingresar y vuelve acá. */
-export function PanelShell({ children }: { children: ReactNode }) {
-  const user = useUser();
-  const router = useRouter();
-  const path = usePathname();
-  const { ordersEnabled, modules } = useNavInfo(!!user);
-
-  useEffect(() => {
-    if (user === null) router.replace(`/ingresar?next=${encodeURIComponent(path)}`);
-  }, [user, path, router]);
-
-  if (!user) return <LoadingScreen message="Cargando tu panel…" />;
-
-  return (
-    <AppShell groups={groupsFor(user.role, ordersEnabled, modules)} areaLabel="Panel del negocio" userLabel={user.email} onLogout={() => void logoutFromShell()} topSlot={<PageSwitcher />}>
+    <AppShell groups={groupsFor(user.role, ordersEnabled, modules)} areaLabel="Panel del negocio" userLabel={user.email} onLogout={() => void logoutFromShell()} compact={compact} fullBleed={fullBleed} topSlot={<PageSwitcher />} bell={(side) => <ClientBell ordersEnabled={ordersEnabled} modules={modules} side={side} />}>
       {children}
     </AppShell>
   );

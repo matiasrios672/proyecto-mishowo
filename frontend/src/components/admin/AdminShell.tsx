@@ -12,6 +12,8 @@ import { Button } from "@/components/ui/button";
 import { Field, TextInput } from "@/components/ui/fields";
 import { api } from "@/lib/authClient";
 import { logout } from "@/components/auth/authStore";
+import { NotifBell, type NotifItem } from "@/components/brand/NotifBell";
+import { AdminCommand } from "./AdminCommand";
 
 import { allows, type AreaKey, type Level, type Permissions } from "@/lib/permissions";
 
@@ -22,33 +24,31 @@ export type AdminUser = Me["user"] & { permissions: Permissions; can: (area: Are
 const Ctx = createContext<AdminUser | null>(null);
 export const useAdmin = () => useContext(Ctx)!;
 
-const ADMIN_GROUPS: { label: string; items: { href: string; label: string; Icon: NavItem["Icon"]; exact?: boolean; area?: AreaKey; ownerOnly?: boolean }[] }[] = [
-  { label: "Inicio", items: [
-    { href: "/admin", label: "Resumen", Icon: IconHome, exact: true },
-    { href: "/admin/estadisticas", label: "Estadísticas", Icon: IconChart, area: "negocios" },
+const ADMIN_GROUPS: { label: string; items: { href: string; label: string; Icon: NavItem["Icon"]; exact?: boolean; area?: AreaKey; ownerOnly?: boolean; badge?: "pay" | "ctc" | "rep"; keywords?: string }[] }[] = [
+  { label: "Atención diaria", items: [
+    { href: "/admin", label: "Resumen", Icon: IconHome, exact: true, keywords: "inicio panel hoy pendientes" },
+    { href: "/admin/pagos", label: "Pagos", Icon: IconCard, area: "pagos", badge: "pay", keywords: "transferencia comprobante confirmar rechazar cobros" },
+    { href: "/admin/consultas", label: "Consultas", Icon: IconChat, area: "consultas", badge: "ctc", keywords: "mensajes contacto formulario responder" },
+    { href: "/admin/denuncias", label: "Denuncias", Icon: IconFlag, area: "denuncias", badge: "rep", keywords: "reportes moderación suspender" },
   ] },
   { label: "Clientes", items: [
-    { href: "/admin/negocios", label: "Negocios", Icon: IconStore, area: "negocios" },
-    { href: "/admin/usuarios", label: "Cuentas", Icon: IconUsers, area: "usuarios" },
-    { href: "/admin/leads", label: "Leads", Icon: IconSparkle, area: "leads" },
+    { href: "/admin/negocios", label: "Negocios", Icon: IconStore, area: "negocios", keywords: "tiendas comercios páginas link slug plan suspender" },
+    { href: "/admin/usuarios", label: "Cuentas", Icon: IconUsers, area: "usuarios", keywords: "usuarios personas email bloquear equipo" },
+    { href: "/admin/leads", label: "Leads", Icon: IconSparkle, area: "leads", keywords: "registrados sin publicar oportunidades retomar" },
   ] },
-  { label: "Ventas", items: [
-    { href: "/admin/pagos", label: "Pagos", Icon: IconCard, area: "pagos" },
-    { href: "/admin/planes", label: "Planes", Icon: IconTag, area: "planes" },
-  ] },
-  { label: "Atención", items: [
-    { href: "/admin/consultas", label: "Consultas", Icon: IconChat, area: "consultas" },
-    { href: "/admin/denuncias", label: "Denuncias", Icon: IconFlag, area: "denuncias" },
+  { label: "Negocio", items: [
+    { href: "/admin/estadisticas", label: "Estadísticas", Icon: IconChart, area: "negocios", keywords: "métricas embudo ingresos canales conversión" },
+    { href: "/admin/planes", label: "Planes y precios", Icon: IconTag, area: "planes", keywords: "precios cobro alias cbu módulos límites" },
   ] },
   { label: "Contenido", items: [
-    { href: "/admin/rubros", label: "Rubros", Icon: IconStore, area: "rubros" },
-    { href: "/admin/contenido", label: "Contenido", Icon: IconEdit, area: "contenido" },
-    { href: "/admin/emails", label: "Emails", Icon: IconMail, area: "emails" },
+    { href: "/admin/rubros", label: "Rubros", Icon: IconStore, area: "rubros", keywords: "industrias plantillas estilos" },
+    { href: "/admin/contenido", label: "Contenido", Icon: IconEdit, area: "contenido", keywords: "aviso global preguntas frecuentes faq links reservados" },
+    { href: "/admin/emails", label: "Emails", Icon: IconMail, area: "emails", keywords: "mails textos plantillas campañas prueba" },
   ] },
-  { label: "Equipo y sistema", items: [
-    { href: "/admin/admins", label: "Equipo", Icon: IconShield, ownerOnly: true },
-    { href: "/admin/sistema", label: "Estado", Icon: IconServer, area: "sistema" },
-    { href: "/admin/auditoria", label: "Auditoría", Icon: IconShield, area: "auditoria" },
+  { label: "Sistema", items: [
+    { href: "/admin/admins", label: "Equipo", Icon: IconShield, ownerOnly: true, keywords: "permisos roles invitar soporte admin 2fa" },
+    { href: "/admin/sistema", label: "Estado del sistema", Icon: IconServer, area: "sistema", keywords: "mantenimiento demos salud" },
+    { href: "/admin/auditoria", label: "Auditoría", Icon: IconShield, area: "auditoria", keywords: "registro historial quién hizo qué" },
   ] },
 ];
 
@@ -75,13 +75,13 @@ const PAGE_HELP: Record<string, { about: string; steps?: string[] }> = {
 export function PageHeader({ title, children }: { title: string; children?: ReactNode }) {
   const help = PAGE_HELP[title === "Usuarios" ? "Cuentas" : title];
   return (
-    <header className="space-y-2">
-      <h1 className="text-2xl font-bold">{title}</h1>
+    <header className="space-y-2 border-b border-[#E5E8EF] pb-5">
+      <h1>{title}</h1>
       {help && <p className="max-w-[68ch] text-muted-foreground">{help.about}</p>}
       {help?.steps && (
         <details className="group max-w-[68ch] text-sm" data-testid="page-help">
           <summary className="inline-flex min-h-9 cursor-pointer items-center gap-1.5 rounded-lg font-semibold text-[#C73E00] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring">¿Cómo se usa?</summary>
-          <ol className="mt-1 list-decimal space-y-1 rounded-xl bg-[#F9FAFB] py-3 pl-8 pr-4">{help.steps.map((t) => <li key={t}>{t}</li>)}</ol>
+          <ol className="mt-2 list-decimal space-y-1.5 rounded-2xl border border-[#E5E8EF] bg-white py-4 pl-9 pr-5 shadow-sm">{help.steps.map((t) => <li key={t}>{t}</li>)}</ol>
         </details>
       )}
       {children}
@@ -139,17 +139,38 @@ function Setup2fa({ onDone }: { onDone: () => void }) {
 }
 
 /** Puerta del admin: sesión, rol de administración y segundo factor. Solo muestra el panel con todo en regla. */
+/** Pagos, consultas y denuncias que esperan al equipo (lo mismo que «Para atender» del Resumen). */
+async function loadAdminAlerts(): Promise<NotifItem[]> {
+  const r = await api<{ alerts: { pendingPayments: number; stalePayments: number; newContacts?: number; newReports: number } }>("/admin/dashboard");
+  if (!r.ok) return [];
+  const a = r.data.alerts;
+  return [
+    { id: "pay", label: "Pagos para confirmar", n: a.pendingPayments, href: "/admin/pagos", tone: a.stalePayments > 0 ? "alert" : "info" },
+    { id: "ctc", label: "Consultas sin responder", n: a.newContacts ?? 0, href: "/admin/consultas" },
+    { id: "rep", label: "Denuncias nuevas", n: a.newReports, href: "/admin/denuncias", tone: "alert" },
+  ];
+}
+
 export function AdminShell({ children }: { children: ReactNode }) {
   const router = useRouter();
   const path = usePathname();
   const [me, setMe] = useState<Me | null | "denied" | "anon">(null);
   const [tick, setTick] = useState(0);
+  const [counts, setCounts] = useState<{ pay: number; ctc: number; rep: number } | null>(null);
 
   useEffect(() => {
     let alive = true;
     api<Me>("/admin/me").then((r) => { if (alive) setMe(r.ok ? r.data : r.status === 401 ? "anon" : "denied"); });
     return () => { alive = false; };
   }, [tick]);
+
+  // Contadores de pendientes junto a Pagos, Consultas y Denuncias: se vuelven a leer al cambiar de pantalla.
+  useEffect(() => {
+    if (me === null || me === "anon" || me === "denied") return;
+    let alive = true;
+    api<{ alerts: { pendingPayments: number; newContacts?: number; newReports: number } }>("/admin/dashboard").then((r) => { if (alive && r.ok) setCounts({ pay: r.data.alerts.pendingPayments, ctc: r.data.alerts.newContacts ?? 0, rep: r.data.alerts.newReports }); });
+    return () => { alive = false; };
+  }, [me, path]);
 
   useEffect(() => { if (me === "anon") router.replace(`/ingresar?next=${encodeURIComponent(path)}`); }, [me, path, router]);
 
@@ -173,10 +194,12 @@ export function AdminShell({ children }: { children: ReactNode }) {
   const roleLabel = role === "owner" ? "Owner" : role === "admin" ? "Admin" : "Soporte";
   const can = (area?: AreaKey, level: Level = "view") => role === "owner" || !area || allows(me.permissions, area, level);
   const admin: AdminUser = { ...me.user, permissions: me.permissions, can };
-  const groups: NavGroup[] = ADMIN_GROUPS.map((g) => ({ label: g.label, items: g.items.filter((n) => (n.ownerOnly ? role === "owner" : can(n.area))).map(({ href, label, Icon, exact }) => ({ href, label, Icon, exact })) })).filter((g) => g.items.length > 0);
+  const badgeOf = (k?: "pay" | "ctc" | "rep") => (k && counts ? counts[k] : 0) || undefined;
+  const groups: NavGroup[] = ADMIN_GROUPS.map((g) => ({ label: g.label, items: g.items.filter((n) => (n.ownerOnly ? role === "owner" : can(n.area))).map(({ href, label, Icon, exact, badge }) => ({ href, label, Icon, exact, badge: badgeOf(badge) })) })).filter((g) => g.items.length > 0);
+  const commandItems = ADMIN_GROUPS.flatMap((g) => g.items.filter((n) => (n.ownerOnly ? role === "owner" : can(n.area))).map((n) => ({ href: n.href, label: n.label, group: g.label, keywords: n.keywords })));
   return (
     <Ctx.Provider value={admin}>
-      <AppShell groups={groups} areaLabel="Administración" homeHref="/admin" userLabel={`${me.user.email} · ${roleLabel}`} onLogout={async () => { await logout(); router.replace("/ingresar"); }}>
+      <AppShell groups={groups} areaLabel="Administración" homeHref="/admin" userLabel={`${me.user.email} · ${roleLabel}`} onLogout={async () => { await logout(); router.replace("/ingresar"); }} topLeft={<AdminCommand items={commandItems} canBusinesses={can("negocios")} />} bell={(side) => <NotifBell load={loadAdminAlerts} side={side} empty="Todo al día: no hay pagos, consultas ni denuncias esperando." />}>
         {children}
       </AppShell>
     </Ctx.Provider>

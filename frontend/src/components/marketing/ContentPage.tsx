@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 import Link from "next/link";
 import { Markdown } from "@/lib/markdown";
 
-const cta = "inline-flex items-center justify-center rounded-xl bg-[#FC5502] px-6 py-3 text-base font-bold text-[#0E1B2C] transition-transform hover:bg-[#FF6A1F] active:scale-95 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring";
+const cta = "inline-flex items-center justify-center rounded-xl bg-[#D14300] px-6 py-3 text-base font-bold text-white transition-transform hover:bg-[#B83700] active:scale-95 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring";
 
 export function PageWrap({ children }: { children: ReactNode }) {
   return <main className="mx-auto w-full max-w-3xl px-5 py-12 sm:px-8 sm:py-20">{children}</main>;

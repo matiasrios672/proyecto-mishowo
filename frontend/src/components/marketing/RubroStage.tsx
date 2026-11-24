@@ -55,7 +55,6 @@ const RUBROS: Rubro[] = [
   },
 ];
 
-const STEPS = ["Elegí tu rubro", "Cargá lo tuyo", "Compartí tu link"];
 const ars = (n: number) => `$ ${new Intl.NumberFormat("es-AR").format(n)}`;
 
 /** Celular con la página del negocio del rubro elegido. Decorativo: el texto de al lado ya dice lo mismo. */
@@ -64,7 +63,7 @@ function Phone({ r }: { r: Rubro }) {
     <div aria-hidden className="relative mx-auto w-[16.5rem] rounded-[2.4rem] border-[9px] border-[#05101D] bg-white p-3 shadow-[0_60px_100px_-30px_rgba(0,0,0,0.85)] ring-1 ring-white/15 sm:w-[18.5rem]">
       <div className="mx-auto mb-3 h-3.5 w-14 rounded-full bg-[#05101D]" />
       <div className="flex items-center gap-2">
-        <span className="grid size-8 place-items-center rounded-full bg-[#FC5502] text-sm font-extrabold text-[#0E1B2C]">{r.shop[0]}</span>
+        <span className="grid size-8 place-items-center rounded-full bg-[#D14300] text-sm font-extrabold text-white">{r.shop[0]}</span>
         <span className="min-w-0 text-left"><span className="block truncate text-[13px] font-extrabold leading-tight text-[#0E1B2C]">{r.shop}</span><span className="block truncate text-[10px] text-[#0E1B2C]/55">{r.tag}</span></span>
       </div>
       <ul className="mt-3 space-y-2">
@@ -108,25 +107,20 @@ export function RubroStage() {
   return (
     <section id="elegi-tu-rubro" aria-labelledby="rubro-title" className="relative isolate scroll-mt-16 overflow-hidden bg-[#0E1B2C] py-16 text-white sm:py-24">
       <div aria-hidden className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
-        <div className="mk-orb absolute -left-24 top-0 size-[28rem] rounded-full" style={{ "--orb": "rgb(47 111 176 / 0.45)" } as React.CSSProperties} />
-        <div className="mk-orb absolute -right-24 bottom-0 size-[30rem] rounded-full" style={{ "--orb": "rgb(116 172 223 / 0.28)" } as React.CSSProperties} />
+        <div className="mk-orb absolute -left-24 top-0 size-[28rem] rounded-full" style={{ "--orb": "rgb(252 85 2 / 0.30)" } as React.CSSProperties} />
+        <div className="mk-orb absolute -right-24 bottom-0 size-[30rem] rounded-full" style={{ "--orb": "rgb(255 176 0 / 0.14)" } as React.CSSProperties} />
       </div>
       <div className="mx-auto w-full max-w-6xl px-5 sm:px-8">
         <div className="text-center">
-          <h2 id="rubro-title" className="mk-display text-4xl font-extrabold leading-[1.02] tracking-tight sm:text-6xl">Elegí tu rubro</h2>
-          <p className="mx-auto mt-4 max-w-[46ch] text-lg text-white/75">Nosotros armamos la página: tu catálogo, tus colores y el botón de WhatsApp.</p>
-          <ol className="mx-auto mt-6 flex max-w-xl flex-wrap items-center justify-center gap-x-3 gap-y-1 text-sm text-white/70" data-testid="home-steps" aria-label="Los tres pasos">
-            {STEPS.map((s, i) => (
-              <li key={s} className="flex items-center gap-3"><span><span aria-hidden className="mr-1.5 font-extrabold text-[#F6B40E]">{i + 1}</span>{s}</span>{i < STEPS.length - 1 && <span aria-hidden className="text-white/30">→</span>}</li>
-            ))}
-          </ol>
+          <h2 id="rubro-title" className="mk-display mx-auto max-w-[20ch] text-4xl font-extrabold leading-[1.02] tracking-tight sm:text-6xl">Páginas hechas para negocios como el tuyo</h2>
+          <p className="mx-auto mt-4 max-w-[46ch] text-lg text-white/75">Elegí tu rubro y mirá cómo queda: catálogo, colores y botón de WhatsApp ya armados.</p>
         </div>
 
-        <div role="tablist" aria-label="Rubros" onKeyDown={onKey} className="mx-auto mt-9 flex w-full max-w-3xl snap-x gap-1.5 overflow-x-auto rounded-full border border-white/15 bg-white/5 p-1.5 backdrop-blur [scrollbar-width:none] sm:justify-center">
+        <div role="tablist" aria-label="Rubros" onKeyDown={onKey} className="mx-auto mt-9 flex w-full max-w-3xl snap-x justify-start gap-7 overflow-x-auto overflow-y-hidden border-b border-white/15 px-1 [scrollbar-width:none] sm:justify-center [&::-webkit-scrollbar]:hidden">
           {RUBROS.map((x, i) => (
             <button key={x.id} ref={(el) => { tabs.current[i] = el; }} role="tab" type="button" id={`rubro-tab-${x.id}`} aria-selected={i === current} aria-controls="rubro-panel" tabIndex={i === current ? 0 : -1}
               onClick={() => setCurrent(i)}
-              className={`min-h-11 shrink-0 snap-center rounded-full px-4 text-sm font-bold whitespace-nowrap transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white ${i === current ? "bg-white text-[#0E1B2C]" : "text-white/80 hover:bg-white/10"}`}>
+              className={`-mb-px min-h-12 shrink-0 snap-center border-b-2 px-0.5 text-base font-bold whitespace-nowrap transition-colors focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white ${i === current ? "border-[#FF7A2E] text-white" : "border-transparent text-white/65 hover:text-white"}`}>
               {x.tab}
             </button>
           ))}
@@ -144,7 +138,7 @@ export function RubroStage() {
               ))}
             </ul>
             <div className="mt-8 flex flex-wrap items-center justify-center gap-3 lg:justify-start">
-              <Link href="/crear" className="inline-flex min-h-12 items-center justify-center rounded-xl bg-[#FC5502] px-7 font-bold text-[#0E1B2C] transition-transform hover:bg-[#FF6A1F] active:scale-95 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white">Crear mi página</Link>
+              <Link href="/crear" className="inline-flex min-h-12 items-center justify-center rounded-xl bg-[#D14300] px-7 font-bold text-white transition-transform hover:bg-[#B83700] active:scale-95 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white">Crear mi página</Link>
               {r.example && (
                 <a href={r.example.href} target="_blank" rel="noopener noreferrer" aria-label={`Ver el ejemplo de ${r.tab} (se abre en una pestaña nueva)`} className="inline-flex min-h-12 items-center gap-1.5 rounded-xl border border-white/25 px-6 font-bold text-white transition-colors hover:bg-white/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white">
                   Ver ejemplo <span aria-hidden>↗</span>

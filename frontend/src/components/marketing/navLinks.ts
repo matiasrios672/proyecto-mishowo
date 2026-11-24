@@ -8,3 +8,11 @@ export const NAV_LINKS: [string, string][] = [
   ["Ayuda", "/ayuda"],
   ["Blog", "/blog"],
 ];
+
+/** Cabecera: lo que más le interesa a quien todavía no es cliente, en orden de decisión: ver ejemplos, entender, qué incluye, cuánto cuesta. */
+export const HEADER_LINKS: [string, string][] = [
+  ["Ejemplos", "/rubros"],
+  ["Cómo funciona", "/como-funciona"],
+  ["Funciones", "/funciones"],
+  ["Precios", "/precios"],
+];

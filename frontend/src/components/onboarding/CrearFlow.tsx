@@ -27,7 +27,7 @@ export function CrearFlow({ picker }: { picker: ReactNode }) {
       <ol aria-label="Pasos para crear tu página" className="site-rise grid gap-3 sm:grid-cols-3" data-testid="crear-steps">
         {STEPS.map((s, i) => (
           <li key={s.n} aria-current={i === step ? "step" : undefined} className={`flex items-start gap-3 border-t-2 pt-3 transition-colors duration-500 ${i <= step ? "border-[#C73E00]" : "border-[#0E1B2C]/15"}`}>
-            <span className={`grid size-7 shrink-0 place-items-center rounded-full text-sm font-extrabold transition-colors duration-500 ${i < step ? "bg-[#15803D] text-white" : i === step ? "bg-[#FC5502] text-[#0E1B2C]" : "bg-white text-[#0E1B2C]/60"}`}>
+            <span className={`grid size-7 shrink-0 place-items-center rounded-full text-sm font-extrabold transition-colors duration-500 ${i < step ? "bg-[#15803D] text-white" : i === step ? "bg-[#D14300] text-white" : "bg-white text-white/60"}`}>
               {i < step ? <IconCheck className="size-4" /> : i + 1}
             </span>
             <span className={i === step ? "" : i < step ? "opacity-80" : "opacity-60"}>

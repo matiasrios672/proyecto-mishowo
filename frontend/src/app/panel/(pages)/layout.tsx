@@ -1,7 +1,6 @@
 import type { ReactNode } from "react";
-import { PanelShell } from "@/components/panel/PanelShell";
 
-// Páginas de lectura y gestión (pedidos, estadísticas, plan…): barra lateral y una hoja blanca con el contenido.
+// Pedidos, estadísticas, plan…: el marco con la barra lateral vive en el layout de /panel (PanelRoot).
 export default function PanelPagesLayout({ children }: { children: ReactNode }) {
-  return <PanelShell>{children}</PanelShell>;
+  return <>{children}</>;
 }

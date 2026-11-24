@@ -9,12 +9,13 @@ import { HeroStage } from "./HeroStage";
 import { Glow } from "./Story";
 import { DEFAULT_FAQ, type FaqItem } from "@/content/faq";
 import { getSiteConfig } from "@/lib/siteConfig";
+import { SLOGAN } from "@/content/brand";
 
 const SOL = "#F6B40E";
 const TINTA = "#0E1B2C";
 const wrap = "mx-auto w-full max-w-6xl px-5 sm:px-8";
-const ctaSol = "inline-flex items-center justify-center rounded-xl bg-[#FC5502] px-7 py-4 text-base font-bold text-[#0E1B2C] transition-transform hover:bg-[#FF6A1F] active:scale-95 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring";
-const ctaGhost = "inline-flex items-center justify-center rounded-xl border-2 border-[#0E1B2C] px-7 py-3.5 text-base font-bold text-[#0E1B2C] transition-transform hover:bg-[#0E1B2C] hover:text-white active:scale-95 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring";
+const ctaSol = "inline-flex items-center justify-center rounded-2xl bg-gradient-to-b from-[#D14300] to-[#B83700] px-7 py-4 text-base font-bold text-white shadow-[0_14px_30px_-12px_rgba(184,55,0,0.7),inset_0_1px_0_rgba(255,255,255,0.35)] transition hover:-translate-y-0.5 hover:shadow-[0_20px_36px_-12px_rgba(252,85,2,0.85),inset_0_1px_0_rgba(255,255,255,0.35)] active:scale-95 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring";
+const ctaGhost = "inline-flex items-center justify-center rounded-2xl border border-[#0E1B2C]/15 bg-white/70 px-7 py-4 text-base font-bold text-[#0E1B2C] shadow-sm backdrop-blur transition hover:-translate-y-0.5 hover:border-[#0E1B2C] hover:bg-[#0E1B2C] hover:text-white active:scale-95 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring";
 
 /** Trae el primer rubro de la demo al atender la visita (no al compilar: el build de Docker no tiene backend). */
 async function DemoSlot() {
@@ -38,16 +39,16 @@ export function Hero() {
       <div className={`${wrap} grid items-center gap-4 pb-10 pt-12 lg:grid-cols-[1fr_1.1fr] lg:gap-12 lg:pb-16 lg:pt-16`}>
         <div>
           <h1 className="mk-display site-rise text-[clamp(3rem,7.4vw,5.6rem)] font-extrabold leading-[0.92] tracking-tight text-[#0E1B2C]">
-            <span className="block">Tu negocio,</span>{" "}
-            <span className="relative block w-fit text-[#FC5502]">en un link.</span>
+            <span className="block">{SLOGAN.line1}</span>{" "}
+            <span className="relative block w-fit bg-gradient-to-r from-[#E24E00] to-[#C73E00] bg-clip-text text-transparent">{SLOGAN.line2}</span>
           </h1>
           <p className="site-rise mt-8 max-w-[34ch] text-xl leading-snug text-[#0E1B2C]/80 sm:text-2xl" style={{ "--d": "120ms" } as React.CSSProperties}>
-            Armá la página de tu negocio desde el celular. Tus clientes eligen y te piden por WhatsApp, sin comisión por venta.
+            {SLOGAN.sub}
           </p>
-          <div className="site-rise mt-9 flex flex-wrap items-center gap-4" style={{ "--d": "240ms" } as React.CSSProperties}>
-            <Link href="/crear" className={ctaSol}>Creá tu página gratis</Link>
-            <a href="#elegi-tu-rubro" className={ctaGhost}>Elegí tu rubro</a>
-            <p className="basis-full text-sm font-medium text-[#0E1B2C]/70">Empezás en 5 minutos. Sin instalar nada.</p>
+          <div className="site-rise mt-9 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:gap-4" style={{ "--d": "240ms" } as React.CSSProperties}>
+            <Link href="/crear" className={`${ctaSol} w-full sm:w-auto`}>Creá tu página gratis</Link>
+            <a href="#elegi-tu-rubro" className={`${ctaGhost} w-full sm:w-auto`}>Ver ejemplos</a>
+            <p className="basis-full text-sm font-medium text-[#0E1B2C]/70">Gratis para empezar, listo en 5 minutos. Sin instalar nada.</p>
           </div>
         </div>
         <HeroStage />
@@ -179,10 +180,10 @@ async function PlansList() {
     <ul className="mt-12 grid gap-6 md:grid-cols-3">
       {plans.map((p) => (
         <li key={p.id} className={`relative flex flex-col rounded-3xl border-2 bg-white p-7 ${p.priceMonthly === 0 ? "border-[#15803D] shadow-[0_30px_60px_-30px_rgba(21,128,61,0.55)] md:-translate-y-2" : "border-border"}`}>
-          {p.priceMonthly === 0 && <span className="absolute -top-3.5 left-7 rounded-full bg-[#15803D] px-3.5 py-1 text-xs font-extrabold uppercase tracking-wide text-white">Empezá acá · gratis</span>}
           <h3 className="mk-display text-2xl font-bold">{p.name}</h3>
+          {p.priceMonthly === 0 && <p className="mt-1 text-sm font-semibold text-[#15803D]">Para empezar hoy, sin tarjeta</p>}
           <p className="mk-display mt-3 text-4xl font-extrabold tracking-tight">
-            {p.priceMonthly === 0 ? "Gratis" : formatPrice(p.priceMonthly)}<span className="text-base font-semibold text-muted-foreground">{p.priceMonthly === 0 ? " para siempre" : " por mes, por página"}</span>
+            {p.priceMonthly === 0 ? "$ 0" : formatPrice(p.priceMonthly)}<span className="text-base font-semibold text-muted-foreground">{p.priceMonthly === 0 ? " para siempre" : " por mes, por página"}</span>
           </p>
           <ul className="mt-6 flex-1 space-y-2.5 text-[0.95rem]">
             <li className="flex gap-2.5"><Check />{p.limits.products ? `Hasta ${p.limits.products} productos` : "Productos ilimitados"}</li>
@@ -247,13 +248,13 @@ export function FinalCta() {
   return (
     <section aria-labelledby="final-title" className="relative isolate overflow-hidden bg-[#0E1B2C] text-white">
       <div aria-hidden className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
-        <div className="mk-orb absolute -right-20 -top-20 size-[30rem] rounded-full" style={{ "--orb": "rgb(116 172 223 / 0.45)" } as React.CSSProperties} />
-        <div className="mk-orb absolute -bottom-32 left-10 size-96 rounded-full" style={{ "--orb": "rgb(47 111 176 / 0.45)" } as React.CSSProperties} />
+        <div className="mk-orb absolute -right-20 -top-20 size-[30rem] rounded-full" style={{ "--orb": "rgb(252 85 2 / 0.40)" } as React.CSSProperties} />
+        <div className="mk-orb absolute -bottom-32 left-10 size-96 rounded-full" style={{ "--orb": "rgb(255 176 0 / 0.20)" } as React.CSSProperties} />
       </div>
       <div className={`${wrap} py-24 sm:py-32`}>
-        <h2 id="final-title" className="mk-display max-w-[12ch] text-5xl font-extrabold leading-[0.98] tracking-tight sm:text-7xl">Creá tu página gratis</h2>
-        <p className="mt-5 max-w-[34ch] text-xl text-white/80">En unos minutos tenés tu link listo para compartir.</p>
-        <Link href="/crear" className={`${ctaSol} mt-9`}>Empezar ahora</Link>
+        <h2 id="final-title" className="mk-display max-w-[14ch] text-5xl font-extrabold leading-[0.98] tracking-tight sm:text-7xl">Que te encuentren y te pidan.</h2>
+        <p className="mt-5 max-w-[38ch] text-xl text-white/80">En 5 minutos tenés tu página y tu link listos para la bio de Instagram, el estado de WhatsApp y un QR para el local.</p>
+        <Link href="/crear" className={`${ctaSol} mt-9`}>Crear mi página gratis</Link>
       </div>
     </section>
   );

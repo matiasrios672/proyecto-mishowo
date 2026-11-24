@@ -2,7 +2,7 @@ import { test, expect } from "@playwright/test";
 
 test("home muestra el mensaje principal", async ({ page }, info) => {
   await page.goto("/");
-  await expect(page.getByRole("heading", { level: 1 })).toContainText("Tu negocio, en un link.");
+  await expect(page.getByRole("heading", { level: 1 })).toContainText("Tu negocio, siempre abierto.");
   await page.screenshot({ path: `test-results/home-${info.project.name}.png`, fullPage: true });
 });
 

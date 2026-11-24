@@ -178,7 +178,7 @@
 
 /* ───────── Landing: escenario con cursor, vidrio y luces ─────────
    Todo lo que se mueve está dentro de "no-preference". Con movimiento reducido la página se ve completa y quieta. */
-.mk-grid { background-image: linear-gradient(rgb(47 111 176 / 0.07) 1px, transparent 1px), linear-gradient(90deg, rgb(47 111 176 / 0.07) 1px, transparent 1px); background-size: 44px 44px; mask-image: radial-gradient(70% 60% at 70% 40%, #000, transparent); }
+.mk-grid { background-image: linear-gradient(rgb(252 85 2 / 0.06) 1px, transparent 1px), linear-gradient(90deg, rgb(252 85 2 / 0.06) 1px, transparent 1px); background-size: 44px 44px; mask-image: radial-gradient(70% 60% at 70% 40%, #000, transparent); }
 .mk-draw, .mk-draw-scroll { stroke-dasharray: 1; stroke-dashoffset: 0; }
 .mk-cursor, .mk-ripple { display: none; }
 .mk-tick, .mk-n1, .mk-n2 { display: none; }
@@ -303,32 +303,55 @@
   .mk-bar { transform-origin: bottom; animation: mk-bar-grow 0.8s cubic-bezier(0.3, 1.3, 0.5, 1) both; }
 }
 
-/* ───────── Paneles (cliente y admin): estilo moderno y neutro. Fondo gris muy claro, tarjetas blancas con esquinas amplias y sombra suave, botones grafito, íconos naranjas ───────── */
+/* ───────── Paneles (cliente y admin): premium y sereno ─────────
+   Lienzo gris azulado con un velo de luz de marca, barra lateral flotante, tarjetas amplias con relieve en capas,
+   botones grafito con brillo sutil y foco naranja. Los tokens --pm-* se pueden ajustar en un solo lugar. */
 .panel-modern {
-  --radius: 14px; --background: #F6F7F9; --muted: #F1F3F5; --border: #E5E7EB; --input: #D1D5DB;
-  --primary: #1F2937; --primary-foreground: #FFFFFF; --ring: #1F2937;
-  background: #F6F7F9;
+  --radius: 15px; --background: #F3F4F8; --muted: #EDEFF4; --border: #E5E8EF; --input: #D5D9E2;
+  --primary: #151B2B; --primary-foreground: #FFFFFF; --ring: #FC5502;
+  --pm-ink: #151B2B; --pm-soft: #5B6577; --pm-line: #E5E8EF;
+  --pm-shadow: 0 1px 1px rgb(21 27 43 / 0.03), 0 2px 8px rgb(21 27 43 / 0.04), 0 22px 40px -28px rgb(21 27 43 / 0.28);
+  --pm-shadow-hover: 0 1px 1px rgb(21 27 43 / 0.04), 0 6px 16px rgb(21 27 43 / 0.06), 0 30px 48px -28px rgb(21 27 43 / 0.36);
+  background: radial-gradient(900px 460px at 88% -120px, rgb(252 85 2 / 0.08), transparent 70%), radial-gradient(760px 460px at -8% 8%, rgb(252 85 2 / 0.06), transparent 70%), #F3F4F8;
+  background-attachment: fixed;
+  color: var(--pm-ink);
 }
-.panel-modern :is(h1) { letter-spacing: -0.02em; font-family: var(--font-mk-display), var(--font-sans), system-ui, sans-serif; font-weight: 800; }
-/* Botones del panel en escala de grises (el naranja queda para los íconos y detalles): los rellenos naranjas pasan a grafito. */
-.panel-modern [class*="bg-[#FC5502]"], .panel-modern [class*="bg-[#C73E00]"]:not([class*="/"]) { background-color: #1F2937; color: #fff; }
-.panel-modern [class*="hover:bg-[#E04C00]"]:hover, .panel-modern [class*="hover:bg-[#A23200]"]:hover { background-color: #111827; }
-.panel-modern button:is([class*="bg-[#FC5502]"], [class*="bg-primary"]):disabled { background-color: #6B7280; }
+.panel-modern :is(h1, h2, h3) { color: var(--pm-ink); }
+.panel-modern h1 { letter-spacing: -0.025em; font-family: var(--font-mk-display), var(--font-sans), system-ui, sans-serif; font-weight: 800; line-height: 1.15; font-size: 1.75rem; }
+.panel-modern h2 { letter-spacing: -0.01em; }
+.panel-modern .text-muted-foreground { color: var(--pm-soft); }
+.panel-modern ::selection { background: rgb(252 85 2 / 0.22); }
+/* Botones del panel: el relleno naranja pasa a grafito con un brillo fino arriba; el naranja queda para íconos, foco y detalles. */
+.panel-modern [class*="bg-[#FC5502]"]:not([class*="group-hover:bg-"]), .panel-modern [class*="bg-[#C73E00]"]:not([class*="/"], [class*="group-hover:bg-"]) { background-color: #1B2336; background-image: linear-gradient(180deg, #2B3550 0%, #151B2B 100%); color: #fff; box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.14), 0 8px 16px -8px rgb(21 27 43 / 0.55); }
+.panel-modern [class*="hover:bg-[#E04C00]"]:hover, .panel-modern [class*="hover:bg-[#A23200]"]:hover { background-color: #0E1320; background-image: linear-gradient(180deg, #232C44 0%, #0E1320 100%); }
+.panel-modern button:is([class*="bg-[#FC5502]"], [class*="bg-primary"]):disabled { background-color: #8A93A5; background-image: none; box-shadow: none; }
 .panel-modern [class*="border-[#FC5502]"] { border-color: #9CA3AF; }
-/* Todo bloque con borde (listas, formularios, tablas) se vuelve una tarjeta: blanca, redondeada y con relieve leve. */
-.panel-modern :is(.rounded-xl, .rounded-2xl).border:not(input, select, textarea, button, a, label, span, li > a) { background-color: #fff; box-shadow: 0 1px 2px rgb(17 24 39 / 0.04), 0 14px 28px -20px rgb(17 24 39 / 0.28); border-color: #E5E7EB; transition: box-shadow 0.25s, transform 0.25s, border-color 0.25s; }
-.panel-modern :is(.rounded-xl, .rounded-2xl).border.divide-y > * + *, .panel-modern :is(.rounded-xl, .rounded-2xl).border:is(ul, ol) > li + li { border-color: #EEF0F3; }
+/* Todo bloque con borde (listas, formularios, tablas) se vuelve una tarjeta: blanca, amplia y con relieve en capas. */
+.panel-modern :is(.rounded-xl, .rounded-2xl).border:not(input, select, textarea, button, a, label, span, li > a) { background-color: #fff; box-shadow: var(--pm-shadow); border-color: rgb(229 232 239 / 0.9); transition: box-shadow 0.25s, transform 0.25s, border-color 0.25s; }
+.panel-modern :is(.rounded-xl, .rounded-2xl).border.divide-y > * + *, .panel-modern :is(.rounded-xl, .rounded-2xl).border:is(ul, ol) > li + li { border-color: #EDEFF4; }
 .panel-modern table { border-collapse: separate; border-spacing: 0; }
-.panel-modern thead { background: #F3F4F6; }
+.panel-modern thead { background: #F6F7FA; }
+.panel-modern thead th { font-size: 0.75rem; font-weight: 600; color: var(--pm-soft); letter-spacing: 0.01em; }
 .panel-modern tbody tr { transition: background-color 0.15s; }
-.panel-modern tbody tr:hover { background: #F9FAFB; }
-.panel-modern :is(input:not([type="radio"], [type="checkbox"]), select, textarea) { border-radius: 12px; border-color: #D1D5DB; background-color: #fff; transition: border-color 0.15s, box-shadow 0.15s; }
-.panel-modern :is(input:not([type="radio"], [type="checkbox"]), select, textarea):focus-visible { outline: none; border-color: #1F2937; box-shadow: 0 0 0 4px rgb(31 41 55 / 0.14); }
-.panel-modern button, .panel-modern a[class*="rounded"] { transition: background-color 0.15s, box-shadow 0.2s, transform 0.12s, border-color 0.15s; }
+.panel-modern tbody tr:hover { background: #F8F9FC; }
+.panel-modern :is(input:not([type="radio"], [type="checkbox"]), select, textarea) { border-radius: 12px; border-color: var(--input); background-color: #fff; box-shadow: 0 1px 1px rgb(21 27 43 / 0.03); transition: border-color 0.15s, box-shadow 0.15s; }
+.panel-modern :is(input:not([type="radio"], [type="checkbox"]), select, textarea):hover { border-color: #B9BFCC; }
+.panel-modern :is(input:not([type="radio"], [type="checkbox"]), select, textarea):focus-visible { outline: none; border-color: #FC5502; box-shadow: 0 0 0 4px rgb(252 85 2 / 0.16); }
+.panel-modern :is(input[type="checkbox"], input[type="radio"]) { accent-color: #FC5502; }
+.panel-modern button, .panel-modern a[class*="rounded"] { transition: background-color 0.15s, box-shadow 0.2s, transform 0.12s, border-color 0.15s, color 0.15s; }
 .panel-modern button:active:not(:disabled) { transform: translateY(1px) scale(0.99); }
+.panel-modern :is(button, a, summary, [tabindex]):focus-visible { outline: 2px solid #FC5502; outline-offset: 2px; }
 .panel-modern details[data-testid="page-help"] summary { list-style: none; }
 .panel-modern details[data-testid="page-help"] summary::-webkit-details-marker { display: none; }
-.panel-modern details[data-testid="page-help"] summary::before { content: "?"; display: inline-grid; place-items: center; width: 1.25rem; height: 1.25rem; margin-right: 0.4rem; border-radius: 999px; background: #FC5502; color: #0E1B2C; font-weight: 800; font-size: 0.75rem; }
+.panel-modern details[data-testid="page-help"] summary::before { content: "?"; display: inline-grid; place-items: center; width: 1.25rem; height: 1.25rem; margin-right: 0.4rem; border-radius: 999px; background: #FC5502; color: #fff; font-weight: 800; font-size: 0.75rem; }
+/* Barra lateral flotante */
+.pm-side { background: rgb(255 255 255 / 0.82); -webkit-backdrop-filter: saturate(1.4) blur(14px); backdrop-filter: saturate(1.4) blur(14px); }
+@media (min-width: 1024px) { .pm-side { margin: 0.75rem 0 0.75rem 0.75rem; height: calc(100dvh - 1.5rem) !important; border-radius: 24px; border: 1px solid rgb(229 232 239 / 0.9); box-shadow: var(--pm-shadow); } }
+.pm-navlink { position: relative; }
+.pm-navlink[aria-current="page"]::before { content: ""; position: absolute; left: -0.5rem; top: 22%; bottom: 22%; width: 3px; border-radius: 3px; background: #FC5502; box-shadow: 0 0 10px rgb(252 85 2 / 0.7); }
+/* Encabezado de cada pantalla: título, bajada y acciones alineados */
+.pm-head { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 0.75rem 1.5rem; padding-bottom: 1.25rem; margin-bottom: 0.25rem; }
+.pm-eyebrow-dot { display: inline-block; width: 0.45rem; height: 0.45rem; border-radius: 999px; background: #FC5502; box-shadow: 0 0 0 4px rgb(252 85 2 / 0.14); }
 
 /* ───────── Movimiento del panel (solo si la persona no pidió menos movimiento) ───────── */
 @keyframes panel-rise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
@@ -390,3 +413,17 @@
 }
 
 @keyframes toast-in { from { opacity: 0; transform: translateY(-8px) translateX(8px); } to { opacity: 1; transform: none; } }
+/* Desplazamiento fino y discreto dentro de la barra lateral */
+.pm-scroll { scrollbar-width: thin; scrollbar-color: #D5D9E2 transparent; }
+.pm-scroll::-webkit-scrollbar { width: 6px; }
+.pm-scroll::-webkit-scrollbar-thumb { background: #D5D9E2; border-radius: 999px; }
+
+/* Ingreso y registro: campos y botón con el mismo trato que los paneles (esquinas amplias, foco naranja) */
+.auth-card :is(input:not([type="radio"], [type="checkbox"]), select, textarea) { border-radius: 14px; border-color: #D5D9E2; background-color: #fff; box-shadow: 0 1px 1px rgb(21 27 43 / 0.03); transition: border-color 0.15s, box-shadow 0.15s; }
+.auth-card :is(input:not([type="radio"], [type="checkbox"]), select, textarea):hover { border-color: #B9BFCC; }
+.auth-card :is(input:not([type="radio"], [type="checkbox"]), select, textarea):focus-visible { outline: none; border-color: #FC5502; box-shadow: 0 0 0 4px rgb(252 85 2 / 0.16); }
+.auth-card button[type="submit"] { border-radius: 14px; background-image: linear-gradient(180deg, #D14300 0%, #B83700 100%); color: #fff; box-shadow: 0 14px 26px -14px rgba(184, 55, 0, 0.8), inset 0 1px 0 rgb(255 255 255 / 0.35); transition: transform 0.12s, box-shadow 0.2s, filter 0.15s; }
+.auth-card button[type="submit"]:hover:not(:disabled) { filter: brightness(1.04); transform: translateY(-1px); }
+
+/* Barra superior de los paneles: cuenta, avisos y salir en la esquina superior derecha, pegada arriba al hacer scroll */
+.pm-topbar { position: sticky; top: 0; background: linear-gradient(180deg, rgb(243 244 248 / 0.92), rgb(243 244 248 / 0.72)); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); }

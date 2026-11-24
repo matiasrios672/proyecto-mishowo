@@ -9,6 +9,7 @@ import { IconArrowLeft, IconArrowRight, IconImage, IconRedo, IconUndo } from "@/
 import { SiteView } from "@/components/site/SiteView";
 import { draftToSite } from "@/lib/site";
 import { withMedia, type MediaItem } from "@/lib/previewMedia";
+import { DeviceFrame } from "./DeviceFrame";
 import { quality, type EditorTab } from "@/lib/score";
 import { clearDraft, contentToDraft, type Draft } from "@/lib/draft";
 import { clearSyncMarker, fetchServerBusiness } from "@/lib/serverSync";
@@ -132,11 +133,7 @@ export function Editor({ initial, sync, module = "all" }: { initial: Draft; sync
   }, [syncEnabled]);
 
   const props = { draft, update, goTab, account: { enabled: syncEnabled, settle: settleNow }, onMedia: setMedia };
-  const preview = (
-    <div className={`mx-auto bg-background ${device === "celular" ? "w-[390px] max-w-full rounded-[2rem] border-8 border-foreground/80" : "w-full max-w-5xl rounded-lg border"} overflow-hidden`} data-testid="preview-frame" data-device={device}>
-      <SiteView site={site} preview />
-    </div>
-  );
+  const preview = <DeviceFrame device={device}><SiteView site={site} preview /></DeviceFrame>;
 
   const idx = TABS.findIndex((t) => t.id === tab);
   const prev = TABS[idx - 1];
@@ -191,7 +188,7 @@ export function Editor({ initial, sync, module = "all" }: { initial: Draft; sync
         </div>
       )}
 
-      <div className={`flex min-h-0 flex-1 flex-col lg:grid lg:grid-cols-[minmax(0,32rem)_minmax(0,1fr)] lg:grid-rows-[auto_minmax(0,1fr)] ${rail ? "xl:grid-cols-[15rem_minmax(0,30rem)_minmax(0,1fr)] xl:grid-rows-1" : ""}`}>
+      <div className={`flex min-h-0 flex-1 flex-col lg:grid lg:grid-cols-[minmax(0,36rem)_minmax(0,1fr)] lg:grid-rows-[auto_minmax(0,1fr)] ${rail ? "xl:grid-cols-[15rem_minmax(0,30rem)_minmax(0,1fr)] xl:grid-rows-1" : ""}`}>
         <div role="tablist" aria-label="Secciones del editor" aria-orientation="horizontal"
           onKeyDown={(e) => {
             const keys = ["ArrowRight", "ArrowLeft", "ArrowDown", "ArrowUp", "Home", "End"];
@@ -201,13 +198,13 @@ export function Editor({ initial, sync, module = "all" }: { initial: Draft; sync
             setTab(TABS[i]!.id);
             document.getElementById(`tab-${TABS[i]!.id}`)?.focus();
           }}
-          className={`${rail ? "mk-tabstrip overflow-x-auto" : "mk-tabstrip-m overflow-x-auto lg:flex-wrap lg:overflow-visible"} relative flex shrink-0 gap-1 border-b border-[#E5E7EB] bg-[#F9FAFB] px-2 py-2 lg:col-start-1 lg:row-start-1 ${rail ? "xl:flex-col xl:gap-0.5 xl:overflow-y-auto xl:border-b-0 xl:border-r xl:px-3 xl:py-4" : ""} ${mobileView === "ver" ? "hidden lg:flex" : "flex"}`}>
+          className={`${rail ? "mk-tabstrip overflow-x-auto border-b bg-[#F9FAFB] px-2 py-2" : "mk-tabstrip-m overflow-x-auto border-b bg-white px-3 py-3 lg:overflow-visible"} relative flex shrink-0 gap-1.5 border-[#E5E8EF] lg:col-start-1 lg:row-start-1 ${rail ? "xl:flex-col xl:gap-0.5 xl:overflow-y-auto xl:border-b-0 xl:border-r xl:px-3 xl:py-4" : ""} ${mobileView === "ver" ? "hidden lg:flex" : "flex"}`}>
           {TABS.map((t, n) => (
             <button key={t.id} id={`tab-${t.id}`} role="tab" type="button" aria-label={t.label} aria-posinset={n + 1} aria-setsize={TABS.length} title={t.hint} aria-selected={tab === t.id} aria-controls="panel" tabIndex={tab === t.id ? 0 : -1}
               onClick={() => setTab(t.id)} ref={(el) => { if (el && tab === t.id) el.scrollIntoView?.({ block: "nearest", inline: "center" }); }}
-              className={`flex min-h-11 shrink-0 items-center gap-2.5 whitespace-nowrap rounded-xl px-3.5 text-[15px] font-semibold transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring ${rail ? "xl:w-full" : ""} ${tab === t.id ? "bg-[#FC5502] text-[#0E1B2C] shadow-[0_8px_18px_-10px_rgba(252,85,2,0.9)]" : "text-[#0E1B2C] hover:bg-[#F1F3F5]"}`}>
+              className={`flex shrink-0 whitespace-nowrap rounded-xl font-semibold transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring ${rail ? "min-h-11 items-center gap-2.5 px-3.5 text-[15px] xl:w-full" : "min-h-[3.75rem] min-w-[5.25rem] flex-1 flex-col items-center justify-center gap-1 px-2 text-[13px]"} ${tab === t.id ? "bg-[#FC5502] text-[#0E1B2C] shadow-[0_8px_18px_-10px_rgba(252,85,2,0.9)]" : "text-[#0E1B2C] hover:bg-[#F1F3F5]"}`}>
               <t.Icon className={`size-5 shrink-0 ${tab === t.id ? "text-white" : "text-[#C73E00]"}`} />
-              <span className="flex flex-col items-start text-left leading-tight">
+              <span className={`flex flex-col leading-tight ${rail ? "items-start text-left" : "items-center text-center"}`}>
                 <span>{t.label}</span>
                 <span className={`${rail ? "hidden text-xs font-normal xl:block" : "hidden"} ${tab === t.id ? "text-white/80" : "text-[#47566A]"}`}>{t.hint}</span>
               </span>
@@ -243,7 +240,7 @@ export function Editor({ initial, sync, module = "all" }: { initial: Draft; sync
             </div>
             <Button size="sm" variant="outline" className="min-h-9 px-3" onClick={() => setFullscreen(true)}>Pantalla completa</Button>
           </div>
-          <div className="min-h-0 flex-1 overflow-y-auto p-4">{preview}</div>
+          <div className="relative min-h-0 flex-1">{preview}</div>
         </aside>
       </div>
 

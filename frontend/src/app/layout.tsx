@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"),
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"),
   title: { default: "MiShowo — Tu página que vende y crece con vos", template: "%s · MiShowo" },
   description:
     "Creá la página de tu negocio desde el celular en minutos: carta, catálogo o servicios, pedidos por WhatsApp si querés y un link listo para tu bio de Instagram.",

@@ -25,7 +25,7 @@ export function StickyCta() {
     <div aria-hidden={!show} className={`pointer-events-none fixed inset-x-0 bottom-5 z-40 flex justify-center px-4 transition-all duration-300 ${show ? "translate-y-0 opacity-100" : "translate-y-6 opacity-0"}`}>
       <Link href="/crear" tabIndex={show ? 0 : -1} className="pointer-events-auto inline-flex min-h-12 items-center gap-2 rounded-full bg-[#0E1B2C] px-6 font-bold text-white shadow-[0_20px_40px_-12px_rgba(14,27,44,0.6)] ring-1 ring-white/20 transition hover:bg-[#1A2B42] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring">
         Creá tu página gratis
-        <span aria-hidden className="grid size-6 place-items-center rounded-full bg-[#FC5502] text-sm text-[#0E1B2C]">→</span>
+        <span aria-hidden className="grid size-6 place-items-center rounded-full bg-[#D14300] text-sm text-white">→</span>
       </Link>
     </div>
   );
