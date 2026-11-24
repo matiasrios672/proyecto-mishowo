@@ -6,6 +6,7 @@ import type { Db } from "../db/tenant.js";
 import * as s from "../db/schema.js";
 import { requireUser } from "../auth/session.js";
 import { modulesForPlan } from "../lib/modules.js";
+import { ownedWhere, pageSelector } from "../lib/activeBusiness.js";
 
 const BOT = /bot|crawl|spider|slurp|headless|preview|facebookexternalhit|whatsapp|telegram|curl|wget|python|node-fetch/i;
 // El visitante es un hash de (sal + día + IP + navegador). No se guarda la IP, no hay cookies y mañana el mismo
@@ -78,7 +79,7 @@ export function statsRoutes(app: FastifyInstance, db: Db) {
     if (!user) return;
     const q = rangeQuery.safeParse(req.query);
     if (!q.success) return reply.code(400).send({ error: "invalid_request" });
-    const [biz] = await db.select({ id: s.businesses.id, planId: s.businesses.planId }).from(s.businesses).where(and(eq(s.businesses.ownerId, user.id), isNull(s.businesses.deletedAt)));
+    const [biz] = await db.select({ id: s.businesses.id, planId: s.businesses.planId }).from(s.businesses).where(ownedWhere(user.id, pageSelector(req)));
     if (!biz) return reply.code(404).send({ error: "no_business" });
     // Sin el módulo de estadísticas completas, el rango se recorta a 7 días (el panel avisa y ofrece mejorar el plan).
     const full = (await modulesForPlan(db, biz.planId)).stats_full;

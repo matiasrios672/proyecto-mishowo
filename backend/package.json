@@ -14,7 +14,8 @@
     "db:migrate": "tsx src/migrate.ts",
     "db:seed": "tsx src/seed.ts",
     "cron": "tsx src/cron.ts",
-    "admin:promote": "tsx src/admin-cli.ts"
+    "admin:promote": "tsx src/admin-cli.ts",
+    "admin:reset": "tsx src/admin-reset.ts"
   },
   "dependencies": {
     "@fastify/cookie": "^11.1.5",

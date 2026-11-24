@@ -256,4 +256,34 @@ describe("bandeja de consultas y alta del equipo", () => {
     expect((await env.call("POST", "/admin/admins/invite", owner.cookie, { email: "owner@test.com", name: "Yo", role: "admin" })).json().error).toBe("is_owner");
     expect((await env.call("POST", "/admin/admins/invite", owner.cookie, { email: "x@test.com", name: "X", role: "owner" })).statusCode).toBe(400);
   });
+
+  it("el Owner escribe al equipo, reenvía invitaciones y reinicia el 2FA; nadie más puede", async () => {
+    const owner = await env.admin("owner@test.com", "owner");
+    const adm = await env.admin("admin@test.com", "admin");
+    await env.call("POST", "/admin/admins/invite", owner.cookie, { email: "sofi@test.com", name: "Sofi", role: "support" });
+    const [sofi] = (await conn.pool.query("select id from users where email = 'sofi@test.com'")).rows;
+    env.mailer.outbox.length = 0;
+
+    expect((await env.call("POST", `/admin/admins/${sofi.id}/email`, adm.cookie, { subject: "Hola", body: "Reunión mañana" })).statusCode).toBe(403);
+    expect((await env.call("POST", `/admin/admins/${sofi.id}/email`, owner.cookie, { subject: "x", body: "" })).statusCode).toBe(400);
+    expect((await env.call("POST", `/admin/admins/${sofi.id}/email`, owner.cookie, { subject: "Reunión", body: "Mañana a las 10" })).statusCode).toBe(200);
+    expect(env.mailer.outbox.find((m) => m.to === "sofi@test.com")?.subject).toBe("Reunión");
+    expect((await lastAudit(conn, "admin.email")).after).toMatchObject({ subject: "Reunión" });
+
+    env.mailer.outbox.length = 0;
+    const all = await env.call("POST", "/admin/admins/email", owner.cookie, { subject: "Aviso", body: "Cambia el horario" });
+    expect(all.json()).toEqual({ sent: 3, failed: 0 });
+    expect(env.mailer.outbox.map((m) => m.to).sort()).toEqual(["admin@test.com", "owner@test.com", "sofi@test.com"]);
+
+    env.mailer.outbox.length = 0;
+    const first = tokenFrom((await env.call("POST", `/admin/admins/${sofi.id}/resend-invite`, owner.cookie, {})).statusCode === 200 ? env.mailer.outbox[0]!.text : "");
+    expect(first).toBeTruthy();
+    expect((await env.call("POST", `/admin/admins/${sofi.id}/resend-invite`, adm.cookie, {})).statusCode).toBe(403);
+
+    await conn.pool.query("update users set totp_secret = 'x', totp_enabled_at = now() where id = $1", [sofi.id]);
+    expect((await env.call("POST", `/admin/admins/${sofi.id}/reset-2fa`, owner.cookie, {})).statusCode).toBe(200);
+    const row = (await conn.pool.query("select totp_secret, totp_enabled_at from users where id = $1", [sofi.id])).rows[0];
+    expect(row).toEqual({ totp_secret: null, totp_enabled_at: null });
+    expect((await lastAudit(conn, "admin.reset_2fa")).entity_id ?? (await lastAudit(conn, "admin.reset_2fa")).entityId).toBe(sofi.id);
+  });
 });

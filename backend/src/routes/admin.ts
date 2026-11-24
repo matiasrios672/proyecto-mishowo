@@ -1,5 +1,5 @@
 import type { FastifyInstance } from "fastify";
-import { and, desc, eq, ilike, isNull, or, sql } from "drizzle-orm";
+import { and, desc, eq, ilike, isNotNull, isNull, ne, notLike, or, sql } from "drizzle-orm";
 import { z } from "zod";
 import type { Config } from "../config.js";
 import type { Db } from "../db/tenant.js";
@@ -252,10 +252,12 @@ export function adminRoutes(app: FastifyInstance, db: Db, config: Config, mailer
   app.get("/admin/users", async (req, reply) => {
     const ctx = await requirePerm(db, config, req, reply, "usuarios","view");
     if (!ctx) return;
-    const q = z.object({ q: z.string().max(80).optional(), page }).safeParse(req.query);
+    const q = z.object({ q: z.string().max(80).optional(), filter: z.enum(["all", "clients", "team", "unverified", "blocked"]).default("all"), page }).safeParse(req.query);
     if (!q.success) return reply.code(400).send({ error: "invalid_request" });
     const term = q.data.q?.trim();
-    const where = term ? or(ilike(s.users.email, `%${term}%`), ilike(s.users.name, `%${term}%`)) : undefined;
+    const byFilter = { all: undefined, clients: eq(s.users.role, "user"), team: ne(s.users.role, "user"), unverified: isNull(s.users.emailVerifiedAt), blocked: isNotNull(s.users.blockedAt) }[q.data.filter];
+    // La cuenta técnica de los negocios de ejemplo no es una persona: no se lista.
+    const where = and(notLike(s.users.email, "%@mishowo.local"), byFilter, term ? or(ilike(s.users.email, `%${term}%`), ilike(s.users.name, `%${term}%`)) : undefined);
     const [rows, total] = await Promise.all([
       db.select({ id: s.users.id, email: s.users.email, name: s.users.name, role: s.users.role, emailVerifiedAt: s.users.emailVerifiedAt, blockedAt: s.users.blockedAt, lastLoginAt: s.users.lastLoginAt, createdAt: s.users.createdAt })
         .from(s.users).where(where).orderBy(desc(s.users.createdAt)).limit(PAGE).offset((q.data.page - 1) * PAGE),

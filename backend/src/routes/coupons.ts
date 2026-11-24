@@ -6,6 +6,7 @@ import * as s from "../db/schema.js";
 import { modulesForPlan } from "../lib/modules.js";
 import { requireUser } from "../auth/session.js";
 import { CouponError, normalizeCode, previewCoupon } from "../coupons/apply.js";
+import { ownedWhere, pageSelector } from "../lib/activeBusiness.js";
 
 const DEFAULT_COUPON_LIMIT = 3; // si el plan no define limits.coupons (null = ilimitados)
 const money = z.number().min(0).max(100_000_000);
@@ -32,7 +33,7 @@ export function couponPanelRoutes(app: FastifyInstance, db: Db) {
   async function business(req: Parameters<typeof requireUser>[1], reply: Parameters<typeof requireUser>[2]) {
     const user = await requireUser(db, req, reply);
     if (!user) return null;
-    const [biz] = await db.select({ id: s.businesses.id, planId: s.businesses.planId }).from(s.businesses).where(and(eq(s.businesses.ownerId, user.id), isNull(s.businesses.deletedAt)));
+    const [biz] = await db.select({ id: s.businesses.id, planId: s.businesses.planId }).from(s.businesses).where(ownedWhere(user.id, pageSelector(req)));
     if (!biz) { reply.code(404).send({ error: "no_business" }); return null; }
     return biz;
   }

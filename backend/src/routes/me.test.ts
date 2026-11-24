@@ -68,7 +68,7 @@ describe("crear y leer", () => {
   it("el primer guardado crea el negocio (borrador, slug provisorio válido) y el catálogo", async () => {
     const res = await put(cookieA, null, doc());
     expect(res.statusCode).toBe(201);
-    expect(res.json()).toEqual({ version: 1 });
+    expect(res.json()).toMatchObject({ version: 1 });
     const b = (await conn.pool.query("select b.slug, b.status, b.plan_id, b.name, u.email from businesses b join users u on u.id = b.owner_id")).rows[0];
     expect(b).toMatchObject({ status: "draft", plan_id: "gratis", name: "Lupe", email: "a@test.com" });
     expect(b.slug).toMatch(/^mi-pagina-[0-9a-f]{8}$/);
@@ -251,5 +251,57 @@ describe("CORS desde el navegador", () => {
   it("un origen ajeno no recibe permiso", async () => {
     const res = await preflight("PUT", "https://evil.com");
     expect(res.headers["access-control-allow-origin"]).toBeUndefined();
+  });
+
+  describe("varias páginas por cuenta (el plan es por página)", () => {
+    const withPage = (cookie: string, page: string | null) => ({ cookie, origin: ORIGIN, ...(page ? { "x-business-id": page } : {}) });
+    const putPage = (cookie: string, page: string | null, baseVersion: number | null, content: object) =>
+      app.inject({ method: "PUT", url: "/me/business", payload: { baseVersion, content }, headers: withPage(cookie, page) });
+
+    it("«new» crea otra página; cada una guarda y se lee por separado; la lista muestra las dos", async () => {
+      const first = await put(cookieA, null, doc({ name: "Primera" }));
+      expect(first.statusCode).toBe(201);
+      const second = await putPage(cookieA, "new", null, doc({ name: "Segunda" }));
+      expect(second.statusCode).toBe(201);
+      const id1 = first.json().id as string, id2 = second.json().id as string;
+      expect(id1).not.toBe(id2);
+
+      const list = (await app.inject({ method: "GET", url: "/me/pages", headers: { cookie: cookieA } })).json();
+      expect(list.pages.map((p: { name: string }) => p.name)).toEqual(["Primera", "Segunda"]);
+      expect((await app.inject({ method: "GET", url: "/me/business", headers: withPage(cookieA, id2) })).json().content.name).toBe("Segunda");
+      expect((await app.inject({ method: "GET", url: "/me/business", headers: withPage(cookieA, id1) })).json().content.name).toBe("Primera");
+      // guardar una no toca la otra
+      expect((await putPage(cookieA, id2, 1, doc({ name: "Segunda v2" }))).statusCode).toBe(200);
+      expect((await app.inject({ method: "GET", url: "/me/business", headers: withPage(cookieA, id1) })).json().content.name).toBe("Primera");
+    });
+
+    it("no se puede elegir (ni guardar en) la página de otra persona, y una página borrada no crea una nueva por error", async () => {
+      const b = await put(cookieB, null, doc({ name: "De B" }));
+      const idB = b.json().id as string;
+      await put(cookieA, null, doc({ name: "De A" }));
+      expect((await app.inject({ method: "GET", url: "/me/business", headers: withPage(cookieA, idB) })).json().business).toBeNull();
+      expect((await putPage(cookieA, idB, 1, doc({ name: "Robo" }))).statusCode).toBe(404);
+      expect((await putPage(cookieA, "00000000-0000-4000-8000-000000000000", null, doc())).statusCode).toBe(404);
+      expect(await count("businesses")).toBe(2);
+    });
+
+    it("hay un tope de páginas por cuenta", async () => {
+      await put(cookieA, null, doc());
+      for (let i = 0; i < 9; i++) expect((await putPage(cookieA, "new", null, doc({ name: `P${i}` }))).statusCode).toBe(201);
+      const over = await putPage(cookieA, "new", null, doc({ name: "Una de más" }));
+      expect(over.statusCode).toBe(422);
+      expect(over.json().error).toBe("pages_limit");
+    });
+
+    it("el plan de cada página es propio: cambiar una no cambia la otra", async () => {
+      await put(cookieA, null, doc({ name: "Uno" }));
+      const second = await putPage(cookieA, "new", null, doc({ name: "Dos" }));
+      await conn.pool.query("insert into plans (id, name, price_monthly, limits) values ('pro','Pro','100','{}') on conflict do nothing");
+      await conn.pool.query("update businesses set plan_id = 'pro' where id = $1", [second.json().id]);
+      const list = (await app.inject({ method: "GET", url: "/me/pages", headers: { cookie: cookieA } })).json();
+      expect(list.pages.map((p: { planId: string }) => p.planId)).toEqual(["gratis", "pro"]);
+      const plan2 = (await app.inject({ method: "GET", url: "/me/plan", headers: withPage(cookieA, second.json().id) })).json();
+      expect(plan2.current.id).toBe("pro");
+    });
   });
 });

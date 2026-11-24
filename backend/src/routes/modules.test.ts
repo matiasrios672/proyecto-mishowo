@@ -17,7 +17,7 @@ const body = (modules: object) => ({ name: "Gratis", priceMonthly: 0, limits: { 
 
 describe("módulos por plan", () => {
   it("sin configuración, el comportamiento anterior se mantiene (y el flag viejo de turnos sigue valiendo)", () => {
-    expect(planModules({})).toMatchObject({ coupons: true, appointments: true, stats_full: true, remove_branding: false });
+    expect(planModules({})).toMatchObject({ coupons: true, appointments: true, stats_full: true });
     expect(planModules({ appointments: false }).appointments).toBe(false);
     expect(planModules({ appointments: false, modules: { appointments: true } }).appointments).toBe(true);
   });
@@ -50,11 +50,11 @@ describe("módulos por plan", () => {
 
   it("guardar el plan no pisa los límites que el formulario no muestra, y rechaza módulos inventados", async () => {
     const adm = await env.admin("admin@test.com", "admin");
-    await env.call("PUT", "/admin/plans/pro", adm.cookie, { ...body({ remove_branding: true }), name: "Pro", priceMonthly: 100 });
+    await env.call("PUT", "/admin/plans/pro", adm.cookie, { ...body({ pixels: true }), name: "Pro", priceMonthly: 100 });
     const list = (await env.call("GET", "/admin/plans", adm.cookie)).json();
     const pro = list.plans.find((p: { id: string }) => p.id === "pro");
     expect(pro.limits.coupons).toBe(2);
-    expect(pro.modules.remove_branding).toBe(true);
+    expect(pro.modules.pixels).toBe(true);
     expect(list.modules.map((m: { key: string }) => m.key)).toContain("appointments");
     const bad = await env.call("PUT", "/admin/plans/pro", adm.cookie, { ...body({ hackear: true }), name: "Pro", priceMonthly: 100 });
     expect(bad.statusCode).toBe(400);

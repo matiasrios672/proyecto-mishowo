@@ -7,6 +7,7 @@ import * as s from "../db/schema.js";
 import { modulesForPlan } from "../lib/modules.js";
 import { requireUser } from "../auth/session.js";
 import { sha256 } from "../lib/security.js";
+import { ownedWhere, pageSelector } from "../lib/activeBusiness.js";
 
 const slug = z.string().min(2).max(30).regex(/^[a-z0-9-]+$/);
 const bodySchema = z.object({
@@ -68,7 +69,7 @@ export function reviewPanelRoutes(app: FastifyInstance, db: Db) {
   async function business(req: Parameters<typeof requireUser>[1], reply: Parameters<typeof requireUser>[2]) {
     const user = await requireUser(db, req, reply);
     if (!user) return null;
-    const [biz] = await db.select({ id: s.businesses.id, planId: s.businesses.planId }).from(s.businesses).where(and(eq(s.businesses.ownerId, user.id), isNull(s.businesses.deletedAt)));
+    const [biz] = await db.select({ id: s.businesses.id, planId: s.businesses.planId }).from(s.businesses).where(ownedWhere(user.id, pageSelector(req)));
     if (!biz) { reply.code(404).send({ error: "no_business" }); return null; }
     return biz;
   }

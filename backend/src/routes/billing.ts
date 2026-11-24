@@ -1,6 +1,6 @@
 import { randomBytes } from "node:crypto";
 import type { FastifyInstance } from "fastify";
-import { and, asc, count, desc, eq, isNull } from "drizzle-orm";
+import { and, asc, count, desc, eq } from "drizzle-orm";
 import { z } from "zod";
 import type { Db } from "../db/tenant.js";
 import * as s from "../db/schema.js";
@@ -11,6 +11,7 @@ import type { StorageProvider } from "../storage/index.js";
 import { sniff } from "../storage/sniff.js";
 import { requireUser } from "../auth/session.js";
 import { getPaymentInfo } from "../billing/settings.js";
+import { ownedWhere, pageSelector } from "../lib/activeBusiness.js";
 
 export const MONTHS = [1, 3, 6, 12] as const;
 export const MAX_PENDING = 3;
@@ -27,7 +28,7 @@ export function billingRoutes(app: FastifyInstance, db: Db, storage: StorageProv
   async function business(req: Parameters<typeof requireUser>[1], reply: Parameters<typeof requireUser>[2]) {
     const user = await requireUser(db, req, reply);
     if (!user) return null;
-    const [biz] = await db.select().from(s.businesses).where(and(eq(s.businesses.ownerId, user.id), isNull(s.businesses.deletedAt)));
+    const [biz] = await db.select().from(s.businesses).where(ownedWhere(user.id, pageSelector(req)));
     if (!biz) { reply.code(404).send({ error: "no_business" }); return null; }
     return { user, biz };
   }

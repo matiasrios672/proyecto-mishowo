@@ -10,6 +10,7 @@ import { addDays, daySlots, isDate, isTime, todayAR, toInstant } from "../appoin
 import { freeFor, normServices, normStaff, serviceSchema, staffSchema, type Service, type Staff } from "../appointments/catalog.js";
 import { sendTemplate } from "../mail/service.js";
 import { apptVars } from "../appointments/notify.js";
+import { ownedWhere, pageSelector } from "../lib/activeBusiness.js";
 
 const DEFAULTS = { slotMinutes: 30, minNoticeHours: 2, capacity: 1, horizonDays: 30, services: [] as Service[], staff: [] as Staff[] };
 const settingsBody = z.object({
@@ -42,7 +43,7 @@ export function appointmentPanelRoutes(app: FastifyInstance, db: Db, mailer?: Ma
   async function business(req: Parameters<typeof requireUser>[1], reply: Parameters<typeof requireUser>[2]) {
     const user = await requireUser(db, req, reply);
     if (!user) return null;
-    const [biz] = await db.select({ id: s.businesses.id, planId: s.businesses.planId, name: s.businesses.name }).from(s.businesses).where(and(eq(s.businesses.ownerId, user.id), isNull(s.businesses.deletedAt)));
+    const [biz] = await db.select({ id: s.businesses.id, planId: s.businesses.planId, name: s.businesses.name }).from(s.businesses).where(ownedWhere(user.id, pageSelector(req)));
     if (!biz) { reply.code(404).send({ error: "no_business" }); return null; }
     return biz;
   }

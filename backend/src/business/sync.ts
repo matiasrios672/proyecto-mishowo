@@ -4,6 +4,7 @@ import type { Db } from "../db/tenant.js";
 import * as s from "../db/schema.js";
 import { defaultHours, type Content } from "./content.js";
 import { productLimit, realProducts } from "./publish.js";
+import { MAX_PAGES_PER_ACCOUNT, NEW_PAGE, activePage, ownedWhere } from "../lib/activeBusiness.js";
 
 type Tx = Parameters<Parameters<Db["transaction"]>[0]>[0];
 const CHUNK = 300;
@@ -24,7 +25,9 @@ function readInstallments(raw: unknown): Content["installments"] {
 }
 
 export type SaveResult =
-  | { status: "ok"; version: number; created: boolean; published: string | null }
+  | { status: "ok"; version: number; id: string; created: boolean; published: string | null }
+  | { status: "pages_limit"; limit: number }
+  | { status: "not_found" }
   | { status: "conflict"; version: number }
   | { status: "limit"; limit: number; count: number };
 
@@ -55,11 +58,15 @@ const placeholderSlug = () => `mi-pagina-${randomBytes(4).toString("hex")}`;
  * `baseVersion` tiene que coincidir con la versión del servidor; si no, hay un cambio más nuevo
  * (otro dispositivo o pestaña) y se devuelve conflicto en vez de pisarlo.
  */
-export async function saveContent(db: Db, userId: string, baseVersion: number | null, content: Content): Promise<SaveResult> {
+export async function saveContent(db: Db, userId: string, baseVersion: number | null, content: Content, sel: string | null = null): Promise<SaveResult> {
   return db.transaction(async (tx) => {
     await tx.execute(sql`select pg_advisory_xact_lock(hashtext(${"business:" + userId}))`);
-    const [existing] = await tx.select().from(s.businesses)
-      .where(and(eq(s.businesses.ownerId, userId), isNull(s.businesses.deletedAt)));
+    const existing = await activePage(tx as unknown as Db, userId, sel) ?? undefined;
+    if (!existing && sel !== null && sel !== NEW_PAGE) return { status: "not_found" as const }; // una página elegida que ya no es suya: no se crea otra por error
+    if (!existing && sel === NEW_PAGE) {
+      const [{ n } = { n: 0 }] = await tx.select({ n: sql<number>`count(*)::int` }).from(s.businesses).where(ownedWhere(userId, null));
+      if (n >= MAX_PAGES_PER_ACCOUNT) return { status: "pages_limit" as const, limit: MAX_PAGES_PER_ACCOUNT };
+    }
 
     // Límite del plan (lo edita el admin): se cuentan solo los productos propios, no los de ejemplo.
     const limit = await productLimit(tx, existing?.planId ?? "gratis");
@@ -83,7 +90,7 @@ export async function saveContent(db: Db, userId: string, baseVersion: number | 
     }
 
     await reconcileCatalog(tx, businessId, content);
-    return { status: "ok" as const, version, created: !existing, published: existing?.status === "published" ? existing.slug : null };
+    return { status: "ok" as const, version, id: businessId, created: !existing, published: existing?.status === "published" ? existing.slug : null };
   });
 }
 
@@ -148,8 +155,8 @@ async function reconcileCatalog(tx: Tx, businessId: string, c: Content) {
 const numOrNull = (v: string | null) => (v === null ? null : Number(v));
 
 /** Documento del editor a partir de las filas del servidor (para abrir el editor en otro dispositivo). */
-export async function loadContent(db: Db, userId: string) {
-  const [b] = await db.select().from(s.businesses).where(and(eq(s.businesses.ownerId, userId), isNull(s.businesses.deletedAt)));
+export async function loadContent(db: Db, userId: string, sel: string | null = null) {
+  const b = await activePage(db, userId, sel);
   if (!b) return null;
   const [cats, prods, opts] = await Promise.all([
     db.select().from(s.categories).where(eq(s.categories.businessId, b.id)).orderBy(asc(s.categories.position)),

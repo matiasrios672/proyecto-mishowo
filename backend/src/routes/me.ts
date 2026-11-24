@@ -1,5 +1,5 @@
 import type { FastifyInstance } from "fastify";
-import { and, eq, isNull, ne, sql } from "drizzle-orm";
+import { asc, and, eq, ne, sql } from "drizzle-orm";
 import { z } from "zod";
 import type { Config } from "../config.js";
 import type { Db } from "../db/tenant.js";
@@ -21,6 +21,7 @@ import { referralPanelRoutes } from "./referrals.js";
 import type { StorageProvider } from "../storage/index.js";
 import type { Mailer } from "../lib/mailer.js";
 import type { SiteChanged } from "../lib/revalidate.js";
+import { MAX_PAGES_PER_ACCOUNT, activePage, ownedWhere, pageSelector } from "../lib/activeBusiness.js";
 
 const putBody = z.object({
   // Versión que el editor cree tener. null = todavía no existe el negocio en el servidor.
@@ -48,14 +49,23 @@ export function meRoutes(app: FastifyInstance, db: Db, config: Config, notify: S
   reviewPanelRoutes(app, db);
   referralPanelRoutes(app, db, config);
 
-  const ownBusiness = async (userId: string) =>
-    (await db.select().from(s.businesses).where(and(eq(s.businesses.ownerId, userId), isNull(s.businesses.deletedAt))))[0] ?? null;
+  const ownBusiness = (userId: string, req: Parameters<typeof pageSelector>[0]) => activePage(db, userId, pageSelector(req));
+
+  // Las páginas de la cuenta (cada una con su plan y vencimiento): alimenta el selector del panel.
+  app.get("/me/pages", async (req, reply) => {
+    const user = await requireUser(db, req, reply);
+    if (!user) return;
+    reply.header("Cache-Control", "no-store");
+    const rows = await db.select({ id: s.businesses.id, name: s.businesses.name, slug: s.businesses.slug, status: s.businesses.status, planId: s.businesses.planId, planExpiresAt: s.businesses.planExpiresAt })
+      .from(s.businesses).where(ownedWhere(user.id, null)).orderBy(asc(s.businesses.createdAt));
+    return { pages: rows, max: MAX_PAGES_PER_ACCOUNT };
+  });
 
   app.get("/me/business", async (req, reply) => {
     const user = await requireUser(db, req, reply);
     if (!user) return;
     reply.header("Cache-Control", "no-store");
-    return (await loadContent(db, user.id)) ?? { business: null, content: null };
+    return (await loadContent(db, user.id, pageSelector(req))) ?? { business: null, content: null };
   });
 
   // Guardado del editor (autoguardado): permite hasta ~4 pedidos por segundo, no más.
@@ -64,11 +74,13 @@ export function meRoutes(app: FastifyInstance, db: Db, config: Config, notify: S
     if (!user) return;
     const parsed = putBody.safeParse(req.body);
     if (!parsed.success) return reply.code(400).send({ error: "invalid_content", issues: parsed.error.issues.slice(0, 5).map((i) => `${i.path.join(".")}: ${i.message}`) });
-    const result = await saveContent(db, user.id, parsed.data.baseVersion, parsed.data.content);
+    const result = await saveContent(db, user.id, parsed.data.baseVersion, parsed.data.content, pageSelector(req));
+    if (result.status === "not_found") return reply.code(404).send({ error: "no_business" });
+    if (result.status === "pages_limit") return reply.code(422).send({ error: "pages_limit", limit: result.limit });
     if (result.status === "conflict") return reply.code(409).send({ error: "version_conflict", version: result.version });
     if (result.status === "limit") return reply.code(422).send({ error: "plan_limit", limit: result.limit, count: result.count });
     if (result.published) notify(result.published); // página ya publicada: se refresca al instante
-    return reply.code(result.created ? 201 : 200).send({ version: result.version });
+    return reply.code(result.created ? 201 : 200).send({ version: result.version, id: result.id });
   });
 
   // ¿Está libre este link? (el propio cuenta como libre)
@@ -79,7 +91,7 @@ export function meRoutes(app: FastifyInstance, db: Db, config: Config, notify: S
     if (!q.success) return reply.code(400).send({ error: "invalid_request" });
     const chk = checkSlug(q.data.slug, await getReservedSlugs(db));
     if (!chk.ok) return { available: false, reason: chk.reason };
-    const own = await ownBusiness(user.id);
+    const own = await ownBusiness(user.id, req);
     const [taken] = await db.select({ id: s.businesses.id }).from(s.businesses)
       .where(and(eq(s.businesses.slug, chk.slug), own ? ne(s.businesses.id, own.id) : undefined));
     return taken ? { available: false, reason: "ocupado" } : { available: true, slug: chk.slug };
@@ -91,12 +103,12 @@ export function meRoutes(app: FastifyInstance, db: Db, config: Config, notify: S
     const p = slugBody.safeParse(req.body);
     if (!p.success) return reply.code(400).send({ error: "invalid_request" });
 
-    const biz = await ownBusiness(user.id);
+    const biz = await ownBusiness(user.id, req);
     if (!biz) return reply.code(404).send({ error: "no_business" });
     if (biz.status === "suspended") return reply.code(403).send({ error: "suspended" });
     if (!user.emailVerifiedAt) return reply.code(403).send({ error: "email_not_verified" });
 
-    const loaded = await loadContent(db, user.id);
+    const loaded = await loadContent(db, user.id, pageSelector(req));
     const missing = loaded ? missingForPublish(loaded.content) : (["name", "whatsapp", "products"] as const);
     if (missing.length > 0) return reply.code(422).send({ error: "not_ready", missing });
 
@@ -123,7 +135,7 @@ export function meRoutes(app: FastifyInstance, db: Db, config: Config, notify: S
   app.post("/me/business/unpublish", async (req, reply) => {
     const user = await requireUser(db, req, reply);
     if (!user) return;
-    const biz = await ownBusiness(user.id);
+    const biz = await ownBusiness(user.id, req);
     if (!biz) return reply.code(404).send({ error: "no_business" });
     if (biz.status === "suspended") return reply.code(403).send({ error: "suspended" });
     await db.update(s.businesses).set({ status: "draft" }).where(eq(s.businesses.id, biz.id));

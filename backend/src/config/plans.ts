@@ -19,5 +19,5 @@ export const PLANS: PlanDef[] = [
     features: ["Productos ilimitados", "Panel de pedidos", "Cupones", "Estadísticas básicas"] },
   { id: "pro", name: "Pro", priceMonthly: 19900,
     limits: { products: null, photosPerProduct: 6, whatsappNumbers: 5, uploadMb: 10 },
-    features: ["Sin marca MiShowo", "Turnos con calendario", "Estadísticas completas", "Pixel de Meta y Google Analytics", "Varios WhatsApp"] },
+    features: ["Turnos con calendario", "Estadísticas completas", "Pixel de Meta y Google Analytics", "Varios WhatsApp"] },
 ];

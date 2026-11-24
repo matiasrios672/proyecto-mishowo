@@ -272,6 +272,79 @@ export function adminMailRoutes(app: FastifyInstance, db: Db, config: Config, ma
     const sent = await sendTemplate(db, mailer, "staff_invite", user.email, { name: p.data.name, role: ROLE_LABEL[p.data.role] ?? p.data.role, link: `${config.APP_URL}/restablecer?token=${encodeURIComponent(raw)}` }, (e) => app.log.error({ err: e }, "no se pudo enviar la invitación"));
     return reply.code(201).send({ ok: true, id: user.id, emailSent: sent, existing: !!existing });
   });
+
+  // ───────── Gestión del equipo: mails, reenvío de invitación y reinicio de 2FA (solo Owner) ─────────
+  const staffOf = async (id: string) => {
+    if (!uuid.safeParse(id).success) return null;
+    const [u] = await db.select().from(s.users).where(eq(s.users.id, id));
+    return u && isAdminRole(u.role) ? u : null;
+  };
+  const staffMail = z.object({ subject: z.string().trim().min(3).max(150), body: z.string().trim().min(5).max(5000) });
+
+  /** Mail a una persona del equipo con el texto que escribe el Owner (con el mismo formato de marca que los demás). */
+  app.post<{ Params: { id: string } }>("/admin/admins/:id/email", async (req, reply) => {
+    const ctx = await ctxOf(req, reply, "owner");
+    if (!ctx) return;
+    const p = staffMail.safeParse(req.body);
+    if (!p.success) return reply.code(400).send({ error: "invalid_request" });
+    const u = await staffOf(req.params.id);
+    if (!u) return reply.code(404).send({ error: "not_found" });
+    const r = render({ subject: p.data.subject, body: p.data.body }, {});
+    try { await mailer.send({ to: u.email, subject: r.subject, text: r.text, ...(r.html ? { html: r.html } : {}) }); }
+    catch (e) { app.log.error({ err: e }, "no se pudo enviar el mail al equipo"); return reply.code(502).send({ error: "mail_failed" }); }
+    await audit(db, { actorId: ctx.user.id, action: "admin.email", entity: "user", entityId: u.id, after: { subject: p.data.subject }, ip: ctx.ip });
+    return { ok: true };
+  });
+
+  /** Comunicado a todo el equipo (o a las personas elegidas). Un fallo con una persona no frena al resto. */
+  app.post("/admin/admins/email", async (req, reply) => {
+    const ctx = await ctxOf(req, reply, "owner");
+    if (!ctx) return;
+    const p = staffMail.extend({ ids: z.array(z.string().uuid()).max(100).optional() }).safeParse(req.body);
+    if (!p.success) return reply.code(400).send({ error: "invalid_request" });
+    const team = (await db.select().from(s.users).where(and(sql`${s.users.role} in ('owner','admin','support')`, sql`${s.users.blockedAt} is null`)))
+      .filter((u) => !p.data.ids || p.data.ids.includes(u.id));
+    if (team.length === 0) return reply.code(400).send({ error: "no_recipients" });
+    const r = render({ subject: p.data.subject, body: p.data.body }, {});
+    let sent = 0, failed = 0;
+    for (const u of team) {
+      try { await mailer.send({ to: u.email, subject: r.subject, text: r.text, ...(r.html ? { html: r.html } : {}) }); sent++; }
+      catch (e) { failed++; app.log.error({ err: e }, "no se pudo enviar el comunicado"); }
+    }
+    await audit(db, { actorId: ctx.user.id, action: "admin.email_all", entity: "team", entityId: ctx.user.id, after: { subject: p.data.subject, sent, failed }, ip: ctx.ip });
+    return { sent, failed };
+  });
+
+  /** Vuelve a mandar el mail para elegir contraseña (el enlace anterior deja de valer). */
+  app.post<{ Params: { id: string } }>("/admin/admins/:id/resend-invite", async (req, reply) => {
+    const ctx = await ctxOf(req, reply, "owner");
+    if (!ctx) return;
+    const u = await staffOf(req.params.id);
+    if (!u || u.role === "owner") return reply.code(404).send({ error: "not_found" });
+    const raw = newToken();
+    await db.transaction(async (tx) => {
+      await tx.update(s.authTokens).set({ usedAt: new Date() }).where(and(eq(s.authTokens.email, u.email), eq(s.authTokens.type, "reset"), sql`${s.authTokens.usedAt} is null`));
+      await tx.insert(s.authTokens).values({ userId: u.id, email: u.email, type: "reset", tokenHash: sha256(raw), expiresAt: new Date(Date.now() + 3 * 86_400_000) });
+      await audit(tx, { actorId: ctx.user.id, action: "admin.resend_invite", entity: "user", entityId: u.id, ip: ctx.ip });
+    });
+    const sent = await sendTemplate(db, mailer, "staff_invite", u.email, { name: u.name ?? "equipo", role: ROLE_LABEL[u.role] ?? u.role, link: `${config.APP_URL}/restablecer?token=${encodeURIComponent(raw)}` }, (e) => app.log.error({ err: e }, "no se pudo reenviar la invitación"));
+    return { ok: true, emailSent: sent };
+  });
+
+  /** Para quien perdió su app de autenticación: borra el 2FA y cierra sus sesiones; al entrar configura uno nuevo. */
+  app.post<{ Params: { id: string } }>("/admin/admins/:id/reset-2fa", async (req, reply) => {
+    const ctx = await ctxOf(req, reply, "owner");
+    if (!ctx) return;
+    const u = await staffOf(req.params.id);
+    if (!u) return reply.code(404).send({ error: "not_found" });
+    if (u.id === ctx.user.id) return reply.code(409).send({ error: "cannot_target_self" });
+    await db.transaction(async (tx) => {
+      await tx.update(s.users).set({ totpSecret: null, totpEnabledAt: null }).where(eq(s.users.id, u.id));
+      await tx.delete(s.sessions).where(eq(s.sessions.userId, u.id));
+      await audit(tx, { actorId: ctx.user.id, action: "admin.reset_2fa", entity: "user", entityId: u.id, ip: ctx.ip });
+    });
+    return { ok: true };
+  });
 }
 
 /** Baja de novedades con un enlace firmado: no pide sesión (se abre desde el mail). */

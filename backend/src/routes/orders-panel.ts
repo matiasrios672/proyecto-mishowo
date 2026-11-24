@@ -1,5 +1,5 @@
 import type { FastifyInstance } from "fastify";
-import { and, desc, eq, inArray, isNull, lt, sql } from "drizzle-orm";
+import { and, desc, eq, inArray, lt, sql } from "drizzle-orm";
 import { z } from "zod";
 import type { Db } from "../db/tenant.js";
 import * as s from "../db/schema.js";
@@ -7,6 +7,7 @@ import { requireUser } from "../auth/session.js";
 import { toCsv } from "../orders/csv.js";
 import { STATUSES, canTransition, nextStatuses } from "../orders/status.js";
 import { releaseCoupon } from "../coupons/apply.js";
+import { ownedWhere, pageSelector } from "../lib/activeBusiness.js";
 
 /** Panel de pedidos del negocio. Se registra dentro del contexto de /me (con sesión y chequeo de origen). */
 export function orderPanelRoutes(app: FastifyInstance, db: Db) {
@@ -14,7 +15,7 @@ export function orderPanelRoutes(app: FastifyInstance, db: Db) {
     const user = await requireUser(db, req, reply);
     if (!user) return null;
     const [biz] = await db.select({ id: s.businesses.id, slug: s.businesses.slug }).from(s.businesses)
-      .where(and(eq(s.businesses.ownerId, user.id), isNull(s.businesses.deletedAt)));
+      .where(ownedWhere(user.id, pageSelector(req)));
     if (!biz) { reply.code(404).send({ error: "no_business" }); return null; }
     return biz;
   }

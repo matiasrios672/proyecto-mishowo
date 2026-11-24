@@ -1,13 +1,14 @@
 import { readdir, stat, statfs } from "node:fs/promises";
 import path from "node:path";
 import type { FastifyInstance } from "fastify";
-import { desc, eq, sql } from "drizzle-orm";
+import { desc, eq, inArray, sql } from "drizzle-orm";
 import type { Config } from "../config.js";
 import type { Db } from "../db/tenant.js";
 import * as s from "../db/schema.js";
 import { audit } from "../audit.js";
 import { requirePerm } from "../admin/guard.js";
 import { RESERVED_SLUGS } from "../lib/slug.js";
+import { DEMO_SLUGS, seedDemoBusinesses } from "../demo.js";
 import {
   CMS_KEY, CRON_KEY, DEFAULT_MAINTENANCE_MESSAGE, MAINTENANCE_KEY, RESERVED_KEY,
   cmsSchema, getCms, getMaintenance, getReservedSlugs, maintenanceSchema, putSetting, reservedSlugsSchema,
@@ -73,6 +74,23 @@ export function adminSystemRoutes(app: FastifyInstance, db: Db, config: Config) 
       maintenance: maint,
       reservedCount: reserved.length,
     };
+  });
+
+  // ───────── Negocios de ejemplo (los que enlaza la landing) ─────────
+  app.get("/admin/system/demo", async (req, reply) => {
+    const ctx = await requirePerm(db, config, req, reply, "sistema", "view");
+    if (!ctx) return;
+    const rows = await db.select({ slug: s.businesses.slug }).from(s.businesses).where(inArray(s.businesses.slug, DEMO_SLUGS));
+    const have = new Set(rows.map((r) => r.slug));
+    return { expected: DEMO_SLUGS, missing: DEMO_SLUGS.filter((x) => !have.has(x)) };
+  });
+  app.post("/admin/system/demo", async (req, reply) => {
+    const ctx = await requirePerm(db, config, req, reply, "sistema", "manage");
+    if (!ctx) return;
+    const reset = (req.body as { reset?: unknown } | null)?.reset === true;
+    const created = await seedDemoBusinesses(db, { reset });
+    await audit(db, { actorId: ctx.user.id, action: "system.demo_seed", entity: "settings", entityId: "demo", before: null, after: { reset, created }, ip: ctx.ip });
+    return { created };
   });
 
   // ───────── Modo mantenimiento ─────────

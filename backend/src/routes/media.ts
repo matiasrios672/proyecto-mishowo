@@ -11,6 +11,7 @@ import { requireUser } from "../auth/session.js";
 import { ImageError, WIDTHS, processImage, variantKey } from "../media/image.js";
 import { CONTENT_TYPES, PUBLIC_FILE, mediaUrls } from "../media/urls.js";
 import type { SiteChanged } from "../lib/revalidate.js";
+import { ownedWhere, pageSelector } from "../lib/activeBusiness.js";
 
 const MAX_COVER = 5;
 const DEFAULTS = { photosPerProduct: 4, uploadMb: 10 };
@@ -24,7 +25,7 @@ export function mediaRoutes(app: FastifyInstance, db: Db, config: Config, storag
   async function business(req: Parameters<typeof requireUser>[1], reply: Parameters<typeof requireUser>[2]) {
     const user = await requireUser(db, req, reply);
     if (!user) return null;
-    const [biz] = await db.select().from(s.businesses).where(and(eq(s.businesses.ownerId, user.id), isNull(s.businesses.deletedAt)));
+    const [biz] = await db.select().from(s.businesses).where(ownedWhere(user.id, pageSelector(req)));
     if (!biz) { reply.code(404).send({ error: "no_business" }); return null; }
     return biz;
   }
