@@ -227,7 +227,9 @@ test("leads: quien se registra y no publica aparece en el embudo y el sysadmin l
   const lead = `${uniq("lead", info.project.name)}@test.com`;
   const { page: visitor } = await newPage(browser);
   await visitor.goto("/crear?utm_source=instagram");
-  await visitor.getByLabel(/^Tu nombre/).fill("Sofi Lead");
+  await visitor.getByLabel("Nombre", { exact: true }).fill("Sofi Lead");
+  await visitor.getByLabel("Apellido").fill("Prueba");
+  await visitor.getByLabel(/^Teléfono/).fill("11 5555-0000");
   await visitor.getByLabel(/^Email/).fill(lead);
   await visitor.getByLabel(/^Contraseña/).fill(PASS);
   await visitor.getByRole("button", { name: "Crear mi cuenta" }).click();

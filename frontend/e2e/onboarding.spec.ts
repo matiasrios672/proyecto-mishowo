@@ -5,7 +5,9 @@ test("elegir un rubro crea el borrador y abre el editor con contenido de ejemplo
   // Primero la cuenta (para guardar el avance y poder escribirle a quien no termina); recién después el rubro.
   await expect(page.getByTestId("crear-account")).toBeVisible();
   await expect(page.getByTestId("crear-steps").getByRole("listitem")).toHaveCount(3);
-  await page.getByLabel(/^Tu nombre/).fill("Lupe Gómez");
+  await page.getByLabel("Nombre", { exact: true }).fill("Lupe Gómez");
+  await page.getByLabel("Apellido").fill("Prueba");
+  await page.getByLabel(/^Teléfono/).fill("11 5555-0000");
   await page.getByLabel(/^Email/).fill(`onb-${info.project.name}-${Date.now()}@test.com`);
   await page.getByLabel(/^Contraseña/).fill("claveSegura123");
   await page.getByRole("button", { name: "Crear mi cuenta" }).click();

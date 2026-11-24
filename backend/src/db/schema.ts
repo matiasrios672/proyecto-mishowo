@@ -21,6 +21,9 @@ export const users = pgTable("users", {
   email: text("email").notNull(),
   passwordHash: text("password_hash"),
   name: text("name"),
+  /** Apellido y teléfono (normalizado 549…) que se piden al registrarse: base de contacto de la plataforma. */
+  lastName: text("last_name"),
+  phone: text("phone"),
   role: text("role").notNull().default("user"), // user | owner | admin | support
   emailVerifiedAt: timestamp("email_verified_at", { withTimezone: true }),
   blockedAt: timestamp("blocked_at", { withTimezone: true }),
@@ -364,3 +367,25 @@ export const appointments = pgTable("appointments", {
   status: text("status").notNull().default("pendiente"), // pendiente | confirmado | cancelado
   createdAt: ts("created_at"),
 }, (t) => [index("appointments_biz_start_idx").on(t.businessId, t.startsAt)]);
+
+// ---- Notas internas de cada negocio (las ve solo el equipo): cada nota guarda quién la dejó y cuándo ----
+export const businessNotes = pgTable("business_notes", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  businessId: uuid("business_id").notNull().references(() => businesses.id, { onDelete: "cascade" }),
+  /** null = nota anterior al registro de autores (la nota única de antes) o cuenta borrada. */
+  authorId: uuid("author_id").references(() => users.id, { onDelete: "set null" }),
+  body: text("body").notNull(),
+  pinned: boolean("pinned").notNull().default(false),
+  createdAt: ts("created_at"),
+}, (t) => [index("business_notes_biz_idx").on(t.businessId, t.createdAt)]);
+
+// ---- Plantillas de email propias (las crea el equipo desde /admin/emails y las usa para armar comunicados) ----
+export const emailCustomTemplates = pgTable("email_custom_templates", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  name: text("name").notNull(),
+  subject: text("subject").notNull(),
+  body: text("body").notNull(),
+  createdBy: uuid("created_by").references(() => users.id, { onDelete: "set null" }),
+  createdAt: ts("created_at"),
+  updatedAt: ts("updated_at"),
+});

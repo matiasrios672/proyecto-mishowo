@@ -55,8 +55,8 @@ export function adminLeadRoutes(app: FastifyInstance, db: Db, config: Config, ma
     const q = query.pick({ stage: true, q: true }).safeParse(req.query);
     if (!q.success) return reply.code(400).send({ error: "invalid_request" });
     const rows = await allLeads(db, { ...(q.data.stage ? { stage: q.data.stage } : {}), ...(q.data.q ? { q: q.data.q } : {}) });
-    const head = ["email", "nombre", "etapa", "email_confirmado", "negocio", "rubro", "plan", "origen", "registro", "ultimo_ingreso", "ultimo_aviso", "baja_novedades"];
-    const lines = rows.map((l) => [l.email, l.name, STAGE_LABEL[l.stage], l.verified ? "si" : "no", l.businessName, l.industry, l.planId, l.source ?? "directo", l.createdAt, l.lastLoginAt, l.lastNudgeAt, l.optedOut ? "si" : "no"].map(cell).join(","));
+    const head = ["email", "nombre", "apellido", "telefono", "etapa", "email_confirmado", "negocio", "rubro", "plan", "origen", "registro", "ultimo_ingreso", "ultimo_aviso", "baja_novedades"];
+    const lines = rows.map((l) => [l.email, l.name, l.lastName, l.phone, STAGE_LABEL[l.stage], l.verified ? "si" : "no", l.businessName, l.industry, l.planId, l.source ?? "directo", l.createdAt, l.lastLoginAt, l.lastNudgeAt, l.optedOut ? "si" : "no"].map(cell).join(","));
     await audit(db, { actorId: ctx.user.id, action: "leads.export", entity: "leads", entityId: "csv", after: { rows: rows.length, stage: q.data.stage ?? null }, ip: ctx.ip });
     return reply.header("Content-Type", "text/csv; charset=utf-8").header("Content-Disposition", 'attachment; filename="leads-mishowo.csv"').header("Cache-Control", "no-store")
       .send(`﻿${[head.join(","), ...lines].join("\r\n")}\r\n`);

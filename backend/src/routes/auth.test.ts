@@ -37,7 +37,7 @@ const tokenFrom = (i = -1) => {
   return decodeURIComponent(mail.text.match(/token=([^\s&]+)/)![1]!);
 };
 const me = (cookie?: string) => app.inject({ method: "GET", url: "/auth/me", headers: cookie ? { cookie } : {} });
-const register = (over: object = {}) => post("/auth/register", { email: "Ana@Test.com", password: "claveSegura1", name: "Ana", ...over });
+const register = (over: object = {}) => post("/auth/register", { email: "Ana@Test.com", password: "claveSegura1", name: "Ana", lastName: "Persona", phone: "11 5555-0000", ...over });
 
 describe("registro", () => {
   it("crea la cuenta, inicia sesión con cookie segura y manda el mail de verificación", async () => {
@@ -88,7 +88,7 @@ describe("registro", () => {
     const broken = buildApp(loadConfig({ NODE_ENV: "test", AUTH_PER_MINUTE: "10000" }), conn.check, conn.db, {
       mailer: { send: async () => { throw new Error("SMTP caído"); } },
     });
-    const res = await broken.inject({ method: "POST", url: "/auth/register", headers: { origin: ORIGIN }, payload: { email: "x@test.com", password: "claveSegura1" } });
+    const res = await broken.inject({ method: "POST", url: "/auth/register", headers: { origin: ORIGIN }, payload: { email: "x@test.com", password: "claveSegura1", name: "Test", lastName: "Persona", phone: "11 5555-0000" } });
     expect(res.statusCode).toBe(201);
   });
 });
@@ -297,5 +297,19 @@ describe("límite de intentos", () => {
     }
     expect(codes.slice(0, 5).every((c) => c === 401)).toBe(true);
     expect(codes.slice(5).every((c) => c === 429)).toBe(true);
+  });
+
+  it("el registro pide nombre, apellido y teléfono válido, y guarda el teléfono normalizado", async () => {
+    const base = { email: "dato@test.com", password: "claveSegura1", name: "Dato", lastName: "Completo", phone: "11 5555-0000" };
+    for (const missing of ["name", "lastName", "phone"]) {
+      const body: Record<string, unknown> = { ...base }; delete body[missing];
+      expect((await post("/auth/register", body)).statusCode, missing).toBe(400);
+    }
+    const bad = await post("/auth/register", { ...base, phone: "1234567" });
+    expect(bad.statusCode).toBe(400);
+    expect(bad.json().error).toBe("invalid_phone");
+    expect((await post("/auth/register", base)).statusCode).toBe(201);
+    const row = (await conn.pool.query("select name, last_name, phone from users where email = 'dato@test.com'")).rows[0];
+    expect(row).toEqual({ name: "Dato", last_name: "Completo", phone: "5491155550000" });
   });
 });

@@ -62,7 +62,7 @@ export function CrearFlow({ picker }: { picker: ReactNode }) {
           <div className="site-rise border border-[#0E1B2C]/10 bg-white p-6 shadow-[0_40px_80px_-40px_rgba(252,85,2,0.55)] sm:p-8" style={{ ...rise(200), borderRadius: "1.25rem" }}>
             <h2 className="mk-display text-2xl font-extrabold text-[#0E1B2C]">Creá tu cuenta</h2>
             <p className="mb-5 mt-1 text-sm text-[#0E1B2C]/65">Es gratis y en 30 segundos. Después elegís tu rubro.</p>
-            <RegisterForm nameRequired onDone={() => { /* el estado de sesión cambia solo y pasa al paso 2 */ }} />
+            <RegisterForm onDone={() => { /* el estado de sesión cambia solo y pasa al paso 2 */ }} />
             <p className="mt-5 border-t border-[#0E1B2C]/10 pt-4 text-center text-sm text-[#0E1B2C]/70">
               ¿Ya tenés cuenta? <Link href="/ingresar?next=/crear" className="font-bold text-[#C73E00]">Ingresá</Link>
             </p>

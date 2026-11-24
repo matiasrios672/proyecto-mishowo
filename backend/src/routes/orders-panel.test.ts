@@ -18,7 +18,7 @@ const call = (method: "GET" | "POST" | "PATCH", url: string, cookie?: string, pa
   app.inject({ method, url, payload, headers: { ...(cookie ? { cookie } : {}), ...(origin ? { origin } : {}) } });
 
 async function signup(email: string) {
-  const res = await app.inject({ method: "POST", url: "/auth/register", headers: { origin: ORIGIN }, payload: { email, password: "claveSegura123" } });
+  const res = await app.inject({ method: "POST", url: "/auth/register", headers: { origin: ORIGIN }, payload: { email, password: "claveSegura123", name: "Test", lastName: "Persona", phone: "11 5555-0000" } });
   return { cookie: `ms_session=${res.cookies.find((x) => x.name === "ms_session")!.value}`, id: res.json().user.id as string };
 }
 const stock = async (table: "products" | "product_options", id: string) => (await conn.pool.query(`select stock from ${table} where id = $1`, [id])).rows[0].stock as number | null;

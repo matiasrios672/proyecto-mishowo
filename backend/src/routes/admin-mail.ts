@@ -247,6 +247,53 @@ export function adminMailRoutes(app: FastifyInstance, db: Db, config: Config, ma
     return { ok: true };
   });
 
+  // ───────────────────────── Plantillas propias (para armar comunicados) ─────────────────────────
+  const customBody = z.object({ name: z.string().trim().min(3).max(80), subject: z.string().trim().min(3).max(150), body: z.string().trim().min(10).max(8000) });
+  const CUSTOM_VARS = ["name", "email"]; // lo que sabe completar un comunicado
+  app.get("/admin/emails/custom", async (req, reply) => {
+    const ctx = await ctxOf(req, reply, ["emails", "view"]);
+    if (!ctx) return;
+    const rows = await db.select({ id: s.emailCustomTemplates.id, name: s.emailCustomTemplates.name, subject: s.emailCustomTemplates.subject, body: s.emailCustomTemplates.body, updatedAt: s.emailCustomTemplates.updatedAt, authorEmail: s.users.email })
+      .from(s.emailCustomTemplates).leftJoin(s.users, eq(s.users.id, s.emailCustomTemplates.createdBy)).orderBy(desc(s.emailCustomTemplates.updatedAt));
+    return { templates: rows, vars: CUSTOM_VARS };
+  });
+  const checkCustom = (b: z.infer<typeof customBody>) => {
+    const bad = [...new Set([...unknownVars(b.subject, CUSTOM_VARS), ...unknownVars(b.body, CUSTOM_VARS)])];
+    return bad.length ? bad : null;
+  };
+  app.post("/admin/emails/custom", async (req, reply) => {
+    const ctx = await ctxOf(req, reply, ["emails", "manage"]);
+    if (!ctx) return;
+    const p = customBody.safeParse(req.body);
+    if (!p.success) return reply.code(400).send({ error: "invalid_request" });
+    const bad = checkCustom(p.data);
+    if (bad) return reply.code(400).send({ error: "unknown_variables", variables: bad });
+    const [row] = await db.insert(s.emailCustomTemplates).values({ ...p.data, createdBy: ctx.user.id }).returning({ id: s.emailCustomTemplates.id });
+    await audit(db, { actorId: ctx.user.id, action: "email.custom_create", entity: "email_custom_template", entityId: row!.id, after: { name: p.data.name }, ip: ctx.ip });
+    return reply.code(201).send({ id: row!.id });
+  });
+  app.put<{ Params: { id: string } }>("/admin/emails/custom/:id", async (req, reply) => {
+    const ctx = await ctxOf(req, reply, ["emails", "manage"]);
+    if (!ctx) return;
+    const p = customBody.safeParse(req.body);
+    if (!p.success || !uuid.safeParse(req.params.id).success) return reply.code(400).send({ error: "invalid_request" });
+    const bad = checkCustom(p.data);
+    if (bad) return reply.code(400).send({ error: "unknown_variables", variables: bad });
+    const r = await db.update(s.emailCustomTemplates).set({ ...p.data, updatedAt: new Date() }).where(eq(s.emailCustomTemplates.id, req.params.id)).returning({ id: s.emailCustomTemplates.id });
+    if (r.length === 0) return reply.code(404).send({ error: "not_found" });
+    await audit(db, { actorId: ctx.user.id, action: "email.custom_update", entity: "email_custom_template", entityId: req.params.id, after: { name: p.data.name }, ip: ctx.ip });
+    return { ok: true };
+  });
+  app.delete<{ Params: { id: string } }>("/admin/emails/custom/:id", async (req, reply) => {
+    const ctx = await ctxOf(req, reply, ["emails", "manage"]);
+    if (!ctx) return;
+    if (!uuid.safeParse(req.params.id).success) return reply.code(404).send({ error: "not_found" });
+    const r = await db.delete(s.emailCustomTemplates).where(eq(s.emailCustomTemplates.id, req.params.id)).returning({ name: s.emailCustomTemplates.name });
+    if (r.length === 0) return reply.code(404).send({ error: "not_found" });
+    await audit(db, { actorId: ctx.user.id, action: "email.custom_delete", entity: "email_custom_template", entityId: req.params.id, before: { name: r[0]!.name }, ip: ctx.ip });
+    return { ok: true };
+  });
+
   // ───────────────────────── Alta de integrantes del equipo (solo Owner) ─────────────────────────
   app.post("/admin/admins/invite", async (req, reply) => {
     const ctx = await ctxOf(req, reply, "owner");

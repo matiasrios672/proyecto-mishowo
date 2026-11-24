@@ -33,25 +33,25 @@ function where(f: LeadFilter): SQL {
   if (f.stage) parts.push(sql`and (${STAGE_SQL}) = ${f.stage}`);
   if (f.q) {
     const like = `%${f.q.replace(/[\\%_]/g, "\\$&")}%`;
-    parts.push(sql`and (u.email ilike ${like} or coalesce(u.name, '') ilike ${like} or coalesce(b.name, '') ilike ${like})`);
+    parts.push(sql`and (u.email ilike ${like} or coalesce(u.name, '') ilike ${like} or coalesce(u.last_name, '') ilike ${like} or coalesce(u.phone, '') ilike ${like} or coalesce(b.name, '') ilike ${like})`);
   }
   if (f.olderThanDays) parts.push(sql`and u.created_at < now() - make_interval(days => ${f.olderThanDays})`);
   return parts.length ? sql.join(parts, sql` `) : sql``;
 }
 
 export interface LeadRow {
-  id: string; email: string; name: string | null; createdAt: Date; lastLoginAt: Date | null; verified: boolean;
+  id: string; email: string; name: string | null; lastName: string | null; phone: string | null; createdAt: Date; lastLoginAt: Date | null; verified: boolean;
   stage: Stage; businessName: string | null; slug: string | null; industry: string | null; planId: string | null;
   source: string | null; lastNudgeAt: Date | null; optedOut: boolean; blocked: boolean;
 }
 
-const SELECT = sql`select u.id, u.email, u.name, u.created_at, u.last_login_at, (u.email_verified_at is not null) as verified,
+const SELECT = sql`select u.id, u.email, u.name, u.last_name, u.phone, u.created_at, u.last_login_at, (u.email_verified_at is not null) as verified,
   (${STAGE_SQL}) as stage, b.name as business_name, b.slug, b.industry, b.plan_id, u.signup_source as source,
   u.last_nudge_at, (u.newsletter_optout_at is not null) as opted_out, (u.blocked_at is not null) as blocked`;
 
 type Raw = Record<string, unknown>;
 const toRow = (r: Raw): LeadRow => ({
-  id: r.id as string, email: r.email as string, name: (r.name as string | null) ?? null, createdAt: new Date(r.created_at as string),
+  id: r.id as string, email: r.email as string, name: (r.name as string | null) ?? null, lastName: (r.last_name as string | null) ?? null, phone: (r.phone as string | null) ?? null, createdAt: new Date(r.created_at as string),
   lastLoginAt: r.last_login_at ? new Date(r.last_login_at as string) : null, verified: !!r.verified, stage: r.stage as Stage,
   businessName: (r.business_name as string | null) ?? null, slug: (r.slug as string | null) ?? null, industry: (r.industry as string | null) ?? null,
   planId: (r.plan_id as string | null) ?? null, source: (r.source as string | null) ?? null,

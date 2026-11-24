@@ -12,7 +12,7 @@ beforeEach(async () => {
   await conn.db.insert(s.plans).values([{ id: "gratis", name: "Gratis", priceMonthly: "0", limits: {} }, { id: "pro", name: "Pro", priceMonthly: "100", limits: {} }]);
 });
 
-const register = (email: string, extra: object = {}) => env.app.inject({ method: "POST", url: "/auth/register", headers: { origin: ORIGIN }, payload: { email, password: "claveSegura123", ...extra } });
+const register = (email: string, extra: object = {}) => env.app.inject({ method: "POST", url: "/auth/register", headers: { origin: ORIGIN }, payload: { email, password: "claveSegura123", name: "Test", lastName: "Persona", phone: "11 5555-0000", ...extra } });
 
 describe("referidos", () => {
   it("cada persona recibe su código (el mismo siempre) y un link para invitar", async () => {

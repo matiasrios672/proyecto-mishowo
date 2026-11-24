@@ -30,7 +30,7 @@ const save = (cookie: string, baseVersion: number | null, content: object) => ca
 const publish = (cookie: string | undefined, slug: string) => call("POST", "/me/business/publish", cookie, { slug });
 
 async function signup(email: string, verified = true) {
-  const res = await app.inject({ method: "POST", url: "/auth/register", headers: { origin: ORIGIN }, payload: { email, password: "claveSegura123" } });
+  const res = await app.inject({ method: "POST", url: "/auth/register", headers: { origin: ORIGIN }, payload: { email, password: "claveSegura123", name: "Test", lastName: "Persona", phone: "11 5555-0000" } });
   if (verified) await conn.pool.query("update users set email_verified_at = now() where email = $1", [email]);
   return `ms_session=${res.cookies.find((x) => x.name === "ms_session")!.value}`;
 }

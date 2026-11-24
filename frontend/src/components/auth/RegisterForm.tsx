@@ -5,13 +5,14 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Field, TextInput } from "@/components/ui/fields";
+import { normalizeWhatsapp } from "@/lib/whatsapp";
 import { api, authErrorMessage, safeNext, type PublicUser } from "@/lib/authClient";
 import { FormError } from "./AuthShell";
 import { PasswordField } from "./PasswordField";
 import { setUser } from "./authStore";
 import { readRef, readSource } from "@/components/marketing/SourceCapture";
 
-export function RegisterForm({ onDone, nameRequired = false }: { onDone?: () => void; nameRequired?: boolean } = {}) {
+export function RegisterForm({ onDone }: { onDone?: () => void } = {}) {
   const router = useRouter();
   const next = safeNext(useSearchParams().get("next"));
   const [error, setError] = useState<string | null>(null);
@@ -20,11 +21,13 @@ export function RegisterForm({ onDone, nameRequired = false }: { onDone?: () => 
   async function submit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const f = new FormData(e.currentTarget);
-    if (nameRequired && !String(f.get("name") ?? "").trim()) { setError("Contanos tu nombre para armar tu cuenta."); return; }
+    const name = String(f.get("name") ?? "").trim(), lastName = String(f.get("lastName") ?? "").trim(), phone = String(f.get("phone") ?? "").trim();
+    if (name.length < 2 || lastName.length < 2) { setError("Contanos tu nombre y tu apellido para armar tu cuenta."); return; }
+    if (normalizeWhatsapp(phone) === null) { setError("Revisá tu teléfono: escribilo con el código de área, por ejemplo 11 5555-0000."); return; }
     setBusy(true);
     setError(null);
     const r = await api<{ user: PublicUser }>("/auth/register", {
-      body: { email: String(f.get("email")), password: String(f.get("password")), name: String(f.get("name") ?? "") || undefined, source: readSource(), ref: readRef() },
+      body: { email: String(f.get("email")), password: String(f.get("password")), name, lastName, phone, source: readSource(), ref: readRef() },
     });
     if (!r.ok) { setError(authErrorMessage(r.data.error)); setBusy(false); return; }
     setUser(r.data.user);
@@ -33,8 +36,16 @@ export function RegisterForm({ onDone, nameRequired = false }: { onDone?: () => 
 
   return (
     <form onSubmit={submit} className="space-y-4" noValidate>
-      <Field label={nameRequired ? "Tu nombre" : "Tu nombre (opcional)"} required={nameRequired}>
-        {(id) => <TextInput id={id} name="name" autoComplete="name" maxLength={80} required={nameRequired} />}
+      <div className="grid gap-4 sm:grid-cols-2">
+        <Field label="Nombre" required>
+          {(id) => <TextInput id={id} name="name" autoComplete="given-name" maxLength={80} required />}
+        </Field>
+        <Field label="Apellido" required>
+          {(id) => <TextInput id={id} name="lastName" autoComplete="family-name" maxLength={80} required />}
+        </Field>
+      </div>
+      <Field label="Teléfono (WhatsApp)" required hint="Con código de área, sin 0 ni 15. Solo lo usamos para ayudarte con tu página.">
+        {(id, d) => <TextInput id={id} aria-describedby={d} name="phone" type="tel" inputMode="tel" autoComplete="tel" maxLength={30} placeholder="11 5555-0000" required />}
       </Field>
       <Field label="Email" required>
         {(id) => <TextInput id={id} name="email" type="email" autoComplete="email" required />}

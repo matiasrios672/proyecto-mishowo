@@ -24,7 +24,7 @@ export function makeEnv(conn: Conn, env: Record<string, string> = {}) {
 
   /** Crea una cuenta con el rol dado. Devuelve su id y una sesión (todavía sin 2FA). */
   async function account(email: string, role: "user" | "owner" | "admin" | "support" = "user") {
-    const res = await app.inject({ method: "POST", url: "/auth/register", headers: { origin: ORIGIN }, payload: { email, password: "claveSegura123" } });
+    const res = await app.inject({ method: "POST", url: "/auth/register", headers: { origin: ORIGIN }, payload: { email, password: "claveSegura123", name: "Test", lastName: "Persona", phone: "11 5555-0000" } });
     const id = res.json().user.id as string;
     if (role !== "user") await conn.pool.query("update users set role = $1 where id = $2", [role, id]);
     return { id, email, cookie: cookieOf(res) };

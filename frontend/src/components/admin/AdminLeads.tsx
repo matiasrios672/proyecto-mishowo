@@ -11,7 +11,7 @@ import { confirmAction } from "@/components/feedback/confirm";
 
 type Stage = "sin_verificar" | "sin_pagina" | "borrador" | "publicado";
 interface Lead {
-  id: string; email: string; name: string | null; createdAt: string; lastLoginAt: string | null; verified: boolean; stage: Stage; stageLabel: string;
+  id: string; email: string; name: string | null; lastName: string | null; phone: string | null; createdAt: string; lastLoginAt: string | null; verified: boolean; stage: Stage; stageLabel: string;
   businessName: string | null; slug: string | null; industry: string | null; planId: string | null; source: string | null; lastNudgeAt: string | null; optedOut: boolean; blocked: boolean;
 }
 interface LeadList { page: number; pageSize: number; total: number; counts: Record<Stage, number>; sources: { source: string; n: number }[]; stages: { key: Stage; label: string }[]; items: Lead[] }
@@ -120,7 +120,7 @@ export function Leads() {
           <tbody>
             {data?.items.map((l) => (
               <tr key={l.id} className="border-b align-top last:border-0" data-testid="lead-row">
-                <td className="px-3 py-2.5"><span className="block font-semibold">{l.email}</span><span className="block text-xs text-muted-foreground">{l.name ?? "Sin nombre"}{!l.verified && " · email sin confirmar"}{l.optedOut && " · se dio de baja"}</span></td>
+                <td className="px-3 py-2.5"><span className="block font-semibold">{l.email}</span><span className="block text-xs text-muted-foreground">{[l.name, l.lastName].filter(Boolean).join(" ") || "Sin nombre"}{l.phone && ` · ${l.phone}`}{!l.verified && " · email sin confirmar"}{l.optedOut && " · se dio de baja"}</span></td>
                 <td className={`px-3 py-2.5 font-medium ${STAGE_TONE[l.stage]}`}>{l.stageLabel}</td>
                 <td className="px-3 py-2.5">{l.businessName ?? "—"}{l.industry && <span className="block text-xs text-muted-foreground">{l.industry}</span>}</td>
                 <td className="px-3 py-2.5 whitespace-nowrap">{when(l.createdAt)}<span className="block text-xs text-muted-foreground">hace {days(l.createdAt)} {days(l.createdAt) === 1 ? "día" : "días"}</span></td>

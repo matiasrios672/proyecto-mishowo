@@ -35,7 +35,9 @@ export async function mailSubjects(to: string): Promise<string[]> {
 /** Crea la cuenta desde /crear (primer paso del recorrido) y elige el rubro «Rotisería y comidas». Termina en el editor, con el borrador ya guardado en la cuenta. */
 export async function signUp(page: Page, mail: string) {
   await page.goto("/crear");
-  await page.getByLabel(/^Tu nombre/).fill("Persona de Prueba");
+  await page.getByLabel("Nombre", { exact: true }).fill("Persona de Prueba");
+  await page.getByLabel("Apellido").fill("Prueba");
+  await page.getByLabel(/^Teléfono/).fill("11 5555-0000");
   await page.getByLabel(/^Email/).fill(mail);
   await page.getByLabel(/^Contraseña/).fill(PASS);
   await page.getByRole("button", { name: "Crear mi cuenta" }).click();

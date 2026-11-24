@@ -186,10 +186,10 @@ export function adminRoutes(app: FastifyInstance, db: Db, config: Config, mailer
     const ctx = await requirePerm(db, config, req, reply, "negocios","view");
     if (!ctx) return;
     if (!uuid.safeParse(req.params.id).success) return reply.code(404).send({ error: "not_found" });
-    const [row] = await db.select({ b: s.businesses, owner: { id: s.users.id, email: s.users.email, name: s.users.name, blockedAt: s.users.blockedAt } })
+    const [row] = await db.select({ b: s.businesses, owner: { id: s.users.id, email: s.users.email, name: s.users.name, lastName: s.users.lastName, phone: s.users.phone, blockedAt: s.users.blockedAt, emailVerifiedAt: s.users.emailVerifiedAt, lastLoginAt: s.users.lastLoginAt, createdAt: s.users.createdAt } })
       .from(s.businesses).innerJoin(s.users, eq(s.users.id, s.businesses.ownerId)).where(eq(s.businesses.id, req.params.id));
     if (!row) return reply.code(404).send({ error: "not_found" });
-    const [overview, counts, payments, history] = await Promise.all([
+    const [overview, counts, payments, history, notes, activity] = await Promise.all([
       db.execute(sql`select
         (select count(*)::int from categories where business_id = ${row.b.id}) as categories,
         (select count(*)::int from products where business_id = ${row.b.id} and is_example = false and available) as available_products,
@@ -198,14 +198,62 @@ export function adminRoutes(app: FastifyInstance, db: Db, config: Config, mailer
         (select max(created_at) from orders where business_id = ${row.b.id}) as last_order_at`),
       db.execute(sql`select (select count(*)::int from products where business_id = ${row.b.id}) as products, (select count(*)::int from orders where business_id = ${row.b.id}) as orders`),
       db.select().from(s.payments).where(eq(s.payments.businessId, row.b.id)).orderBy(desc(s.payments.createdAt)).limit(20),
-      db.select().from(s.auditLog).where(and(eq(s.auditLog.entity, "business"), eq(s.auditLog.entityId, row.b.id))).orderBy(desc(s.auditLog.id)).limit(20),
+      db.select({ id: s.auditLog.id, action: s.auditLog.action, createdAt: s.auditLog.createdAt, actorEmail: s.users.email, actorName: s.users.name }).from(s.auditLog).leftJoin(s.users, eq(s.users.id, s.auditLog.actorId)).where(and(eq(s.auditLog.entity, "business"), eq(s.auditLog.entityId, row.b.id))).orderBy(desc(s.auditLog.id)).limit(40),
+      db.select({ id: s.businessNotes.id, body: s.businessNotes.body, pinned: s.businessNotes.pinned, createdAt: s.businessNotes.createdAt, authorId: s.businessNotes.authorId, authorEmail: s.users.email, authorName: s.users.name })
+        .from(s.businessNotes).leftJoin(s.users, eq(s.users.id, s.businessNotes.authorId)).where(eq(s.businessNotes.businessId, row.b.id))
+        .orderBy(desc(s.businessNotes.pinned), desc(s.businessNotes.createdAt)).limit(100),
+      db.execute(sql`select
+        (select count(*)::int from site_events where business_id = ${row.b.id} and type = 'visit' and day >= current_date - 30) as visits30,
+        (select count(*)::int from site_events where business_id = ${row.b.id} and type = 'whatsapp_click' and day >= current_date - 30) as whatsapp30,
+        (select count(*)::int from orders where business_id = ${row.b.id} and created_at >= now() - interval '30 days') as orders30,
+        (select coalesce(sum(total), 0)::float from orders where business_id = ${row.b.id} and status <> 'cancelado') as orders_total`),
     ]);
     const { settings: _s, hours: _h, ...b } = row.b; void _s; void _h;
     const st = (row.b.settings ?? {}) as Record<string, unknown>;
     const days = Array.isArray(row.b.hours) ? (row.b.hours as { open?: boolean }[]).filter((x) => x?.open).length : 0;
     // Solo lectura: se ve lo mismo que vería el negocio, sin sesión del usuario (no hay "entrar como").
     const view = { design: row.b.design, whatsappSet: !!row.b.whatsapp, instagramSet: !!row.b.instagram, addressSet: !!row.b.address, openDays: days, announcement: typeof st.announcement === "string" ? st.announcement : "", showQuantities: st.showQuantities !== false, askEventDate: st.askEventDate === true, ...overview.rows[0] };
-    return { business: b, view, owner: row.owner, counts: counts.rows[0], payments: !can(ctx.user, "pagos", "view") ? [] : payments.map((p) => ({ id: p.id, planId: p.planId, months: p.months, amount: Number(p.amount), status: p.status, createdAt: p.createdAt })), history };
+    return { business: b, view, owner: row.owner, counts: counts.rows[0], activity: activity.rows[0], contact: { whatsapp: row.b.whatsapp, instagram: row.b.instagram, address: row.b.address, industry: row.b.industry }, notes: notes.map((n) => ({ id: n.id, body: n.body, pinned: n.pinned, createdAt: n.createdAt, author: n.authorId ? { id: n.authorId, email: n.authorEmail, name: n.authorName } : null })), payments: !can(ctx.user, "pagos", "view") ? [] : payments.map((p) => ({ id: p.id, planId: p.planId, months: p.months, amount: Number(p.amount), status: p.status, createdAt: p.createdAt })), history };
+  });
+
+  // ───────── Notas internas del negocio: quién la dejó y cuándo queda registrado ─────────
+  const noteBody = z.object({ body: z.string().trim().min(1).max(2000) });
+  const bizExists = async (id: string) => uuid.safeParse(id).success && (await db.select({ id: s.businesses.id }).from(s.businesses).where(and(eq(s.businesses.id, id), isNull(s.businesses.deletedAt))))[0] !== undefined;
+  app.post<{ Params: { id: string } }>("/admin/businesses/:id/notes", async (req, reply) => {
+    const ctx = await requirePerm(db, config, req, reply, "negocios", "view"); // Soporte también deja notas
+    if (!ctx) return;
+    const p = noteBody.safeParse(req.body);
+    if (!p.success) return reply.code(400).send({ error: "invalid_request" });
+    if (!(await bizExists(req.params.id))) return reply.code(404).send({ error: "not_found" });
+    const note = await db.transaction(async (tx) => {
+      const [n] = await tx.insert(s.businessNotes).values({ businessId: req.params.id, authorId: ctx.user.id, body: p.data.body }).returning();
+      await audit(tx, { actorId: ctx.user.id, action: "business.note_add", entity: "business", entityId: req.params.id, after: { noteId: n!.id, body: p.data.body.slice(0, 200) }, ip: ctx.ip });
+      return n!;
+    });
+    return reply.code(201).send({ id: note.id });
+  });
+  app.patch<{ Params: { id: string; noteId: string } }>("/admin/businesses/:id/notes/:noteId", async (req, reply) => {
+    const ctx = await requirePerm(db, config, req, reply, "negocios", "view");
+    if (!ctx) return;
+    const p = z.object({ pinned: z.boolean() }).safeParse(req.body);
+    if (!p.success || !uuid.safeParse(req.params.noteId).success) return reply.code(400).send({ error: "invalid_request" });
+    const r = await db.update(s.businessNotes).set({ pinned: p.data.pinned }).where(and(eq(s.businessNotes.id, req.params.noteId), eq(s.businessNotes.businessId, req.params.id))).returning({ id: s.businessNotes.id });
+    if (r.length === 0) return reply.code(404).send({ error: "not_found" });
+    return { ok: true };
+  });
+  app.delete<{ Params: { id: string; noteId: string } }>("/admin/businesses/:id/notes/:noteId", async (req, reply) => {
+    const ctx = await requirePerm(db, config, req, reply, "negocios", "view");
+    if (!ctx) return;
+    if (!uuid.safeParse(req.params.noteId).success) return reply.code(404).send({ error: "not_found" });
+    const [n] = await db.select().from(s.businessNotes).where(and(eq(s.businessNotes.id, req.params.noteId), eq(s.businessNotes.businessId, req.params.id)));
+    if (!n) return reply.code(404).send({ error: "not_found" });
+    // Cada quien borra las suyas; el Owner puede borrar cualquiera. Queda el texto en Auditoría.
+    if (n.authorId !== ctx.user.id && ctx.user.role !== "owner") return reply.code(403).send({ error: "forbidden_role" });
+    await db.transaction(async (tx) => {
+      await tx.delete(s.businessNotes).where(eq(s.businessNotes.id, n.id));
+      await audit(tx, { actorId: ctx.user.id, action: "business.note_delete", entity: "business", entityId: req.params.id, before: { noteId: n.id, authorId: n.authorId, body: n.body.slice(0, 200) }, ip: ctx.ip });
+    });
+    return { ok: true };
   });
 
   const bizAction = (path: string, perm: readonly [AreaKey, Level], run: (tx: Parameters<Parameters<Db["transaction"]>[0]>[0], biz: typeof s.businesses.$inferSelect, body: unknown, ctx: NonNullable<Awaited<ReturnType<typeof requireAdmin>>>) => Promise<{ action: string; after: Partial<typeof s.businesses.$inferSelect>; error?: undefined } | { error: string; status: number }>, method: "POST" | "PUT" | "DELETE" = "POST") => {
@@ -257,9 +305,10 @@ export function adminRoutes(app: FastifyInstance, db: Db, config: Config, mailer
     const term = q.data.q?.trim();
     const byFilter = { all: undefined, clients: eq(s.users.role, "user"), team: ne(s.users.role, "user"), unverified: isNull(s.users.emailVerifiedAt), blocked: isNotNull(s.users.blockedAt) }[q.data.filter];
     // La cuenta técnica de los negocios de ejemplo no es una persona: no se lista.
-    const where = and(notLike(s.users.email, "%@mishowo.local"), byFilter, term ? or(ilike(s.users.email, `%${term}%`), ilike(s.users.name, `%${term}%`)) : undefined);
+    const digits = term?.replace(/\D/g, "") ?? "";
+    const where = and(notLike(s.users.email, "%@mishowo.local"), byFilter, term ? or(ilike(s.users.email, `%${term}%`), ilike(s.users.name, `%${term}%`), ilike(s.users.lastName, `%${term}%`), digits ? ilike(s.users.phone, `%${digits}%`) : undefined) : undefined);
     const [rows, total] = await Promise.all([
-      db.select({ id: s.users.id, email: s.users.email, name: s.users.name, role: s.users.role, emailVerifiedAt: s.users.emailVerifiedAt, blockedAt: s.users.blockedAt, lastLoginAt: s.users.lastLoginAt, createdAt: s.users.createdAt })
+      db.select({ id: s.users.id, email: s.users.email, name: s.users.name, lastName: s.users.lastName, phone: s.users.phone, role: s.users.role, emailVerifiedAt: s.users.emailVerifiedAt, blockedAt: s.users.blockedAt, lastLoginAt: s.users.lastLoginAt, createdAt: s.users.createdAt })
         .from(s.users).where(where).orderBy(desc(s.users.createdAt)).limit(PAGE).offset((q.data.page - 1) * PAGE),
       db.select({ n: sql<number>`count(*)::int` }).from(s.users).where(where),
     ]);

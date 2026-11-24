@@ -28,7 +28,9 @@ async function startDraft(page: Page) {
 }
 
 async function register(page: Page, email: string) {
-  await page.getByLabel("Tu nombre (opcional)").fill("Ana");
+  await page.getByLabel("Nombre", { exact: true }).fill("Ana");
+  await page.getByLabel("Apellido").fill("Prueba");
+  await page.getByLabel(/^Teléfono/).fill("11 5555-0000");
   await page.getByLabel(/^Email/).fill(email);
   await page.getByLabel(/^Contraseña/).fill(PASS);
   await page.getByRole("button", { name: "Crear mi cuenta" }).click();

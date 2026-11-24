@@ -40,6 +40,7 @@ export async function api<T = Record<string, unknown>>(
 /** Mensajes en voseo, sin jerga técnica. */
 export function authErrorMessage(code: string | undefined): string {
   switch (code) {
+    case "invalid_phone": return "Revisá tu teléfono: escribilo con el código de área, por ejemplo 11 5555-0000.";
     case "email_taken": return "Ya hay una cuenta con ese email. Probá ingresar.";
     case "password_too_short": return "La contraseña tiene que tener al menos 8 caracteres.";
     case "password_is_email": return "La contraseña no puede ser igual a tu email.";

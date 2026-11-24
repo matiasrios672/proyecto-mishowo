@@ -65,7 +65,7 @@ describe("plantillas de email", () => {
   it("apagar la bienvenida corta ese mail; el de confirmación sigue saliendo siempre", async () => {
     const adm = await env.admin("admin@test.com", "admin");
     await env.call("PUT", "/admin/emails/templates/welcome", adm.cookie, { subject: "Bienvenido", body: "Hola, ya podés publicar.", enabled: false });
-    const register = (email: string) => env.app.inject({ method: "POST", url: "/auth/register", headers: { origin: ORIGIN }, payload: { email, password: "claveSegura123" } });
+    const register = (email: string) => env.app.inject({ method: "POST", url: "/auth/register", headers: { origin: ORIGIN }, payload: { email, password: "claveSegura123", name: "Test", lastName: "Persona", phone: "11 5555-0000" } });
     expect((await register("nueva@test.com")).statusCode).toBe(201);
     const verifyMail = env.mailer.outbox.find((m) => m.to === "nueva@test.com")!;
     expect(verifyMail.subject).toBe("Confirmá tu email en MiShowo");
@@ -285,5 +285,33 @@ describe("bandeja de consultas y alta del equipo", () => {
     const row = (await conn.pool.query("select totp_secret, totp_enabled_at from users where id = $1", [sofi.id])).rows[0];
     expect(row).toEqual({ totp_secret: null, totp_enabled_at: null });
     expect((await lastAudit(conn, "admin.reset_2fa")).entity_id ?? (await lastAudit(conn, "admin.reset_2fa")).entityId).toBe(sofi.id);
+  });
+
+  it("los mails salen con la identidad de MiShowo: logo, botón naranja con texto tinta, negritas, listas y firma", () => {
+    const out = render({ subject: "Hola", body: "Mirá **esto**:\n\n- Uno\n- Dos\n\n{{link}}", cta: "Abrir" }, { link: "https://mishowo.com/x" });
+    expect(out.html).toContain("/brand/logo-claro.png");
+    expect(out.html).toContain("background:#FC5502");
+    expect(out.html).toContain("<strong>esto</strong>");
+    expect(out.html).toContain("<li");
+    expect(out.html).toContain("Hecho por");
+    expect(out.html).not.toContain("#2F6FB0");
+    expect(out.text).not.toContain("**");
+  });
+
+  it("el equipo crea, edita y borra plantillas propias; solo con permiso de emails y con variables conocidas", async () => {
+    const sup = await env.admin("soporte@test.com", "support");
+    const adm = await env.admin("admin@test.com", "admin");
+    const body = { name: "Promo de fin de mes", subject: "Hola {{name}}, mirá esto", body: "Tenemos una promo para vos, {{name}}.\n\nRespondé este mail." };
+    expect((await env.call("POST", "/admin/emails/custom", sup.cookie, body)).statusCode).toBe(403);
+    expect((await env.call("POST", "/admin/emails/custom", adm.cookie, { ...body, body: "Hola {{inventada}} esto es largo" })).json().error).toBe("unknown_variables");
+    const created = await env.call("POST", "/admin/emails/custom", adm.cookie, body);
+    expect(created.statusCode).toBe(201);
+    const id = created.json().id as string;
+    expect((await env.call("GET", "/admin/emails/custom", sup.cookie)).json().templates).toHaveLength(1);
+    expect((await env.call("PUT", `/admin/emails/custom/${id}`, adm.cookie, { ...body, name: "Promo de enero" })).statusCode).toBe(200);
+    expect((await env.call("GET", "/admin/emails/custom", adm.cookie)).json().templates[0].name).toBe("Promo de enero");
+    expect((await lastAudit(conn, "email.custom_update")).after).toMatchObject({ name: "Promo de enero" });
+    expect((await env.call("DELETE", `/admin/emails/custom/${id}`, adm.cookie)).statusCode).toBe(200);
+    expect((await env.call("GET", "/admin/emails/custom", adm.cookie)).json().templates).toHaveLength(0);
   });
 });

@@ -54,19 +54,21 @@ interface Tpl {
   key: string; name: string; group: string; description: string; trigger: string; locked: boolean; hasButton: boolean;
   vars: { name: string; example: string; help: string }[]; subject: string; body: string; enabled: boolean; customized: boolean; defaultSubject: string; defaultBody: string; updatedAt: string | null;
 }
-const GROUPS: Record<string, string> = { cuenta: "Cuenta y acceso", planes: "Planes y pagos", turnos: "Turnos", soporte: "Soporte", equipo: "Equipo" };
+const GROUPS: Record<string, string> = { cuenta: "Cuenta y acceso", planes: "Planes y pagos", turnos: "Turnos", soporte: "Soporte", equipo: "Equipo", comunicados: "Puntos de partida para comunicados" };
 
 function Templates() {
   const me = useAdmin();
   const canEdit = me.can("emails", "manage");
   const { data, error, reload } = useLoad<{ templates: Tpl[] }>("/admin/emails/templates");
-  const [sel, setSel] = useState<string>("verify");
+  const custom = useLoad<{ templates: CustomTpl[]; vars: string[] }>("/admin/emails/custom");
+  const [sel, setSel] = useState<string>("verify"); // «verify», «custom:<id>» o «new»
   const groups = useMemo(() => {
     const out: Record<string, Tpl[]> = {};
     for (const t of data?.templates ?? []) (out[t.group] ??= []).push(t);
     return out;
   }, [data]);
   const current = data?.templates.find((t) => t.key === sel);
+  const currentCustom = sel.startsWith("custom:") ? custom.data?.templates.find((t) => `custom:${t.id}` === sel) : undefined;
   return (
     <div className="grid gap-6 lg:grid-cols-[17rem_minmax(0,1fr)]">
       <nav aria-label="Plantillas" className="space-y-4">
@@ -90,9 +92,62 @@ function Templates() {
             </ul>
           </div>
         ))}
+        <div data-testid="custom-templates">
+          <p className="px-2 pb-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Mis plantillas</p>
+          <ul className="space-y-0.5">
+            {custom.data?.templates.map((t) => (
+              <li key={t.id}>
+                <button type="button" onClick={() => setSel(`custom:${t.id}`)} aria-current={sel === `custom:${t.id}` ? "true" : undefined}
+                  className={`flex min-h-10 w-full items-center rounded-lg px-3 text-left text-sm ${sel === `custom:${t.id}` ? "bg-[#F1F3F5] font-semibold text-[#0E1B2C]" : "hover:bg-muted"}`}>{t.name}</button>
+              </li>
+            ))}
+            {custom.data?.templates.length === 0 && <li className="px-3 py-1 text-xs text-muted-foreground">Todavía no creaste ninguna.</li>}
+          </ul>
+          {canEdit && <button type="button" onClick={() => setSel("new")} data-testid="new-template" className="mt-2 min-h-10 w-full rounded-lg border border-dashed px-3 text-sm font-semibold hover:bg-muted">+ Crear plantilla</button>}
+        </div>
       </nav>
       {current && <TemplateEditor key={current.key} tpl={current} canEdit={canEdit} onSaved={reload} />}
+      {sel === "new" && <CustomEditor key="new" vars={custom.data?.vars ?? ["name", "email"]} onSaved={(id) => { custom.reload(); setSel(`custom:${id}`); }} />}
+      {currentCustom && <CustomEditor key={currentCustom.id} tpl={currentCustom} canEdit={canEdit} vars={custom.data?.vars ?? ["name", "email"]} onSaved={() => custom.reload()} onDeleted={() => { custom.reload(); setSel("verify"); }} />}
     </div>
+  );
+}
+
+interface CustomTpl { id: string; name: string; subject: string; body: string; updatedAt: string; authorEmail: string | null }
+
+/** Crear o editar una plantilla propia. Después se usa en Comunicados → «Empezar desde una plantilla». */
+function CustomEditor({ tpl, vars, canEdit = true, onSaved, onDeleted }: { tpl?: CustomTpl; vars: string[]; canEdit?: boolean; onSaved: (id: string) => void; onDeleted?: () => void }) {
+  const [name, setName] = useState(tpl?.name ?? "");
+  const [subject, setSubject] = useState(tpl?.subject ?? "");
+  const [body, setBody] = useState(tpl?.body ?? "");
+  const [status, setStatus] = useState<{ kind: "ok" | "error"; text: string } | null>(null);
+  async function save(e: React.FormEvent) {
+    e.preventDefault();
+    const payload = { name, subject, body };
+    const r = tpl ? await api(`/admin/emails/custom/${tpl.id}`, { method: "PUT", body: payload, toastText: "Plantilla guardada." }) : await api<{ id: string }>("/admin/emails/custom", { body: payload, toastText: "Plantilla creada." });
+    if (!r.ok) return setStatus({ kind: "error", text: r.data.error === "unknown_variables" ? `Variables que no existen: ${((r.data as { variables?: string[] }).variables)?.map((v) => `{{${v}}}`).join(", ")}. Podés usar ${vars.map((v) => `{{${v}}}`).join(" y ")}.` : "Revisá el nombre, el asunto y el mensaje: alguno es muy corto." });
+    setStatus({ kind: "ok", text: "Guardada." });
+    onSaved(tpl?.id ?? (r.data as { id: string }).id);
+  }
+  async function remove() {
+    if (!tpl || !(await confirmAction({ title: "¿Borrar la plantilla?", message: `«${tpl.name}» se elimina. Los comunicados ya enviados no cambian.`, confirmLabel: "Borrar plantilla", danger: true }))) return;
+    const r = await api(`/admin/emails/custom/${tpl.id}`, { method: "DELETE", toastText: "Plantilla borrada." });
+    if (r.ok) onDeleted?.();
+  }
+  return (
+    <form onSubmit={(e) => void save(e)} className="space-y-4 rounded-2xl border p-5" data-testid="custom-editor">
+      <div>
+        <h2 className="text-lg font-bold">{tpl ? tpl.name : "Nueva plantilla"}</h2>
+        <p className="text-sm text-muted-foreground">Un texto que dejás listo para usar en un comunicado. {tpl?.authorEmail && <>Creada por {tpl.authorEmail}.</>}</p>
+      </div>
+      <Field label="Nombre (solo lo ves vos)" required>{(id) => <TextInput id={id} value={name} onChange={(e) => setName(e.target.value)} required minLength={3} maxLength={80} disabled={!canEdit} />}</Field>
+      <Field label="Asunto" required>{(id) => <TextInput id={id} value={subject} onChange={(e) => setSubject(e.target.value)} required minLength={3} maxLength={150} disabled={!canEdit} />}</Field>
+      <Field label="Mensaje" required hint={`Variables: ${vars.map((v) => `{{${v}}}`).join(", ")}. Una línea en blanco separa los párrafos; empezá una línea con «- » para hacer una lista y usá **así** para negrita.`}>
+        {(id, d) => <TextArea id={id} aria-describedby={d} value={body} onChange={(e) => setBody(e.target.value)} rows={10} required minLength={10} maxLength={8000} disabled={!canEdit} />}
+      </Field>
+      {status && <p role={status.kind === "error" ? "alert" : "status"} className={`rounded-lg p-3 text-sm ${status.kind === "error" ? "bg-destructive/10 text-destructive" : "bg-[#F1F3F5]"}`}>{status.text}</p>}
+      {canEdit && <div className="flex flex-wrap gap-2"><Button type="submit">{tpl ? "Guardar cambios" : "Crear plantilla"}</Button>{tpl && <Button type="button" variant="outline" onClick={() => void remove()}>Borrar</Button>}</div>}
+    </form>
   );
 }
 
@@ -201,6 +256,13 @@ function Campaigns() {
   const [mode, setMode] = useState<"now" | "later">("now");
   const [segment, setSegment] = useState("gratis");
   const [kind, setKind] = useState<"servicio" | "novedades">("novedades");
+  const customTpls = useLoad<{ templates: CustomTpl[] }>("/admin/emails/custom");
+  const builtin = useLoad<{ templates: Tpl[] }>("/admin/emails/templates");
+  const [draft, setDraft] = useState<{ subject: string; body: string; n: number }>({ subject: "", body: "", n: 0 });
+  const starters = [
+    ...(builtin.data?.templates.filter((t) => t.group === "comunicados").map((t) => ({ id: `b:${t.key}`, label: `${t.name} (de fábrica)`, subject: t.subject, body: t.body })) ?? []),
+    ...(customTpls.data?.templates.map((t) => ({ id: `c:${t.id}`, label: t.name, subject: t.subject, body: t.body })) ?? []),
+  ];
   const count = segs.data?.segments.find((x) => x.key === segment)?.count;
 
   async function submit(e: React.FormEvent<HTMLFormElement>) {
@@ -239,8 +301,13 @@ function Campaigns() {
               {(id, d) => <Select id={id} aria-describedby={d} value={kind} onChange={(e) => setKind(e.target.value as "servicio" | "novedades")}><option value="novedades">Novedades y promociones</option><option value="servicio">Aviso del servicio</option></Select>}
             </Field>
           </div>
-          <Field label="Asunto" required>{(id) => <TextInput id={id} name="subject" required minLength={3} maxLength={150} />}</Field>
-          <Field label="Mensaje" required hint="Podés usar {{name}} para el nombre de cada persona. Una línea en blanco separa los párrafos.">{(id, d) => <TextArea id={id} aria-describedby={d} name="body" rows={7} required minLength={10} maxLength={8000} />}</Field>
+          {starters.length > 0 && (
+            <Field label="Empezar desde una plantilla" hint="Carga el asunto y el mensaje para que los ajustes. Podés crear las tuyas en Plantillas.">
+              {(id, d) => <Select id={id} aria-describedby={d} value="" data-testid="starter-select" onChange={(e) => { const t = starters.find((x) => x.id === e.target.value); if (t) setDraft((p) => ({ subject: t.subject, body: t.body, n: p.n + 1 })); }}><option value="">Elegir…</option>{starters.map((t) => <option key={t.id} value={t.id}>{t.label}</option>)}</Select>}
+            </Field>
+          )}
+          <Field label="Asunto" required>{(id) => <TextInput key={`s${draft.n}`} id={id} name="subject" defaultValue={draft.subject} required minLength={3} maxLength={150} />}</Field>
+          <Field label="Mensaje" required hint="Podés usar {{name}} para el nombre de cada persona. Una línea en blanco separa los párrafos.">{(id, d) => <TextArea key={`b${draft.n}`} id={id} aria-describedby={d} name="body" defaultValue={draft.body} rows={7} required minLength={10} maxLength={8000} />}</Field>
           <fieldset className="flex flex-wrap items-end gap-4">
             <legend className="sr-only">Cuándo se envía</legend>
             <label className="flex items-center gap-2 text-sm"><input type="radio" name="when" checked={mode === "now"} onChange={() => setMode("now")} className="size-4" />Enviar ahora</label>

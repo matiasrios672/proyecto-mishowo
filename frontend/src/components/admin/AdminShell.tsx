@@ -7,7 +7,7 @@ import QRCode from "qrcode";
 import { LoadingScreen } from "@/components/brand/LoadingScreen";
 import { Wordmark } from "@/components/brand/Wordmark";
 import { AppShell, type NavGroup, type NavItem } from "@/components/brand/AppShell";
-import { IconCard, IconChat, IconEdit, IconFlag, IconHome, IconMail, IconSparkle, IconServer, IconShield, IconStore, IconTag, IconUsers } from "@/components/marketing/Doodles";
+import { IconChart, IconCard, IconChat, IconEdit, IconFlag, IconHome, IconMail, IconSparkle, IconServer, IconShield, IconStore, IconTag, IconUsers } from "@/components/marketing/Doodles";
 import { Button } from "@/components/ui/button";
 import { Field, TextInput } from "@/components/ui/fields";
 import { api } from "@/lib/authClient";
@@ -25,6 +25,7 @@ export const useAdmin = () => useContext(Ctx)!;
 const ADMIN_GROUPS: { label: string; items: { href: string; label: string; Icon: NavItem["Icon"]; exact?: boolean; area?: AreaKey; ownerOnly?: boolean }[] }[] = [
   { label: "Inicio", items: [
     { href: "/admin", label: "Resumen", Icon: IconHome, exact: true },
+    { href: "/admin/estadisticas", label: "Estadísticas", Icon: IconChart, area: "negocios" },
   ] },
   { label: "Clientes", items: [
     { href: "/admin/negocios", label: "Negocios", Icon: IconStore, area: "negocios" },
@@ -54,6 +55,7 @@ const ADMIN_GROUPS: { label: string; items: { href: string; label: string; Icon:
 /** Qué es cada pantalla y cómo usarla: se muestra bajo el título y se despliega con «¿Cómo se usa?». Editarlo acá no toca la lógica. */
 const PAGE_HELP: Record<string, { about: string; steps?: string[] }> = {
   Resumen: { about: "Lo que necesita tu atención hoy y cómo viene el negocio.", steps: ["«Para atender» muestra lo urgente: tocá una tarjeta para ir directo.", "Los números de abajo se calculan solos.", "Si sos Owner, «Primeros pasos» te guía para dejar todo configurado."] },
+  Estadísticas: { about: "Cómo se mueve MiShowo: de dónde llegan las personas, cuántas avanzan hasta publicar y pagar, ingresos y actividad de las páginas.", steps: ["Elegí el período arriba; cada número se compara con el período anterior de la misma duración.", "El embudo muestra en qué paso se cae la gente: ahí está la oportunidad.", "Canales de adquisición sale del utm_source del link: armá tus links como mishowo.com/?utm_source=instagram para medir cada campaña.", "Descargá los canales en CSV para armar tus informes."] },
   Negocios: { about: "Todos los negocios creados, con su plan y estado.", steps: ["Buscá por nombre o link y tocá un negocio para ver su ficha.", "Desde la ficha podés cambiar el plan, suspender o ver la página.", "Cada cambio queda en Auditoría."] },
   Cuentas: { about: "Las personas registradas: clientes y equipo. Para sumar o cambiar permisos del equipo andá a «Equipo».", steps: ["Usá los filtros para ver solo clientes, equipo, sin verificar o bloqueadas.", "Bloquear cierra todas sus sesiones al instante."] },
   Leads: { about: "Personas que se registraron pero todavía no publicaron: oportunidades para escribirles.", steps: ["El embudo muestra en qué paso se frenó cada una.", "«Escribirle» manda el mail de retomar (máximo uno cada 3 días)."] },

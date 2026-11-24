@@ -19,6 +19,7 @@ import { publicCouponRoutes } from "./routes/coupons.js";
 import { publicAppointmentRoutes } from "./routes/appointments.js";
 import { adminModerationRoutes } from "./routes/admin-moderation.js";
 import { adminSystemRoutes, publicSiteConfigRoutes } from "./routes/admin-system.js";
+import { adminStatsRoutes } from "./routes/admin-stats.js";
 import { adminMailRoutes, publicMailRoutes } from "./routes/admin-mail.js";
 import { adminLeadRoutes } from "./routes/admin-leads.js";
 import { adminReferralRoutes } from "./routes/referrals.js";
@@ -29,6 +30,7 @@ import { publicMediaRoutes } from "./routes/media.js";
 import { createSmtpMailer, type Mailer } from "./lib/mailer.js";
 import { createRevalidator, type SiteChanged } from "./lib/revalidate.js";
 import { DiskStorage, type StorageProvider } from "./storage/index.js";
+import { setMailBrand } from "./mail/templates.js";
 
 export type HealthCheck = () => Promise<boolean>;
 
@@ -51,6 +53,7 @@ export interface AppDeps { mailer?: Mailer; onSiteChanged?: SiteChanged; storage
 let storageSingleton: StorageProvider | undefined;
 
 export function buildApp(config: Config, dbCheck: HealthCheck = async () => true, db?: Db, deps: AppDeps = {}) {
+  setMailBrand(config.APP_URL); // el logo y los links de los mails salen del dominio configurado
   const app = Fastify({ logger: config.NODE_ENV !== "test", trustProxy: config.NODE_ENV === "production" });
 
   app.register(cors, {
@@ -109,6 +112,7 @@ export function buildApp(config: Config, dbCheck: HealthCheck = async () => true
         adminRoutes(adminScope, db, config, mailer, storage, notify);
         adminModerationRoutes(adminScope, db, config, notify);
         adminSystemRoutes(adminScope, db, config);
+        adminStatsRoutes(adminScope, db, config);
         adminMailRoutes(adminScope, db, config, mailer);
         adminLeadRoutes(adminScope, db, config, mailer);
         adminReferralRoutes(adminScope, db, config);

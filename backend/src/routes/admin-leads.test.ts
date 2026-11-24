@@ -31,10 +31,10 @@ async function seed() {
 
 describe("leads: registro con origen y etapas", () => {
   it("guarda de dónde llegó la persona y rechaza orígenes raros", async () => {
-    const ok = await env.app.inject({ method: "POST", url: "/auth/register", headers: { origin: ORIGIN }, payload: { email: "ig@test.com", password: "claveSegura123", source: "Instagram" } });
+    const ok = await env.app.inject({ method: "POST", url: "/auth/register", headers: { origin: ORIGIN }, payload: { email: "ig@test.com", password: "claveSegura123", name: "Test", lastName: "Persona", phone: "11 5555-0000", source: "Instagram" } });
     expect(ok.statusCode).toBe(201);
     expect((await conn.pool.query("select signup_source from users where email = 'ig@test.com'")).rows[0].signup_source).toBe("instagram");
-    const bad = await env.app.inject({ method: "POST", url: "/auth/register", headers: { origin: ORIGIN }, payload: { email: "x@test.com", password: "claveSegura123", source: "<script>alert(1)</script>" } });
+    const bad = await env.app.inject({ method: "POST", url: "/auth/register", headers: { origin: ORIGIN }, payload: { email: "x@test.com", password: "claveSegura123", name: "Test", lastName: "Persona", phone: "11 5555-0000", source: "<script>alert(1)</script>" } });
     expect(bad.statusCode).toBe(400);
   });
 
@@ -88,7 +88,7 @@ describe("volver a escribirles", () => {
     env.mailer.outbox.length = 0;
     expect((await env.call("POST", `/admin/leads/${bare.id}/nudge`, adm.cookie, {})).statusCode).toBe(200);
     expect(env.mailer.outbox).toHaveLength(1);
-    expect(env.mailer.outbox[0]).toMatchObject({ to: "sinpagina@test.com", subject: "¿Seguimos, emprendedor/a?" });
+    expect(env.mailer.outbox[0]).toMatchObject({ to: "sinpagina@test.com", subject: "¿Seguimos, Test?" });
     expect(env.mailer.outbox[0]!.text).toContain("/panel");
     expect((await lastAudit(conn, "lead.nudge")).entity_id).toBe(bare.id);
     const again = await env.call("POST", `/admin/leads/${bare.id}/nudge`, adm.cookie, {});

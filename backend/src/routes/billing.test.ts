@@ -40,7 +40,7 @@ const upload = (id: string, cookie: string, data: Buffer, filename = "comprobant
 const pay = async (cookie: string, over: object = {}) => (await call("POST", "/me/payments", cookie, { planId: "emprende", months: 3, ...over }));
 
 async function signup(email: string) {
-  const res = await app.inject({ method: "POST", url: "/auth/register", headers: { origin: ORIGIN }, payload: { email, password: "claveSegura123" } });
+  const res = await app.inject({ method: "POST", url: "/auth/register", headers: { origin: ORIGIN }, payload: { email, password: "claveSegura123", name: "Test", lastName: "Persona", phone: "11 5555-0000" } });
   return { cookie: `ms_session=${res.cookies.find((x) => x.name === "ms_session")!.value}`, id: res.json().user.id as string };
 }
 

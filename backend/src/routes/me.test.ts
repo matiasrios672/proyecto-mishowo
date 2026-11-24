@@ -33,7 +33,7 @@ const put = (cookie: string | undefined, baseVersion: number | null, content: ob
 const get = (cookie?: string) => app.inject({ method: "GET", url: "/me/business", headers: cookie ? { cookie } : {} });
 
 async function signup(email: string) {
-  const res = await app.inject({ method: "POST", url: "/auth/register", headers: { origin: ORIGIN }, payload: { email, password: "claveSegura123" } });
+  const res = await app.inject({ method: "POST", url: "/auth/register", headers: { origin: ORIGIN }, payload: { email, password: "claveSegura123", name: "Test", lastName: "Persona", phone: "11 5555-0000" } });
   const c = res.cookies.find((x) => x.name === "ms_session")!;
   return `ms_session=${c.value}`;
 }

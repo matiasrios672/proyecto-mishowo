@@ -120,7 +120,7 @@ describe("moderación de denuncias", () => {
 });
 
 describe("modo mantenimiento", () => {
-  const register = (email: string) => env.app.inject({ method: "POST", url: "/auth/register", headers: { origin: "http://localhost:3000" }, payload: { email, password: "claveSegura123" } });
+  const register = (email: string) => env.app.inject({ method: "POST", url: "/auth/register", headers: { origin: "http://localhost:3000" }, payload: { email, password: "claveSegura123", name: "Test", lastName: "Persona", phone: "11 5555-0000" } });
   const order = (slug: string) => env.app.inject({ method: "POST", url: "/public/orders", headers: { "user-agent": UA }, payload: { slug, customerName: "Ana", customerPhone: "1155550000", items: [] } });
 
   it("encendido: bloquea registros y pedidos nuevos con 503 y mensaje; apagado: vuelve a andar", async () => {

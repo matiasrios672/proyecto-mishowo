@@ -5,6 +5,7 @@ import type { Config } from "../config.js";
 import type { Db } from "../db/tenant.js";
 import * as s from "../db/schema.js";
 import type { Mailer } from "../lib/mailer.js";
+import { normalizeWhatsapp } from "../lib/whatsapp.js";
 import { hashPassword, newToken, sha256, verifyPassword } from "../lib/security.js";
 import { sendTemplate } from "../mail/service.js";
 import { currentUser, endAllSessions, endSession, requireUser, startSession, strictOriginOk, toPublicUser } from "../auth/session.js";
@@ -52,9 +53,11 @@ export function authRoutes(app: FastifyInstance, db: Db, config: Config, mailer:
   });
 
   app.post("/auth/register", limit, async (req, reply) => {
-    const p = z.object({ email, password, name: z.string().trim().max(80).optional(), source: z.string().trim().toLowerCase().max(60).regex(/^[a-z0-9._:\-\/ ]*$/).optional(), ref: z.string().trim().toLowerCase().regex(/^[a-z0-9]{6,12}$/).optional() }).safeParse(req.body);
+    const p = z.object({ email, password, name: z.string().trim().min(2).max(80), lastName: z.string().trim().min(2).max(80), phone: z.string().trim().min(6).max(30), source: z.string().trim().toLowerCase().max(60).regex(/^[a-z0-9._:\-\/ ]*$/).optional(), ref: z.string().trim().toLowerCase().regex(/^[a-z0-9]{6,12}$/).optional() }).safeParse(req.body);
     if (!p.success) return reply.code(400).send({ error: p.error.issues.some((i) => i.message === "too_short") ? "password_too_short" : "invalid_request" });
     if (p.data.password.toLowerCase() === p.data.email) return reply.code(400).send({ error: "password_is_email" });
+    const phone = normalizeWhatsapp(p.data.phone);
+    if (!phone) return reply.code(400).send({ error: "invalid_phone" });
 
     const [exists] = await db.select({ id: s.users.id }).from(s.users).where(eq(s.users.email, p.data.email));
     if (exists) return reply.code(409).send({ error: "email_taken" });
@@ -62,7 +65,7 @@ export function authRoutes(app: FastifyInstance, db: Db, config: Config, mailer:
     // Código de quien lo invitó: si no existe, se ignora (nunca es motivo para rechazar un registro).
     const referrer = p.data.ref ? (await db.select({ id: s.users.id }).from(s.users).where(eq(s.users.referralCode, p.data.ref)))[0] : undefined;
     const [user] = await db.insert(s.users).values({
-      email: p.data.email, name: p.data.name || null, passwordHash: await hashPassword(p.data.password), signupSource: referrer ? "referido" : p.data.source || null, referredBy: referrer?.id ?? null,
+      email: p.data.email, name: p.data.name, lastName: p.data.lastName, phone, passwordHash: await hashPassword(p.data.password), signupSource: referrer ? "referido" : p.data.source || null, referredBy: referrer?.id ?? null,
     }).onConflictDoNothing().returning();
     if (!user) return reply.code(409).send({ error: "email_taken" }); // carrera entre dos registros
 
